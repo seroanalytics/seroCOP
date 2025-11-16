@@ -21,11 +21,11 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: Start here: Overview of seroCOP
+      - text: Start here; Overview of seroCOP
         href: articles/serocop-overview.html
-      - text: Application 1: Simulation and Recovery
+      - text: Application 1; Simulation and Recovery
         href: articles/simulation-recovery.html
-      - text: Application 2: Multi-Biomarker Analysis
+      - text: Application 2; Multi-Biomarker Analysis
         href: articles/multi-biomarker.html
     github:
       icon: fab fa-github fa-lg
