@@ -1,0 +1,178 @@
+---
+title: "SeroCOP Overview"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SeroCOP Overview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Overview of SeroCOP
+
+This vignette provides a comprehensive overview of the `SeroCOP` R6 class, including its options, functions, and usage. The `SeroCOP` class is designed for Bayesian analysis of correlates of protection using Stan.
+
+## Key Features
+
+- Flexible prior distributions.
+- Multi-biomarker analysis.
+- Model fitting and parameter extraction.
+- Visualization tools.
+
+## Model Description
+
+The `SeroCOP` model is based on a logistic regression framework, which models the probability of protection as a function of biomarker levels. The logistic function is defined as:
+
+$$
+P(Y = 1 | X) = \frac{1}{1 + \exp(-z)},
+$$
+
+where $z$ is a linear combination of the predictors:
+
+$$
+z = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \dots + \beta_k X_k.
+$$
+
+### Parameters
+- $\beta_0$: Intercept term.
+- $\beta_1, \beta_2, \dots, \beta_k$: Coefficients for the predictors.
+- $X_1, X_2, \dots, X_k$: Biomarker levels.
+
+### Priors
+The `SeroCOP` model allows you to specify prior distributions for the parameters. These priors can be tailored to reflect prior knowledge or assumptions about the parameters.
+
+#### Supported Priors
+- **Normal**: Suitable for parameters with symmetric distributions.
+  ```r
+  model$definePrior(parameter = "beta_1", distribution = "normal", mean = 0, sd = 1)
+  ```
+- **Uniform**: Suitable for parameters with bounded ranges.
+  ```r
+  model$definePrior(parameter = "beta_2", distribution = "uniform", min = -1, max = 1)
+  ```
+- **Beta**: Suitable for probabilities or proportions.
+  ```r
+  model$definePrior(parameter = "p", distribution = "beta", alpha = 2, beta = 5)
+  ```
+
+## Initialization
+
+To create a new `SeroCOP` object, use the following:
+
+```r
+library(seroCOP)
+# Example data
+set.seed(123)
+n <- 200
+titre <- rnorm(n, mean = 2, sd = 1.5)
+prob <- 0.05 + 0.9 / (1 + exp(2 * (titre - 1.5)))
+infected <- rbinom(n, 1, prob)
+
+# Initialize the model
+model <- SeroCOP$new(titre = titre, infected = infected)
+```
+
+### Arguments
+- `titre`: Numeric vector of antibody titres.
+- `infected`: Binary vector (0/1) of infection outcomes.
+
+These inputs are required to initialize the `SeroCOP` object.
+
+## Prior Options
+
+The `definePrior` method allows you to specify prior distributions for the model parameters. Below is a detailed explanation of each option:
+
+- **`floor_alpha`**: Alpha parameter for the Beta prior distribution of the "floor" parameter. Default: `1`.
+- **`floor_beta`**: Beta parameter for the Beta prior distribution of the "floor" parameter. Default: `9`.
+- **`ceiling_alpha`**: Alpha parameter for the Beta prior distribution of the "ceiling" parameter. Default: `9`.
+- **`ceiling_beta`**: Beta parameter for the Beta prior distribution of the "ceiling" parameter. Default: `1`.
+- **`ec50_mean`**: Mean of the Normal prior distribution for the `ec50` parameter. Default: Midpoint of the `titre` range.
+- **`ec50_sd`**: Standard deviation of the Normal prior distribution for the `ec50` parameter. Default: One-fourth of the `titre` range.
+- **`slope_mean`**: Mean of the Normal prior distribution for the slope parameter. Default: `0`.
+- **`slope_sd`**: Standard deviation of the Normal prior distribution for the slope parameter. Default: `2`.
+
+### Example Usage
+
+```r
+model$definePrior(
+  floor_alpha = 2, floor_beta = 18,    # Stronger prior for low floor
+  ceiling_alpha = 18, ceiling_beta = 2, # Stronger prior for high ceiling
+  ec50_mean = 1.5, ec50_sd = 0.5,      # Custom ec50 prior
+  slope_mean = 0, slope_sd = 1         # More conservative slope
+)
+```
+
+### Supported Distributions
+- Normal
+- Uniform
+- Beta
+
+## Model Fitting
+
+The `fit_model` method fits the model to the data using Stan. Example:
+
+```r
+fit <- model$fit_model(
+  chains = 4,
+  iter = 2000,
+  warmup = 500,
+  cores = 2
+)
+```
+
+### Arguments
+- `data`: The dataset to fit the model to.
+- `chains`: Number of MCMC chains.
+- `iter`: Total number of iterations per chain.
+- `warmup`: Number of warmup iterations.
+- `cores`: Number of CPU cores to use.
+
+## Multi-Biomarker Analysis
+
+The `SeroCOPMulti` class extends `SeroCOP` to support multi-biomarker analysis. Example:
+
+```r
+
+set.seed(123)
+data1 <- data.frame(
+  titre = rnorm(100, mean = 2, sd = 1.5),
+  infected = rbinom(100, 1, prob = 0.5)
+)
+data2 <- data.frame(
+  titre = rnorm(100, mean = 3, sd = 1.2),
+  infected = rbinom(100, 1, prob = 0.6)
+)
+
+
+multi_model <- SeroCOPMulti$new(
+  titre = c(data1$titre, data2$titre),
+  infected = c(data1$infected, data2$infected)
+)
+multi_fit <- multi_model$fit_all(
+  chains = 4,
+  iter = 2000,
+  warmup = 500,
+  cores = 2
+)
+```
+
+### Example Datasets for Multi-Biomarker analysis
+
+## Visualization
+
+The `plot` method provides visualization tools for the fitted model:
+
+```r
+fit$plot_curve()
+```
+
+## Extracting Parameters
+
+Use the `extract_parameters` method to extract posterior samples:
+
+```r
+params <- model$extract_parameters()
+```
+
+## Summary
+
+The `SeroCOP` class provides a flexible and powerful framework for Bayesian analysis of correlates of protection. This vignette covered the key options and functions available in the class. For more details, refer to the package documentation.

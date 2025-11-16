@@ -72,13 +72,13 @@ SeroCOP <- R6::R6Class(
       if (any(is.na(titre)) || any(is.na(infected))) {
         stop("Missing values are not allowed")
       }
-      
+
       self$titre <- titre
       self$infected <- infected
-      
+
       # Set default priors
       self$priors <- private$get_default_priors()
-      
+
       message(sprintf("SeroCOP initialized with %d observations", length(titre)))
       message(sprintf("  Infection rate: %.1f%%", mean(infected) * 100))
       message(sprintf("  Titre range: [%.2f, %.2f]", min(titre), max(titre)))

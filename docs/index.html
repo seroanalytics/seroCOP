@@ -33,7 +33,7 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="active nav-item"><a class="nav-link" href="index.html"><span class="fa fas fa-home fa-lg"></span></a></li>
+<li class="active nav-item"><a class="nav-link" href="index.html" aria-label="Home"><span class="fa fas fa-home fa-lg"></span></a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
@@ -44,7 +44,7 @@
 </li>
       </ul>
 <ul class="navbar-nav">
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/USERNAME/seroCOP"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/seroanalytics/seroCOP" aria-label="GitHub Repository"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -88,10 +88,10 @@
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">seroCOP</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seroanalytics.org/seroCOP/">seroCOP</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Simulate data</span></span>
-<span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu">simulate_serocop_data</span><span class="op">(</span></span>
+<span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_serocop_data.html">simulate_serocop_data</a></span><span class="op">(</span></span>
 <span>  n <span class="op">=</span> <span class="fl">200</span>,</span>
 <span>  floor <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  ceiling <span class="op">=</span> <span class="fl">0.90</span>,</span>
@@ -101,7 +101,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Create SeroCOP object</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va">SeroCOP</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">infected</span></span>
 <span><span class="op">)</span></span>
@@ -123,7 +123,7 @@
 <span><span class="va">model</span><span class="op">$</span><span class="fu">plot_roc</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract parameter estimates</span></span>
-<span><span class="fu">extract_parameters</span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/extract_parameters.html">extract_parameters</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="multi-biomarker-analysis">Multi-Biomarker Analysis<a class="anchor" aria-label="anchor" href="#multi-biomarker-analysis"></a>
@@ -138,7 +138,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Initialize and fit</span></span>
-<span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va">SeroCOPMulti</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre <span class="op">=</span> <span class="va">titre_matrix</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">infected</span></span>
 <span><span class="op">)</span></span>
@@ -220,7 +220,15 @@ R package version 0.1.0.</code></pre>
 <p>For questions, issues, or feature requests, please open an issue on GitHub.</p>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/seroanalytics/seroCOP/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/seroanalytics/seroCOP/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>

@@ -3,8 +3,9 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   multi-biomarker: multi-biomarker.html
+  serocop-overview: serocop-overview.html
   simulation-recovery: simulation-recovery.html
-last_built: 2025-11-16T14:05Z
+last_built: 2025-11-16T15:44Z
 urls:
-  reference: https://USERNAME.github.io/seroCOP/reference
-  article: https://USERNAME.github.io/seroCOP/articles
+  reference: https://seroanalytics.org/seroCOP/reference
+  article: https://seroanalytics.org/seroCOP/articles
