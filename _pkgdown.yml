@@ -1,8 +1,5 @@
 url: https://seroanalytics.org/seroCOP/
 
-template:
-  bootstrap: 5
-  bootswatch: flatly
 
 home:
   title: seroCOP - Correlates of Protection Analysis
