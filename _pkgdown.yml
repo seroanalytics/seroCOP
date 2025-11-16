@@ -24,12 +24,12 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: Simulation and Recovery
-        href: articles/simulation-recovery.html
-      - text: Multi-Biomarker Analysis
-        href: articles/multi-biomarker.html
-      - text: Overview of seroCOP
+      - text: Start here: Overview of seroCOP
         href: articles/serocop-overview.html
+      - text: Application 1: Simulation and Recovery
+        href: articles/simulation-recovery.html
+      - text: Application 2: Multi-Biomarker Analysis
+        href: articles/multi-biomarker.html
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/seroanalytics/seroCOP
