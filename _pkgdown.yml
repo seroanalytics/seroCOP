@@ -31,6 +31,7 @@ navbar:
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/seroanalytics/seroCOP
+      aria-label: GitHub Repository
 
 reference:
   - title: Main Classes
