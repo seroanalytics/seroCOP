@@ -4,6 +4,7 @@
 #' An R6 class for analyzing multiple biomarkers simultaneously.
 #' Fits separate models for each biomarker and provides comparison tools.
 #'
+#' @concept r6-classes
 #' @export
 #' @examples
 #' \dontrun{

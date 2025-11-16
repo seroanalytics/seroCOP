@@ -12,6 +12,7 @@
 #' 4. Performance metrics (ROC AUC, Brier score, LOO-CV)
 #' 5. Visualization
 #'
+#' @concept r6-classes
 #' @export
 #' @examples
 #' \dontrun{

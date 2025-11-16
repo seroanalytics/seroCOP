@@ -29,14 +29,13 @@ navbar:
         href: articles/multi-biomarker.html
     github:
       icon: fab fa-github fa-lg
-      href: https://github.com/USERNAME/seroCOP
+      href: https://github.com/seroanalytics/seroCOP
 
 reference:
   - title: Main Classes
     desc: Core R6 classes for analysis
     contents:
-    - SeroCOP
-    - SeroCOPMulti
+    - has_concept("r6-classes")
   
   - title: Utility Functions
     desc: Helper functions for data simulation and analysis
