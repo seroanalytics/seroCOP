@@ -3,18 +3,7 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-**seroCOP** (Sero-epidemiological Correlates of Protection) is an R package for analyzing correlates of protection using Bayesian methods. It fits generalized four-parameter logistic functions to antibody titre and infection outcome data using Stan, providing comprehensive model diagnostics and performance metrics.
-
-## Features
-
-- 🔬 **Bayesian Inference**: Full uncertainty quantification using Stan
-- 📊 **R6 Class Interface**: Clean, object-oriented workflow
-- 🧬 **Multi-Biomarker Support**: Analyze and compare multiple biomarkers simultaneously
-- 📈 **Performance Metrics**: ROC AUC, Brier score, LOO-CV
-- 🎨 **Rich Visualizations**: Fitted curves, ROC curves, comparison plots
-- 🔧 **Flexible Priors**: Customizable prior distributions
-- ✅ **Reproducible**: Complete simulation and recovery tools
-- 📚 **Well-documented**: Comprehensive vignettes and examples
+**seroCOP** is an R package for analysing correlates of protection using Bayesian methods. It fits generalized four-parameter logistic functions to antibody titre and infection outcome data using Stan, providing comprehensive model diagnostics and performance metrics.
 
 ## Installation
 
@@ -135,8 +124,6 @@ See the package vignettes for detailed examples:
 # View available vignettes
 browseVignettes("seroCOP")
 
-# Or directly open the simulation vignette
-vignette("simulation-recovery", package = "seroCOP")
 ```
 
 ## Performance Metrics
