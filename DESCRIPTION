@@ -8,7 +8,7 @@ Description: Fits generalized logistic functions to serological data (antibody t
     tools for assessing correlates of risk/protection including ROC AUC, LOO-CV,
     and Brier scores. Built around an R6 class for streamlined workflow.
 License: MIT + file LICENSE
-URL: https://seroanalytics.github.io/seroCOP/
+URL: https://seroanalytics.org/seroCOP/
 BugReports: https://github.com/seroanalytics/seroCOP/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
