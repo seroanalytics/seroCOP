@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/seroanalytics/seroCOP/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/seroanalytics/seroCOP/blob/HEAD/DESCRIPTION)
 
 Hodgson D (2025). *seroCOP: Correlates of Protection Analysis Using
 Bayesian Methods*. R package version 0.1.0,

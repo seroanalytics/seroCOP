@@ -163,9 +163,6 @@ model$fit_model(
   warmup = 500,
   cores = 1  # Adjust based on your system
 )
-#> Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
-#> Running the chains for more iterations may help. See
-#> https://mc-stan.org/misc/warnings.html#bulk-ess
 #> Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
 #> Running the chains for more iterations may help. See
 #> https://mc-stan.org/misc/warnings.html#tail-ess
@@ -183,10 +180,10 @@ them to the true values:
 param_est <- extract_parameters(model, prob = 0.95)
 print(param_est)
 #>   parameter       mean     median      lower     upper
-#> 1     floor 0.09642708 0.09786847 0.02485813 0.1676064
-#> 2   ceiling 0.88623967 0.88434593 0.77492731 0.9929769
-#> 3      ec50 1.45779155 1.46501599 1.13277387 1.7373545
-#> 4     slope 2.58401348 2.44805019 1.19778888 4.7727179
+#> 1     floor 0.09548641 0.09708918 0.01918608 0.1664959
+#> 2   ceiling 0.88366275 0.88145177 0.77466135 0.9874876
+#> 3      ec50 1.47267925 1.47527449 1.16633441 1.7562228
+#> 4     slope 2.59202504 2.45122428 1.17213361 4.8796363
 
 # Compare to true values
 cat("\nTrue Parameters:\n")
@@ -244,14 +241,14 @@ metrics <- model$get_metrics()
 #> Performance Metrics:
 #>   ROC AUC: 0.839
 #>   Brier Score: 0.150
-#>   LOO ELPD: -145.51 (SE: 9.96)
+#>   LOO ELPD: -145.42 (SE: 9.96)
 ```
 
 The model shows good performance:
 
 - **ROC AUC**: 0.839 (closer to 1 is better)
 - **Brier Score**: 0.150 (closer to 0 is better)
-- **LOO ELPD**: -145.51 (higher is better)
+- **LOO ELPD**: -145.42 (higher is better)
 
 ## Visualization
 
@@ -334,9 +331,9 @@ print(model$loo)
 #> Computed from 2000 by 300 log-likelihood matrix.
 #> 
 #>          Estimate   SE
-#> elpd_loo   -145.5 10.0
-#> p_loo         3.9  0.4
-#> looic       291.0 19.9
+#> elpd_loo   -145.4 10.0
+#> p_loo         3.8  0.4
+#> looic       290.8 19.9
 #> ------
 #> MCSE of elpd_loo is 0.0.
 #> MCSE and ESS estimates assume independent draws (r_eff=1).
@@ -369,48 +366,46 @@ Bayesian inference.
 
 ``` r
 sessionInfo()
-#> R version 4.5.2 (2025-10-31)
-#> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.3 LTS
+#> R version 4.5.1 (2025-06-13)
+#> Platform: aarch64-apple-darwin20
+#> Running under: macOS Sequoia 15.6.1
 #> 
 #> Matrix products: default
-#> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+#> LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 #> 
 #> locale:
-#>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
-#>  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
-#>  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
-#> [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+#> [1] en_US.UTF-8/UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 #> 
-#> time zone: UTC
-#> tzcode source: system (glibc)
+#> time zone: Europe/Berlin
+#> tzcode source: internal
 #> 
 #> attached base packages:
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] ggplot2_4.0.0 seroCOP_0.1.0
+#> [1] ggplot2_3.5.2 seroCOP_0.1.0
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] sass_0.4.10           generics_0.1.4        pROC_1.19.0.1        
-#>  [4] digest_0.6.38         magrittr_2.0.4        evaluate_1.0.5       
-#>  [7] grid_4.5.2            RColorBrewer_1.1-3    fastmap_1.2.0        
-#> [10] jsonlite_2.0.0        processx_3.8.6        pkgbuild_1.4.8       
-#> [13] ps_1.9.1              gridExtra_2.3         QuickJSR_1.8.1       
-#> [16] scales_1.4.0          codetools_0.2-20      textshaping_1.0.4    
-#> [19] jquerylib_0.1.4       cli_3.6.5             rlang_1.1.6          
-#> [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.10          
-#> [25] StanHeaders_2.32.10   tools_4.5.2           rstan_2.32.7         
-#> [28] inline_0.3.21         parallel_4.5.2        dplyr_1.1.4          
-#> [31] vctrs_0.6.5           R6_2.6.1              matrixStats_1.5.0    
-#> [34] stats4_4.5.2          lifecycle_1.0.4       fs_1.6.6             
-#> [37] ragg_1.5.0            pkgconfig_2.0.3       desc_1.4.3           
-#> [40] callr_3.7.6           pkgdown_2.2.0         RcppParallel_5.1.11-1
-#> [43] pillar_1.11.1         bslib_0.9.0           gtable_0.3.6         
-#> [46] loo_2.8.0             glue_1.8.0            Rcpp_1.1.0           
-#> [49] systemfonts_1.3.1     xfun_0.54             tibble_3.3.0         
-#> [52] tidyselect_1.2.1      knitr_1.50            farver_2.1.2         
-#> [55] htmltools_0.5.8.1     rmarkdown_2.30        labeling_0.4.3       
-#> [58] compiler_4.5.2        S7_0.2.0
+#>  [1] sass_0.4.10         generics_0.1.4      pROC_1.18.5        
+#>  [4] digest_0.6.37       magrittr_2.0.3      evaluate_1.0.4     
+#>  [7] grid_4.5.1          RColorBrewer_1.1-3  fastmap_1.2.0      
+#> [10] plyr_1.8.9          jsonlite_2.0.0      processx_3.8.6     
+#> [13] pkgbuild_1.4.8      ps_1.9.1            gridExtra_2.3      
+#> [16] QuickJSR_1.8.0      scales_1.4.0        codetools_0.2-20   
+#> [19] textshaping_1.0.1   jquerylib_0.1.4     cli_3.6.5          
+#> [22] rlang_1.1.6         withr_3.0.2         cachem_1.1.0       
+#> [25] yaml_2.3.10         StanHeaders_2.32.10 tools_4.5.1        
+#> [28] rstan_2.32.7        inline_0.3.21       parallel_4.5.1     
+#> [31] dplyr_1.1.4         curl_6.4.0          vctrs_0.6.5        
+#> [34] R6_2.6.1            matrixStats_1.5.0   stats4_4.5.1       
+#> [37] lifecycle_1.0.4     fs_1.6.6            V8_6.0.6           
+#> [40] htmlwidgets_1.6.4   ragg_1.4.0          callr_3.7.6        
+#> [43] pkgconfig_2.0.3     desc_1.4.3          pkgdown_2.2.0      
+#> [46] RcppParallel_5.1.10 pillar_1.11.0       bslib_0.9.0        
+#> [49] gtable_0.3.6        loo_2.8.0           glue_1.8.0         
+#> [52] Rcpp_1.1.0          systemfonts_1.3.1   xfun_0.52          
+#> [55] tibble_3.3.0        tidyselect_1.2.1    knitr_1.50         
+#> [58] farver_2.1.2        htmltools_0.5.8.1   rmarkdown_2.29     
+#> [61] labeling_0.4.3      compiler_4.5.1
 ```

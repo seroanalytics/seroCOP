@@ -36,6 +36,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/simulation-recovery.html">Simulation and Recovery</a></li>
     <li><a class="dropdown-item" href="../articles/multi-biomarker.html">Multi-Biomarker Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/.html">Overview of seroCOP</a></li>
   </ul>
 </li>
       </ul>
@@ -57,7 +58,7 @@
       <h1>Simulation and Recovery Analysis with seroCOP</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/seroanalytics/seroCOP/blob/main/vignettes/simulation-recovery.Rmd" class="external-link"><code>vignettes/simulation-recovery.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/seroanalytics/seroCOP/blob/HEAD/vignettes/simulation-recovery.Rmd" class="external-link"><code>vignettes/simulation-recovery.Rmd</code></a></small>
       <div class="d-none name"><code>simulation-recovery.Rmd</code></div>
     </div>
 
@@ -238,9 +239,6 @@ truncated at 0</li>
 <span>  warmup <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">1</span>  <span class="co"># Adjust based on your system</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
-<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span>
 <span><span class="co">#&gt; Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
 <span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#tail-ess</span></span></code></pre></div>
@@ -259,10 +257,10 @@ compare them to the true values:</p>
 <span><span class="va">param_est</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_parameters.html">extract_parameters</a></span><span class="op">(</span><span class="va">model</span>, prob <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">param_est</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   parameter       mean     median      lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.09642708 0.09786847 0.02485813 0.1676064</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.88623967 0.88434593 0.77492731 0.9929769</span></span>
-<span><span class="co">#&gt; 3      ec50 1.45779155 1.46501599 1.13277387 1.7373545</span></span>
-<span><span class="co">#&gt; 4     slope 2.58401348 2.44805019 1.19778888 4.7727179</span></span>
+<span><span class="co">#&gt; 1     floor 0.09548641 0.09708918 0.01918608 0.1664959</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.88366275 0.88145177 0.77466135 0.9874876</span></span>
+<span><span class="co">#&gt; 3      ec50 1.47267925 1.47527449 1.16633441 1.7562228</span></span>
+<span><span class="co">#&gt; 4     slope 2.59202504 2.45122428 1.17213361 4.8796363</span></span>
 <span></span>
 <span><span class="co"># Compare to true values</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nTrue Parameters:\n"</span><span class="op">)</span></span>
@@ -318,7 +316,7 @@ compare them to the true values:</p>
 <span><span class="co">#&gt; Performance Metrics:</span></span>
 <span><span class="co">#&gt;   ROC AUC: 0.839</span></span>
 <span><span class="co">#&gt;   Brier Score: 0.150</span></span>
-<span><span class="co">#&gt;   LOO ELPD: -145.51 (SE: 9.96)</span></span></code></pre></div>
+<span><span class="co">#&gt;   LOO ELPD: -145.42 (SE: 9.96)</span></span></code></pre></div>
 <p>The model shows good performance:</p>
 <ul>
 <li>
@@ -326,7 +324,7 @@ compare them to the true values:</p>
 <li>
 <strong>Brier Score</strong>: 0.150 (closer to 0 is better)</li>
 <li>
-<strong>LOO ELPD</strong>: -145.51 (higher is better)</li>
+<strong>LOO ELPD</strong>: -145.42 (higher is better)</li>
 </ul>
 </div>
 <div class="section level2">
@@ -412,9 +410,9 @@ out-of-sample predictive performance:</p>
 <span><span class="co">#&gt; Computed from 2000 by 300 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -145.5 10.0</span></span>
-<span><span class="co">#&gt; p_loo         3.9  0.4</span></span>
-<span><span class="co">#&gt; looic       291.0 19.9</span></span>
+<span><span class="co">#&gt; elpd_loo   -145.4 10.0</span></span>
+<span><span class="co">#&gt; p_loo         3.8  0.4</span></span>
+<span><span class="co">#&gt; looic       290.8 19.9</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
 <span><span class="co">#&gt; MCSE and ESS estimates assume independent draws (r_eff=1).</span></span>
@@ -454,50 +452,48 @@ through Bayesian inference.</p>
 </h3>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
-<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; R version 4.5.1 (2025-06-13)</span></span>
+<span><span class="co">#&gt; Platform: aarch64-apple-darwin20</span></span>
+<span><span class="co">#&gt; Running under: macOS Sequoia 15.6.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
-<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
-<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
+<span><span class="co">#&gt; BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib </span></span>
+<span><span class="co">#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
-<span><span class="co">#&gt;  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
-<span><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
-<span><span class="co">#&gt; [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
+<span><span class="co">#&gt; [1] en_US.UTF-8/UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; time zone: UTC</span></span>
-<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span><span class="co">#&gt; time zone: Europe/Berlin</span></span>
+<span><span class="co">#&gt; tzcode source: internal</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; attached base packages:</span></span>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_4.0.0 seroCOP_0.1.0</span></span>
+<span><span class="co">#&gt; [1] ggplot2_3.5.2 seroCOP_0.1.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] sass_0.4.10           generics_0.1.4        pROC_1.19.0.1        </span></span>
-<span><span class="co">#&gt;  [4] digest_0.6.38         magrittr_2.0.4        evaluate_1.0.5       </span></span>
-<span><span class="co">#&gt;  [7] grid_4.5.2            RColorBrewer_1.1-3    fastmap_1.2.0        </span></span>
-<span><span class="co">#&gt; [10] jsonlite_2.0.0        processx_3.8.6        pkgbuild_1.4.8       </span></span>
-<span><span class="co">#&gt; [13] ps_1.9.1              gridExtra_2.3         QuickJSR_1.8.1       </span></span>
-<span><span class="co">#&gt; [16] scales_1.4.0          codetools_0.2-20      textshaping_1.0.4    </span></span>
-<span><span class="co">#&gt; [19] jquerylib_0.1.4       cli_3.6.5             rlang_1.1.6          </span></span>
-<span><span class="co">#&gt; [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.10          </span></span>
-<span><span class="co">#&gt; [25] StanHeaders_2.32.10   tools_4.5.2           rstan_2.32.7         </span></span>
-<span><span class="co">#&gt; [28] inline_0.3.21         parallel_4.5.2        dplyr_1.1.4          </span></span>
-<span><span class="co">#&gt; [31] vctrs_0.6.5           R6_2.6.1              matrixStats_1.5.0    </span></span>
-<span><span class="co">#&gt; [34] stats4_4.5.2          lifecycle_1.0.4       fs_1.6.6             </span></span>
-<span><span class="co">#&gt; [37] ragg_1.5.0            pkgconfig_2.0.3       desc_1.4.3           </span></span>
-<span><span class="co">#&gt; [40] callr_3.7.6           pkgdown_2.2.0         RcppParallel_5.1.11-1</span></span>
-<span><span class="co">#&gt; [43] pillar_1.11.1         bslib_0.9.0           gtable_0.3.6         </span></span>
-<span><span class="co">#&gt; [46] loo_2.8.0             glue_1.8.0            Rcpp_1.1.0           </span></span>
-<span><span class="co">#&gt; [49] systemfonts_1.3.1     xfun_0.54             tibble_3.3.0         </span></span>
-<span><span class="co">#&gt; [52] tidyselect_1.2.1      knitr_1.50            farver_2.1.2         </span></span>
-<span><span class="co">#&gt; [55] htmltools_0.5.8.1     rmarkdown_2.30        labeling_0.4.3       </span></span>
-<span><span class="co">#&gt; [58] compiler_4.5.2        S7_0.2.0</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] sass_0.4.10         generics_0.1.4      pROC_1.18.5        </span></span>
+<span><span class="co">#&gt;  [4] digest_0.6.37       magrittr_2.0.3      evaluate_1.0.4     </span></span>
+<span><span class="co">#&gt;  [7] grid_4.5.1          RColorBrewer_1.1-3  fastmap_1.2.0      </span></span>
+<span><span class="co">#&gt; [10] plyr_1.8.9          jsonlite_2.0.0      processx_3.8.6     </span></span>
+<span><span class="co">#&gt; [13] pkgbuild_1.4.8      ps_1.9.1            gridExtra_2.3      </span></span>
+<span><span class="co">#&gt; [16] QuickJSR_1.8.0      scales_1.4.0        codetools_0.2-20   </span></span>
+<span><span class="co">#&gt; [19] textshaping_1.0.1   jquerylib_0.1.4     cli_3.6.5          </span></span>
+<span><span class="co">#&gt; [22] rlang_1.1.6         withr_3.0.2         cachem_1.1.0       </span></span>
+<span><span class="co">#&gt; [25] yaml_2.3.10         StanHeaders_2.32.10 tools_4.5.1        </span></span>
+<span><span class="co">#&gt; [28] rstan_2.32.7        inline_0.3.21       parallel_4.5.1     </span></span>
+<span><span class="co">#&gt; [31] dplyr_1.1.4         curl_6.4.0          vctrs_0.6.5        </span></span>
+<span><span class="co">#&gt; [34] R6_2.6.1            matrixStats_1.5.0   stats4_4.5.1       </span></span>
+<span><span class="co">#&gt; [37] lifecycle_1.0.4     fs_1.6.6            V8_6.0.6           </span></span>
+<span><span class="co">#&gt; [40] htmlwidgets_1.6.4   ragg_1.4.0          callr_3.7.6        </span></span>
+<span><span class="co">#&gt; [43] pkgconfig_2.0.3     desc_1.4.3          pkgdown_2.2.0      </span></span>
+<span><span class="co">#&gt; [46] RcppParallel_5.1.10 pillar_1.11.0       bslib_0.9.0        </span></span>
+<span><span class="co">#&gt; [49] gtable_0.3.6        loo_2.8.0           glue_1.8.0         </span></span>
+<span><span class="co">#&gt; [52] Rcpp_1.1.0          systemfonts_1.3.1   xfun_0.52          </span></span>
+<span><span class="co">#&gt; [55] tibble_3.3.0        tidyselect_1.2.1    knitr_1.50         </span></span>
+<span><span class="co">#&gt; [58] farver_2.1.2        htmltools_0.5.8.1   rmarkdown_2.29     </span></span>
+<span><span class="co">#&gt; [61] labeling_0.4.3      compiler_4.5.1</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

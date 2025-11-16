@@ -20,18 +20,21 @@ The `SeroCOP` model is based on a logistic regression framework, which
 models the probability of protection as a function of biomarker levels.
 The logistic function is defined as:
 
-$$P\left( Y = 1|X \right) = \frac{1}{1 + \exp( - z)},$$
+``` math
+P(Y = 1 | X) = \frac{1}{1 + \exp(-z)},
+```
 
-where $z$ is a linear combination of the predictors:
+where $`z`$ is a linear combination of the predictors:
 
-$$z = \beta_{0} + \beta_{1}X_{1} + \beta_{2}X_{2} + \ldots + \beta_{k}X_{k}.$$
+``` math
+z = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \dots + \beta_k X_k.
+```
 
 #### Parameters
 
-- $\beta_{0}$: Intercept term.
-- $\beta_{1},\beta_{2},\ldots,\beta_{k}$: Coefficients for the
-  predictors.
-- $X_{1},X_{2},\ldots,X_{k}$: Biomarker levels.
+- $`\beta_0`$: Intercept term.
+- $`\beta_1, \beta_2, \dots, \beta_k`$: Coefficients for the predictors.
+- $`X_1, X_2, \dots, X_k`$: Biomarker levels.
 
 #### Priors
 

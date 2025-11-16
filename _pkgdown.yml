@@ -28,6 +28,8 @@ navbar:
         href: articles/simulation-recovery.html
       - text: Multi-Biomarker Analysis
         href: articles/multi-biomarker.html
+      - text: Overview of seroCOP
+        href: articles/.html
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/seroanalytics/seroCOP

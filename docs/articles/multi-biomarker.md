@@ -120,16 +120,16 @@ multi_model$fit_all(
 #> Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
 #> Running the chains for more iterations may help. See
 #> https://mc-stan.org/misc/warnings.html#tail-ess
-#> Warning: There were 12 divergent transitions after warmup. See
+#> Warning: There were 27 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
 #> to find out why this is a problem and how to eliminate them.
 #> Warning: Examine the pairs() plot to diagnose sampling problems
-#> Warning: The largest R-hat is 1.07, indicating chains have not mixed.
-#> Running the chains for more iterations may help. See
-#> https://mc-stan.org/misc/warnings.html#r-hat
 #> Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
 #> Running the chains for more iterations may help. See
 #> https://mc-stan.org/misc/warnings.html#bulk-ess
+#> Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+#> Running the chains for more iterations may help. See
+#> https://mc-stan.org/misc/warnings.html#tail-ess
 ```
 
 ## Compare Biomarkers
@@ -150,9 +150,9 @@ comparison <- multi_model$compare_biomarkers()
 #> === Biomarker Comparison ===
 #> 
 #>    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se
-#>          IgG 0.6582046 0.5829271 0.7334822 0.2072601 -154.1994 6.544413
-#>          IgA 0.5468585 0.4722618 0.6214551 0.2260122 -162.8842 4.665918
-#>  Nonspecific 0.5017982 0.4247284 0.5788680 0.2268769 -163.6162 4.660890
+#>          IgG 0.6582046 0.5829271 0.7334822 0.2072716 -154.1694 6.499022
+#>          IgA 0.5468585 0.4722618 0.6214551 0.2260677 -162.8680 4.636499
+#>  Nonspecific 0.5017982 0.4247284 0.5788680 0.2274129 -163.7294 4.506090
 ```
 
 The comparison table shows:
@@ -171,10 +171,9 @@ multi_model$plot_comparison()
 #> === Biomarker Comparison ===
 #> 
 #>    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se
-#>          IgG 0.6582046 0.5829271 0.7334822 0.2072601 -154.1994 6.544413
-#>          IgA 0.5468585 0.4722618 0.6214551 0.2260122 -162.8842 4.665918
-#>  Nonspecific 0.5017982 0.4247284 0.5788680 0.2268769 -163.6162 4.660890
-#> `height` was translated to `width`.
+#>          IgG 0.6582046 0.5829271 0.7334822 0.2072716 -154.1694 6.499022
+#>          IgA 0.5468585 0.4722618 0.6214551 0.2260677 -162.8680 4.636499
+#>  Nonspecific 0.5017982 0.4247284 0.5788680 0.2274129 -163.7294 4.506090
 ```
 
 ![](multi-biomarker_files/figure-html/plot-comparison-1.png)
@@ -212,10 +211,10 @@ for (biomarker in c("IgG", "IgA", "Nonspecific")) {
 #> 
 #> Estimated parameters:
 #>   parameter      mean      lower     upper
-#> 1     floor 0.1719731 0.01995582 0.2858089
-#> 2   ceiling 0.8729742 0.65037485 0.9961169
-#> 3      ec50 1.1228755 0.22232689 2.0414593
-#> 4     slope 1.3597713 0.42230112 3.1277511
+#> 1     floor 0.1735044 0.02434853 0.2932927
+#> 2   ceiling 0.8712714 0.64578948 0.9945067
+#> 3      ec50 1.1281224 0.19160443 1.9728158
+#> 4     slope 1.3485831 0.42399908 2.9999878
 #> 
 #> True parameters:
 #>   floor:   0.020
@@ -226,11 +225,11 @@ for (biomarker in c("IgG", "IgA", "Nonspecific")) {
 #> === IgA ===
 #> 
 #> Estimated parameters:
-#>   parameter        mean        lower     upper
-#> 1     floor  0.08839946  0.002603836 0.3310646
-#> 2   ceiling  0.79373918  0.522643007 0.9907708
-#> 3      ec50 -0.07922047 -3.240520644 3.9734660
-#> 4     slope  0.32865864  0.016487435 1.9151297
+#>   parameter       mean        lower     upper
+#> 1     floor 0.08385938  0.002403052 0.3119311
+#> 2   ceiling 0.78642721  0.522601570 0.9859760
+#> 3      ec50 0.11886713 -2.928058869 4.2480754
+#> 4     slope 0.30359530  0.016038929 1.4042707
 #> 
 #> True parameters:
 #>   floor:   0.150
@@ -242,10 +241,10 @@ for (biomarker in c("IgG", "IgA", "Nonspecific")) {
 #> 
 #> Estimated parameters:
 #>   parameter      mean        lower     upper
-#> 1     floor 0.1511990  0.002941631 0.3597803
-#> 2   ceiling 0.7893157  0.539220278 0.9845812
-#> 3      ec50 1.4381978 -0.913237426 4.8762568
-#> 4     slope 0.8487359  0.012967226 3.7070817
+#> 1     floor 0.1208224  0.002613569 0.3520967
+#> 2   ceiling 0.7735269  0.539953081 0.9837264
+#> 3      ec50 1.6340261 -0.938441284 4.9775194
+#> 4     slope 0.5757391  0.007883129 3.3509061
 #> 
 #> True parameters:
 #>   floor:   0.350
@@ -361,7 +360,7 @@ for (biomarker in multi_model$biomarker_names) {
 #>          Estimate   SE
 #> elpd_loo   -154.2  6.5
 #> p_loo         3.0  0.3
-#> looic       308.4 13.1
+#> looic       308.3 13.0
 #> ------
 #> MCSE of elpd_loo is 0.0.
 #> MCSE and ESS estimates assume independent draws (r_eff=1).
@@ -374,9 +373,9 @@ for (biomarker in multi_model$biomarker_names) {
 #> Computed from 2000 by 250 log-likelihood matrix.
 #> 
 #>          Estimate  SE
-#> elpd_loo   -162.9 4.7
+#> elpd_loo   -162.9 4.6
 #> p_loo         1.8 0.1
-#> looic       325.8 9.3
+#> looic       325.7 9.3
 #> ------
 #> MCSE of elpd_loo is 0.0.
 #> MCSE and ESS estimates assume independent draws (r_eff=1).
@@ -389,9 +388,9 @@ for (biomarker in multi_model$biomarker_names) {
 #> Computed from 2000 by 250 log-likelihood matrix.
 #> 
 #>          Estimate  SE
-#> elpd_loo   -163.6 4.7
-#> p_loo         2.0 0.2
-#> looic       327.2 9.3
+#> elpd_loo   -163.7 4.5
+#> p_loo         1.9 0.1
+#> looic       327.5 9.0
 #> ------
 #> MCSE of elpd_loo is 0.0.
 #> MCSE and ESS estimates assume independent draws (r_eff=1).
@@ -424,48 +423,46 @@ biomarkers to identify the best correlates of protection.
 
 ``` r
 sessionInfo()
-#> R version 4.5.2 (2025-10-31)
-#> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.3 LTS
+#> R version 4.5.1 (2025-06-13)
+#> Platform: aarch64-apple-darwin20
+#> Running under: macOS Sequoia 15.6.1
 #> 
 #> Matrix products: default
-#> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+#> LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 #> 
 #> locale:
-#>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
-#>  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
-#>  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
-#> [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
+#> [1] en_US.UTF-8/UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 #> 
-#> time zone: UTC
-#> tzcode source: system (glibc)
+#> time zone: Europe/Berlin
+#> tzcode source: internal
 #> 
 #> attached base packages:
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] ggplot2_4.0.0 seroCOP_0.1.0
+#> [1] ggplot2_3.5.2 seroCOP_0.1.0
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] sass_0.4.10           generics_0.1.4        pROC_1.19.0.1        
-#>  [4] digest_0.6.38         magrittr_2.0.4        evaluate_1.0.5       
-#>  [7] grid_4.5.2            RColorBrewer_1.1-3    fastmap_1.2.0        
-#> [10] jsonlite_2.0.0        processx_3.8.6        pkgbuild_1.4.8       
-#> [13] ps_1.9.1              gridExtra_2.3         QuickJSR_1.8.1       
-#> [16] scales_1.4.0          codetools_0.2-20      textshaping_1.0.4    
-#> [19] jquerylib_0.1.4       cli_3.6.5             rlang_1.1.6          
-#> [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.10          
-#> [25] StanHeaders_2.32.10   tools_4.5.2           rstan_2.32.7         
-#> [28] inline_0.3.21         parallel_4.5.2        dplyr_1.1.4          
-#> [31] vctrs_0.6.5           R6_2.6.1              matrixStats_1.5.0    
-#> [34] stats4_4.5.2          lifecycle_1.0.4       fs_1.6.6             
-#> [37] ragg_1.5.0            pkgconfig_2.0.3       desc_1.4.3           
-#> [40] callr_3.7.6           pkgdown_2.2.0         RcppParallel_5.1.11-1
-#> [43] pillar_1.11.1         bslib_0.9.0           gtable_0.3.6         
-#> [46] loo_2.8.0             glue_1.8.0            Rcpp_1.1.0           
-#> [49] systemfonts_1.3.1     xfun_0.54             tibble_3.3.0         
-#> [52] tidyselect_1.2.1      knitr_1.50            farver_2.1.2         
-#> [55] htmltools_0.5.8.1     rmarkdown_2.30        labeling_0.4.3       
-#> [58] compiler_4.5.2        S7_0.2.0
+#>  [1] sass_0.4.10         generics_0.1.4      pROC_1.18.5        
+#>  [4] digest_0.6.37       magrittr_2.0.3      evaluate_1.0.4     
+#>  [7] grid_4.5.1          RColorBrewer_1.1-3  fastmap_1.2.0      
+#> [10] plyr_1.8.9          jsonlite_2.0.0      processx_3.8.6     
+#> [13] pkgbuild_1.4.8      ps_1.9.1            gridExtra_2.3      
+#> [16] QuickJSR_1.8.0      scales_1.4.0        codetools_0.2-20   
+#> [19] textshaping_1.0.1   jquerylib_0.1.4     cli_3.6.5          
+#> [22] rlang_1.1.6         withr_3.0.2         cachem_1.1.0       
+#> [25] yaml_2.3.10         StanHeaders_2.32.10 tools_4.5.1        
+#> [28] rstan_2.32.7        inline_0.3.21       parallel_4.5.1     
+#> [31] dplyr_1.1.4         curl_6.4.0          vctrs_0.6.5        
+#> [34] R6_2.6.1            matrixStats_1.5.0   stats4_4.5.1       
+#> [37] lifecycle_1.0.4     fs_1.6.6            V8_6.0.6           
+#> [40] htmlwidgets_1.6.4   ragg_1.4.0          callr_3.7.6        
+#> [43] pkgconfig_2.0.3     desc_1.4.3          pkgdown_2.2.0      
+#> [46] RcppParallel_5.1.10 pillar_1.11.0       bslib_0.9.0        
+#> [49] gtable_0.3.6        loo_2.8.0           glue_1.8.0         
+#> [52] Rcpp_1.1.0          systemfonts_1.3.1   xfun_0.52          
+#> [55] tibble_3.3.0        tidyselect_1.2.1    knitr_1.50         
+#> [58] farver_2.1.2        htmltools_0.5.8.1   rmarkdown_2.29     
+#> [61] labeling_0.4.3      compiler_4.5.1
 ```

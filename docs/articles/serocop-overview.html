@@ -36,6 +36,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/simulation-recovery.html">Simulation and Recovery</a></li>
     <li><a class="dropdown-item" href="../articles/multi-biomarker.html">Multi-Biomarker Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/.html">Overview of seroCOP</a></li>
   </ul>
 </li>
       </ul>
@@ -57,7 +58,7 @@
       <h1>SeroCOP Overview</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/seroanalytics/seroCOP/blob/main/vignettes/serocop-overview.Rmd" class="external-link"><code>vignettes/serocop-overview.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/seroanalytics/seroCOP/blob/HEAD/vignettes/serocop-overview.Rmd" class="external-link"><code>vignettes/serocop-overview.Rmd</code></a></small>
       <div class="d-none name"><code>serocop-overview.Rmd</code></div>
     </div>
 
@@ -86,7 +87,7 @@ of correlates of protection using Stan.</p>
 <p>The <code>SeroCOP</code> model is based on a logistic regression
 framework, which models the probability of protection as a function of
 biomarker levels. The logistic function is defined as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>Y</mi><mo>=</mo><mn>1</mn><mo stretchy="false" form="prefix">|</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><mo>exp</mo><mrow><mo stretchy="true" form="prefix">(</mo><mo>−</mo><mi>z</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mi>Y</mi><mo>=</mo><mn>1</mn><mo stretchy="false" form="prefix">|</mo><mi>X</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><mrow><mi>exp</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>−</mi><mi>z</mi><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
 P(Y = 1 | X) = \frac{1}{1 + \exp(-z)},
 </annotation></semantics></math></p>
 <p>where

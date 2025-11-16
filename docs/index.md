@@ -126,7 +126,9 @@ model$definePrior(
 
 The package fits a four-parameter logistic model:
 
-$$P\left( \text{infection}|\text{titre} \right) = \text{floor} + \frac{\text{ceiling} - \text{floor}}{1 + e^{\text{slope} \times {(\text{titre} - \text{ec50})}}}$$
+``` math
+P(\text{infection} | \text{titre}) = \text{floor} + \frac{\text{ceiling} - \text{floor}}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}}
+```
 
 Where: - **floor**: Lower asymptote (minimum infection probability) -
 **ceiling**: Upper asymptote (maximum infection probability)  
