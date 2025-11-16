@@ -17,6 +17,7 @@ navbar:
     home:
       icon: fas fa-home fa-lg
       href: index.html
+      aria-label: Home
     reference:
       text: Reference
       href: reference/index.html
@@ -36,9 +37,9 @@ reference:
     desc: Core R6 classes for analysis
     contents:
     - has_concept("r6-classes")
-  
+
   - title: Utility Functions
-    desc: Helper functions for data simulation and analysis
+    desc: Helper functions for simulations and analysis
     contents:
     - simulate_serocop_data
     - brier_score
