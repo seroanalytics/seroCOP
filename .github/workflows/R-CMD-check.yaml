@@ -50,3 +50,16 @@ jobs:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
           error-on: '"error"'
+
+      - name: Install BH
+        run: Rscript -e "install.packages('BH')"
+
+      - name: Install macOS Rtools
+        if: runner.os == 'macOS'
+        run: Rscript -e "install.packages('r-macos-rtools')"
+
+      - name: Configure Makevars
+        run: |
+          mkdir -p ~/.R
+          echo "CXX14FLAGS=-O3 -mtune=native -arch x86_64 -ftemplate-depth-256" >> ~/.R/Makevars
+          echo "CXX14=/usr/local/clang7/bin/clang++" >> ~/.R/Makevars
