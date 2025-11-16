@@ -1,0 +1,10 @@
+pandoc: 3.7.0.2
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  multi-biomarker: multi-biomarker.html
+  simulation-recovery: simulation-recovery.html
+last_built: 2025-11-16T14:05Z
+urls:
+  reference: https://USERNAME.github.io/seroCOP/reference
+  article: https://USERNAME.github.io/seroCOP/articles
