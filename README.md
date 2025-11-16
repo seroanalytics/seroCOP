@@ -1,0 +1,167 @@
+# seroCOP
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+**seroCOP** (Sero-epidemiological Correlates of Protection) is an R package for analyzing correlates of protection using Bayesian methods. It fits generalized four-parameter logistic functions to antibody titre and infection outcome data using Stan, providing comprehensive model diagnostics and performance metrics.
+
+## Features
+
+- 🔬 **Bayesian Inference**: Full uncertainty quantification using Stan
+- 📊 **R6 Class Interface**: Clean, object-oriented workflow
+- 🧬 **Multi-Biomarker Support**: Analyze and compare multiple biomarkers simultaneously
+- 📈 **Performance Metrics**: ROC AUC, Brier score, LOO-CV
+- 🎨 **Rich Visualizations**: Fitted curves, ROC curves, comparison plots
+- 🔧 **Flexible Priors**: Customizable prior distributions
+- ✅ **Reproducible**: Complete simulation and recovery tools
+- 📚 **Well-documented**: Comprehensive vignettes and examples
+
+## Installation
+
+You can install the development version of seroCOP from GitHub:
+
+```r
+# Install devtools if needed
+install.packages("devtools")
+
+# Install seroCOP
+devtools::install_github("seroanalytics/seroCOP")
+```
+
+**Note**: This package requires a working installation of RStan. See [RStan Getting Started](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for installation instructions.
+
+## Quick Start
+
+```r
+library(seroCOP)
+
+# Simulate data
+sim_data <- simulate_serocop_data(
+  n = 200,
+  floor = 0.05,
+  ceiling = 0.90,
+  ec50 = 1.5,
+  slope = 2.0,
+  seed = 123
+)
+
+# Create SeroCOP object
+model <- SeroCOP$new(
+  titre = sim_data$titre,
+  infected = sim_data$infected
+)
+
+# Optional: Customize priors (defaults are data-driven)
+model$definePrior(
+  floor_alpha = 2, floor_beta = 18,    # E[floor] ≈ 0.1
+  ec50_mean = 2.0, ec50_sd = 1.0       # Informative prior on ec50
+)
+
+# Fit the model
+model$fit_model(chains = 4, iter = 2000)
+
+# Get performance metrics
+model$get_metrics()
+
+# Visualize results
+model$plot_curve()
+model$plot_roc()
+
+# Extract parameter estimates
+extract_parameters(model)
+```
+
+## Multi-Biomarker Analysis
+
+Compare multiple biomarkers simultaneously:
+
+```r
+# Prepare multi-biomarker data (matrix with columns = biomarkers)
+titre_matrix <- cbind(
+  IgG = rnorm(200, 2, 1),
+  IgA = rnorm(200, 1.5, 1),
+  Neutralization = rnorm(200, 3, 1.2)
+)
+
+# Initialize and fit
+multi_model <- SeroCOPMulti$new(
+  titre = titre_matrix,
+  infected = infected
+)
+multi_model$fit_all(chains = 4, iter = 2000)
+
+# Compare biomarkers
+multi_model$compare_biomarkers()
+multi_model$plot_comparison()  # AUC vs LOO-ELPD plot
+multi_model$plot_all_curves()
+```
+
+## Flexible Prior Distributions
+
+The package automatically sets sensible default priors based on your data:
+
+- **ec50** centered at the midpoint of observed titre range
+- **floor** and **ceiling** with weak priors favoring low/high infection probabilities
+
+You can easily customize priors using the `definePrior()` method:
+
+```r
+model$definePrior(
+  floor_alpha = 2, floor_beta = 18,      # Beta prior for floor
+  ceiling_alpha = 18, ceiling_beta = 2,  # Beta prior for ceiling
+  ec50_mean = 2.0, ec50_sd = 1.0,        # Normal prior for ec50
+  slope_mean = 0, slope_sd = 2           # Normal prior for slope (truncated at 0)
+)
+```
+
+## Model
+
+The package fits a four-parameter logistic model:
+
+$$P(\text{infection} | \text{titre}) = \text{floor} + \frac{\text{ceiling} - \text{floor}}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}}$$
+
+Where:
+- **floor**: Lower asymptote (minimum infection probability)
+- **ceiling**: Upper asymptote (maximum infection probability)  
+- **ec50**: Titre at 50% between floor and ceiling (inflection point)
+- **slope**: Steepness of the curve
+
+
+## Documentation
+
+See the package vignettes for detailed examples:
+
+```r
+# View available vignettes
+browseVignettes("seroCOP")
+
+# Or directly open the simulation vignette
+vignette("simulation-recovery", package = "seroCOP")
+```
+
+## Performance Metrics
+
+The package calculates several performance metrics:
+
+- **ROC AUC**: Area under the ROC curve (discrimination)
+- **Brier Score**: Mean squared error of predictions (calibration)
+- **LOO-CV**: Leave-one-out cross-validation (out-of-sample performance)
+- **ELPD**: Expected log pointwise predictive density
+
+## Citation
+
+If you use this package in your research, please cite:
+
+```
+Hodgson, D. (2025). seroCOP: Correlates of Protection Analysis Using Bayesian Methods.
+R package version 0.1.0.
+```
+
+## Development
+
+This package is under active development. Contributions and feedback are welcome.
+
+
+## Support
+
+For questions, issues, or feature requests, please open an issue on GitHub.

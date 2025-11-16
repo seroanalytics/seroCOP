@@ -1,0 +1,55 @@
+url: https://seroanalytics.github.io/seroCOP/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+
+home:
+  title: seroCOP - Correlates of Protection Analysis
+  description: >
+    Bayesian analysis of correlates of protection using Stan
+
+navbar:
+  structure:
+    left:  [home, reference, articles]
+    right: [github]
+  components:
+    home:
+      icon: fas fa-home fa-lg
+      href: index.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Articles
+      menu:
+      - text: Simulation and Recovery
+        href: articles/simulation-recovery.html
+      - text: Multi-Biomarker Analysis
+        href: articles/multi-biomarker.html
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/USERNAME/seroCOP
+
+reference:
+  - title: Main Classes
+    desc: Core R6 classes for analysis
+    contents:
+    - SeroCOP
+    - SeroCOPMulti
+  
+  - title: Utility Functions
+    desc: Helper functions for data simulation and analysis
+    contents:
+    - simulate_serocop_data
+    - brier_score
+    - extract_parameters
+
+figures:
+  dev: ragg::agg_png
+  dpi: 96
+  dev.args: []
+  fig.ext: png
+  fig.width: 7
+  fig.height: 5
+  fig.retina: 2
