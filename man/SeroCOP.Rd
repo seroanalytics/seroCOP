@@ -2,12 +2,17 @@
 % Please edit documentation in R/SeroCOP.R
 \name{SeroCOP}
 \alias{SeroCOP}
-\title{SeroCOP R6 Class for Correlates of Protection Analysis}
+\title{SeroCOP R6 Class}
 \description{
 An R6 class for analyzing correlates of protection using Bayesian methods.
 Fits a four-parameter logistic model to antibody titre and infection outcome data.
+
+This class implements a Bayesian logistic model for analyzing correlates of protection.
+It provides methods for model fitting, prediction, performance evaluation, and visualization.
 }
 \details{
+SeroCOP R6 Class for Correlates of Protection Analysis
+
 This class provides a complete workflow for correlates of protection analysis:
 \enumerate{
 \item Data input and validation
@@ -56,6 +61,77 @@ model$definePrior(
   slope_mean = 0, slope_sd = 1         # More conservative slope
 )
 }
+
+## ------------------------------------------------
+## Method `SeroCOP$fit_model`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model(chains = 4, iter = 2000)
+
+## ------------------------------------------------
+## Method `SeroCOP$predict`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model()
+predictions <- sero$predict()
+
+## ------------------------------------------------
+## Method `SeroCOP$predict_protection`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model()
+protection <- sero$predict_protection()
+
+## ------------------------------------------------
+## Method `SeroCOP$summary`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model()
+summary <- sero$summary()
+
+## ------------------------------------------------
+## Method `SeroCOP$get_metrics`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model()
+metrics <- sero$get_metrics()
+
+## ------------------------------------------------
+## Method `SeroCOP$plot_curve`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model()
+plot <- sero$plot_curve()
+
+## ------------------------------------------------
+## Method `SeroCOP$plot_roc`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model()
+roc_plot <- sero$plot_roc()
+
+## ------------------------------------------------
+## Method `SeroCOP$plot_parameters`
+## ------------------------------------------------
+
+sero <- SeroCOP$new()
+sero$fit_model()
+param_plot <- sero$plot_parameters()
+
+## ------------------------------------------------
+## Method `SeroCOP$extract_cop`
+## ------------------------------------------------
+
+sero <- SeroCOP$new(titre = titre, infected = infected)
+sero$fit_model()
+cor <- sero$extract_cop(correlate_of_risk = c(0.1, 0.2), upper_bound = 0.7)
 }
 \concept{r6-classes}
 \section{Public fields}{
@@ -80,11 +156,13 @@ model$definePrior(
 \item \href{#method-SeroCOP-definePrior}{\code{SeroCOP$definePrior()}}
 \item \href{#method-SeroCOP-fit_model}{\code{SeroCOP$fit_model()}}
 \item \href{#method-SeroCOP-predict}{\code{SeroCOP$predict()}}
+\item \href{#method-SeroCOP-predict_protection}{\code{SeroCOP$predict_protection()}}
 \item \href{#method-SeroCOP-summary}{\code{SeroCOP$summary()}}
 \item \href{#method-SeroCOP-get_metrics}{\code{SeroCOP$get_metrics()}}
 \item \href{#method-SeroCOP-plot_curve}{\code{SeroCOP$plot_curve()}}
 \item \href{#method-SeroCOP-plot_roc}{\code{SeroCOP$plot_roc()}}
 \item \href{#method-SeroCOP-plot_parameters}{\code{SeroCOP$plot_parameters()}}
+\item \href{#method-SeroCOP-extract_cop}{\code{SeroCOP$extract_cop()}}
 \item \href{#method-SeroCOP-clone}{\code{SeroCOP$clone()}}
 }
 }
@@ -179,14 +257,11 @@ model$definePrior(
 \if{latex}{\out{\hypertarget{method-SeroCOP-fit_model}{}}}
 \subsection{Method \code{fit_model()}}{
 Fit the Bayesian logistic model
+
+
+Fits a Bayesian logistic model using Stan.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$fit_model(
-  chains = 4,
-  iter = 2000,
-  warmup = floor(iter/2),
-  thin = 1,
-  ...
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$fit_model(chains = 4, iter = 2000, warmup = 1000, thin = 1, ...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -194,25 +269,47 @@ Fit the Bayesian logistic model
 \describe{
 \item{\code{chains}}{Number of MCMC chains (default: 4)}
 
+\item{\code{chains}}{Number of MCMC chains (default: 4).}
+
 \item{\code{iter}}{Number of iterations per chain (default: 2000)}
+
+\item{\code{iter}}{Total number of iterations per chain (default: 2000).}
 
 \item{\code{warmup}}{Number of warmup iterations (default: iter/2)}
 
+\item{\code{warmup}}{Number of warmup iterations per chain (default: 1000).}
+
 \item{\code{thin}}{Thinning interval (default: 1)}
 
+\item{\code{thin}}{Thinning interval for samples (default: 1).}
+
 \item{\code{...}}{Additional arguments passed to rstan::sampling}
+
+\item{\code{...}}{Additional arguments passed to \code{rstan::stan}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 Self (invisibly)
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model(chains = 4, iter = 2000)
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-predict"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-predict}{}}}
 \subsection{Method \code{predict()}}{
 Get posterior predictions for infection probability
+
+
+Generates posterior predictions for infection probability.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SeroCOP$predict(newdata = NULL)}\if{html}{\out{</div>}}
 }
@@ -221,18 +318,63 @@ Get posterior predictions for infection probability
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{newdata}}{Optional new titre values for prediction}
+
+\item{\code{newdata}}{Optional new titre values for prediction.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 Matrix of posterior predictions (iterations x observations)
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model()
+predictions <- sero$predict()
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOP-predict_protection"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOP-predict_protection}{}}}
+\subsection{Method \code{predict_protection()}}{
+Extract probability of protection from the fitted model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$predict_protection(newdata = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{newdata}}{Optional vector of new titre values for prediction}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Matrix of protection probabilities (rows = MCMC samples, cols = observations)
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model()
+protection <- sero$predict_protection()
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-summary"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-summary}{}}}
 \subsection{Method \code{summary()}}{
 Get summary statistics for model parameters
+
+
+Provides summary statistics for model parameters.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SeroCOP$summary()}\if{html}{\out{</div>}}
 }
@@ -240,12 +382,25 @@ Get summary statistics for model parameters
 \subsection{Returns}{
 Data frame with parameter summaries
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model()
+summary <- sero$summary()
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-get_metrics"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-get_metrics}{}}}
 \subsection{Method \code{get_metrics()}}{
 Calculate performance metrics
+
+
+Calculates performance metrics such as ROC AUC, Brier score, and LOO-CV metrics.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SeroCOP$get_metrics()}\if{html}{\out{</div>}}
 }
@@ -253,12 +408,25 @@ Calculate performance metrics
 \subsection{Returns}{
 List containing ROC AUC, Brier score, and LOO-CV metrics
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model()
+metrics <- sero$get_metrics()
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-plot_curve"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-plot_curve}{}}}
 \subsection{Method \code{plot_curve()}}{
 Plot the fitted curve with uncertainty
+
+
+Plots the fitted curve with uncertainty.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SeroCOP$plot_curve(title = "Correlates of Risk Curve", ...)}\if{html}{\out{</div>}}
 }
@@ -268,19 +436,36 @@ Plot the fitted curve with uncertainty
 \describe{
 \item{\code{title}}{Plot title}
 
+\item{\code{title}}{Title of the plot (default: "Correlates of Risk Curve").}
+
 \item{\code{...}}{Additional arguments passed to ggplot2}
+
+\item{\code{...}}{Additional arguments passed to \code{ggplot2}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 A ggplot object
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model()
+plot <- sero$plot_curve()
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-plot_roc"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-plot_roc}{}}}
 \subsection{Method \code{plot_roc()}}{
 Plot ROC curve
+
+
+Plots the ROC curve.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SeroCOP$plot_roc(title = "ROC Curve")}\if{html}{\out{</div>}}
 }
@@ -289,18 +474,33 @@ Plot ROC curve
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{title}}{Plot title}
+
+\item{\code{title}}{Title of the plot (default: "ROC Curve").}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 A ggplot object
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model()
+roc_plot <- sero$plot_roc()
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-plot_parameters"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-plot_parameters}{}}}
 \subsection{Method \code{plot_parameters()}}{
 Plot posterior distributions of parameters
+
+
+Visualizes posterior distributions of parameters.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SeroCOP$plot_parameters()}\if{html}{\out{</div>}}
 }
@@ -308,6 +508,48 @@ Plot posterior distributions of parameters
 \subsection{Returns}{
 A ggplot object
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new()
+sero$fit_model()
+param_plot <- sero$plot_parameters()
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOP-extract_cop"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOP-extract_cop}{}}}
+\subsection{Method \code{extract_cop()}}{
+Extract the correlate of protection conditional on exposure.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$extract_cop(correlate_of_risk, upper_bound = 0.7)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{correlate_of_risk}}{Numeric vector of correlates of risk.}
+
+\item{\code{upper_bound}}{Numeric value for the upper bound (default: 0.7).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Numeric vector of correlates of protection.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{sero <- SeroCOP$new(titre = titre, infected = infected)
+sero$fit_model()
+cor <- sero$extract_cop(correlate_of_risk = c(0.1, 0.2), upper_bound = 0.7)
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-clone"></a>}}

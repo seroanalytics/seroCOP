@@ -31,10 +31,10 @@ library(ggplot2)
 
 We'll simulate data where the probability of infection follows a four-parameter logistic curve as a function of antibody titre. The parameters we'll use are:
 
-- **floor** = 0.05 (5% minimum infection probability)
-- **ceiling** = 0.90 (90% maximum infection probability)
-- **ec50** = 1.5 (titre at 50% infection probability)
-- **slope** = 2.0 (steepness of the curve)
+- **floor** = 0.05 (5% of maximum risk remaining at high titre - 95% protection at high titre)
+- **ceiling** = 0.70 (70% maximum infection probability at low titre)
+- **ec50** = 1.5 (titre at inflection point)
+- **slope** = 2.0 (steepness of the protective curve)
 
 ```{r simulate}
 # Set parameters for simulation
@@ -42,7 +42,7 @@ set.seed(2025)
 
 true_params <- list(
   floor = 0.05,
-  ceiling = 0.90,
+  ceiling = 0.70,
   ec50 = 1.5,
   slope = 2.0
 )
@@ -98,8 +98,8 @@ The `seroCOP` package allows you to customize prior distributions. By default:
 
 - **ec50** is centered at the midpoint of the observed titre range
 - **ec50_sd** is set to titre_range / 4
-- **floor** ~ Beta(1, 9) - weak prior favoring low infection at high titres
-- **ceiling** ~ Beta(9, 1) - weak prior favoring high infection at low titres
+- **floor** ~ Beta(1, 9) - weak prior favoring low residual risk at high titres (strong protection)
+- **ceiling** ~ Beta(9, 1) - weak prior favoring high infection risk at low titres
 - **slope** ~ Normal(0, 2) - weakly informative, truncated at 0
 
 ```{r init-model}
@@ -119,8 +119,8 @@ You can customize priors if you have prior knowledge:
 ```{r custom-priors, eval=FALSE}
 # Example: Set custom priors (not run in this vignette)
 model$definePrior(
-  floor_alpha = 2, floor_beta = 18,      # Stronger prior: E[floor] ≈ 0.1
-  ceiling_alpha = 18, ceiling_beta = 2,  # Stronger prior: E[ceiling] ≈ 0.9
+  floor_alpha = 2, floor_beta = 18,      # Stronger prior: E[floor] ≈ 0.1 (10% residual risk at high titre)
+  ceiling_alpha = 18, ceiling_beta = 2,  # Stronger prior: E[ceiling] ≈ 0.9 (90% risk at low titre)
   ec50_mean = 2.0, ec50_sd = 1.0,        # Informative prior on ec50
   slope_mean = 0, slope_sd = 1           # More conservative slope
 )
@@ -217,6 +217,66 @@ The plot shows:
 - **Blue line**: Posterior mean prediction
 - **Blue ribbon**: 95% credible interval
 - **Points**: Observed infection outcomes (jittered for visibility)
+
+## Correlate of Protection
+
+Now let's extract the correlate of protection directly from the Stan model. The correlate of protection is calculated within the model as `1 - (prob_infection / ceiling)`.
+
+```{r cop-calculation}
+# Extract protection probabilities directly from Stan model
+protection_samples <- model$predict_protection()
+correlate_of_protection <- colMeans(protection_samples)
+
+# Also extract risk for comparison
+risk_samples <- model$predict()
+correlate_of_risk <- colMeans(risk_samples)
+
+# Display summary
+summary_df <- data.frame(
+  titre = sim_data$titre,
+  correlate_of_risk = correlate_of_risk,
+  correlate_of_protection = correlate_of_protection
+)
+
+head(summary_df, 10)
+```
+
+### Correlate of Protection Curve
+
+```{r plot-cop-curve}
+# Create prediction grid
+titre_grid <- seq(min(sim_data$titre), max(sim_data$titre), length.out = 100)
+
+# Extract protection probabilities from Stan model
+cop_matrix <- model$predict_protection(newdata = titre_grid)
+
+# Calculate summary statistics
+cop_mean <- colMeans(cop_matrix)
+cop_lower <- apply(cop_matrix, 2, quantile, probs = 0.025)
+cop_upper <- apply(cop_matrix, 2, quantile, probs = 0.975)
+
+# Create plot data
+cop_plot_df <- data.frame(
+  titre = titre_grid,
+  cop = cop_mean,
+  lower = cop_lower,
+  upper = cop_upper
+)
+
+# Plot
+ggplot(cop_plot_df, aes(x = titre, y = cop)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "steelblue", alpha = 0.3) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  labs(
+    title = "Correlate of Protection Curve",
+    x = "Antibody Titre (log scale)",
+    y = "Correlate of Protection"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+The correlate of protection curve shows how protection increases with antibody titre.
 
 ## ROC Curve
 

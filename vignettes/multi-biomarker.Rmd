@@ -42,12 +42,12 @@ n <- 250  # Sample size
 # Biomarker 1: Strong CoP (IgG)
 # High ceiling-floor difference, clear dose-response
 titre_IgG <- rnorm(n, mean = 2.5, sd = 1.2)
-prob_IgG <- 0.02 + 0.90 / (1 + exp(2.5 * (titre_IgG - 2.0)))
+prob_IgG <- 0.02 + 0.68 / (1 + exp(2.5 * (titre_IgG - 2.0)))
 
 # Biomarker 2: Weak CoP (IgA)  
 # Moderate ceiling-floor difference, weaker slope
 titre_IgA <- rnorm(n, mean = 1.8, sd = 1.5)
-prob_IgA <- 0.15 + 0.50 / (1 + exp(1.0 * (titre_IgA - 1.5)))
+prob_IgA <- 0.15 + 0.55 / (1 + exp(1.0 * (titre_IgA - 1.5)))
 
 # Biomarker 3: No CoP (Non-specific)
 # No relationship with infection - flat line
@@ -68,9 +68,9 @@ titre_matrix <- cbind(
 
 # Store true parameters for later comparison
 true_params <- list(
-  IgG = list(floor = 0.02, ceiling = 0.92, ec50 = 2.0, slope = 2.5),
-  IgA = list(floor = 0.15, ceiling = 0.65, ec50 = 1.5, slope = 1.0),
-  Nonspecific = list(floor = 0.35, ceiling = 0.35, ec50 = 3.0, slope = 0.01)
+  IgG = list(floor = 0.02, ceiling = 0.70, ec50 = 2.0, slope = 2.5),
+  IgA = list(floor = 0.15, ceiling = 0.70, ec50 = 1.5, slope = 1.0),
+  Nonspecific = list(floor = 0.35, ceiling = 0.70, ec50 = 3.0, slope = 0.01)
 )
 
 cat(sprintf("Simulated %d samples with 3 biomarkers\n", n))
@@ -133,6 +133,90 @@ multi_model$fit_all(
 ```{r plot-all-curves}
 multi_model$plot_all_curves()
 ```
+
+## Correlate of Protection for All Biomarkers
+
+Now let's extract the correlate of protection directly from the Stan model for each biomarker. The protection probability is calculated within the model as `1 - (prob_infection / ceiling)`.
+
+```{r cop-multi-calculation}
+# Extract protection probabilities for each biomarker
+cop_results <- list()
+
+for (biomarker in multi_model$biomarker_names) {
+  model <- multi_model$models[[biomarker]]
+  
+  # Get protection probabilities directly from Stan model
+  protection_samples <- model$predict_protection()
+  correlate_of_protection <- colMeans(protection_samples)
+  
+  # Also get risk for comparison
+  risk_samples <- model$predict()
+  correlate_of_risk <- colMeans(risk_samples)
+  
+  cop_results[[biomarker]] <- data.frame(
+    titre = model$titre,
+    correlate_of_risk = correlate_of_risk,
+    correlate_of_protection = correlate_of_protection
+  )
+}
+
+# Display summary for each biomarker
+for (biomarker in multi_model$biomarker_names) {
+  cat(sprintf("\n=== %s ===\n", biomarker))
+  print(head(cop_results[[biomarker]], 5))
+}
+```
+
+### Correlate of Protection Curves
+
+```{r plot-cop-curves}
+# Combine CoP data for all biomarkers
+cop_plot_data <- list()
+
+for (i in seq_along(multi_model$biomarker_names)) {
+  biomarker <- multi_model$biomarker_names[i]
+  model <- multi_model$models[[biomarker]]
+  
+  # Create prediction grid
+  titre_grid <- seq(min(model$titre), max(model$titre), length.out = 100)
+  
+  # Extract protection probabilities from Stan model
+  cop_matrix <- model$predict_protection(newdata = titre_grid)
+  
+  # Calculate summary statistics
+  cop_mean <- colMeans(cop_matrix)
+  cop_lower <- apply(cop_matrix, 2, quantile, probs = 0.025)
+  cop_upper <- apply(cop_matrix, 2, quantile, probs = 0.975)
+  
+  cop_plot_data[[i]] <- data.frame(
+    biomarker = biomarker,
+    titre = titre_grid,
+    cop = cop_mean,
+    lower = cop_lower,
+    upper = cop_upper
+  )
+}
+
+cop_plot_df <- do.call(rbind, cop_plot_data)
+
+# Plot all CoP curves
+ggplot(cop_plot_df, aes(x = titre, y = cop, color = biomarker, fill = biomarker)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2, color = NA) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~biomarker, scales = "free_x") +
+  labs(
+    title = "Correlate of Protection Curves by Biomarker",
+    x = "Antibody Titre (log scale)",
+    y = "Correlate of Protection"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "none"
+  )
+```
+
+The correlate of protection curves show how protection increases with titre for each biomarker.
 
 ## Performance Metrics Comparison
 

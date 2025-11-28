@@ -243,12 +243,51 @@ SeroCOP <- R6::R6Class(
         predictions <- matrix(NA, nrow = n_iter, ncol = n_new)
         
         for (i in 1:n_iter) {
-          predictions[i, ] <- params$floor[i] + 
-            (params$ceiling[i] - params$floor[i]) / 
-            (1 + exp(params$slope[i] * (newdata - params$ec50[i])))
+          # Using the new formula: ceiling * (floor + (1-floor) * inv_logit(-slope * (titre - ec50)))
+          logit_part <- 1 / (1 + exp(params$slope[i] * (newdata - params$ec50[i])))
+          predictions[i, ] <- params$ceiling[i] * (params$floor[i] + (1 - params$floor[i]) * logit_part)
         }
         
         return(predictions)
+      }
+    },
+    
+    #' @description
+    #' Extract probability of protection from the fitted model
+    #' @param newdata Optional vector of new titre values for prediction
+    #' @return Matrix of protection probabilities (rows = MCMC samples, cols = observations)
+    #' @examples
+    #' sero <- SeroCOP$new()
+    #' sero$fit_model()
+    #' protection <- sero$predict_protection()
+    predict_protection = function(newdata = NULL) {
+      if (is.null(self$fit)) {
+        stop("Model has not been fitted yet. Run fit_model() first.")
+      }
+      
+      if (is.null(newdata)) {
+        # Extract fitted protection probabilities
+        prob_protection <- rstan::extract(self$fit, pars = "prob_protection")[[1]]
+        return(prob_protection)
+      } else {
+        # Predict protection for new data
+        # Get infection probabilities first
+        prob_infection <- self$predict(newdata = newdata)
+        
+        # Extract ceiling samples
+        params <- rstan::extract(self$fit)
+        ceiling_samples <- params$ceiling
+        
+        # Calculate protection: 1 - (prob_infection / ceiling)
+        n_iter <- nrow(prob_infection)
+        n_new <- ncol(prob_infection)
+        prob_protection <- matrix(NA, nrow = n_iter, ncol = n_new)
+        
+        for (i in 1:n_iter) {
+          prob_protection[i, ] <- 1 - (prob_infection[i, ] / ceiling_samples[i])
+        }
+        
+        return(prob_protection)
       }
     },
     
@@ -482,6 +521,29 @@ SeroCOP <- R6::R6Class(
         )
       
       return(p)
+    },
+    
+    #' @description
+    #' Extract the correlate of protection conditional on exposure.
+    #' @param correlate_of_risk Numeric vector of correlates of risk.
+    #' @param upper_bound Numeric value for the upper bound (default: 0.7).
+    #' @return Numeric vector of correlates of protection.
+    #' @examples
+    #' sero <- SeroCOP$new(titre = titre, infected = infected)
+    #' sero$fit_model()
+    #' cor <- sero$extract_cop(correlate_of_risk = c(0.1, 0.2), upper_bound = 0.7)
+    extract_cop = function(correlate_of_risk, upper_bound = 0.7) {
+      if (missing(correlate_of_risk)) {
+        stop("correlate_of_risk must be provided")
+      }
+      if (!is.numeric(correlate_of_risk) || any(correlate_of_risk < 0 | correlate_of_risk > 1)) {
+        stop("correlate_of_risk must be a numeric vector with values between 0 and 1")
+      }
+      if (!is.numeric(upper_bound) || upper_bound <= 0) {
+        stop("upper_bound must be a positive numeric value")
+      }
+      cop <- (1 - correlate_of_risk) / upper_bound
+      return(cop)
     }
   ),
   

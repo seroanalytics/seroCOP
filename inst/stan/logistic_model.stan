@@ -1,10 +1,10 @@
 // Four-parameter logistic model for correlates of protection
 // Models the probability of infection as a function of antibody titre
 // Parameters:
-//   - floor: lower asymptote (minimum infection probability)
-//   - ceiling: upper asymptote (maximum infection probability)
-//   - ec50: titre at 50% between floor and ceiling (inflection point)
-//   - slope: steepness of the curve
+//   - floor: proportion of maximum risk remaining at high titre (relative protection at high titre)
+//   - ceiling: maximum infection probability (at low antibody titre)
+//   - ec50: titre at inflection point (50% reduction from ceiling to ceiling*floor)
+//   - slope: steepness of the protective curve (higher = steeper decline in risk with titre)
 
 data {
   int<lower=0> N;                    // number of observations
@@ -29,18 +29,21 @@ data {
 }
 
 parameters {
-  real<lower=0,upper=1> floor;       // lower asymptote
-  real<lower=0,upper=1> ceiling;     // upper asymptote
-  real ec50;                         // titre at midpoint
-  real<lower=0> slope;               // slope parameter (steepness)
+  real<lower=0,upper=1> floor;       // proportion of maximum risk at high titre
+  real<lower=0,upper=1> ceiling;     // maximum infection probability at low titre
+  real ec50;                         // titre at inflection point
+  real<lower=0> slope;               // steepness of protective curve
 }
 
 transformed parameters {
   vector[N] prob_infection;
-  
+  vector[N] prob_protection;
   // Four-parameter logistic function
+  // At low titre: prob → ceiling (maximum risk)
+  // At high titre: prob → ceiling * floor (minimum risk, as proportion of ceiling)
   for (n in 1:N) {
-    prob_infection[n] = floor + (ceiling - floor) / (1 + exp(slope * (titre[n] - ec50)));
+    prob_infection[n] = ceiling * (inv_logit(-slope * (titre[n] - ec50)) * (1 - floor) + floor);
+    prob_protection[n] = 1 - (prob_infection[n] / ceiling);
   }
 }
 

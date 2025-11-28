@@ -22,6 +22,15 @@ multi_model$fit_all(chains = 4, iter = 2000)
 multi_model$compare_biomarkers()
 multi_model$plot_comparison()
 }
+
+## ------------------------------------------------
+## Method `SeroCOPMulti$extract_cop_multi`
+## ------------------------------------------------
+
+multi_model <- SeroCOPMulti$new(titre = titre_matrix, infected = infected)
+multi_model$fit_all()
+cor_list <- list(IgG = c(0.1, 0.2), IgA = c(0.3, 0.4))
+cop_list <- multi_model$extract_cop_multi(correlate_of_risk_list = cor_list, upper_bound = 0.7)
 }
 \concept{r6-classes}
 \section{Public fields}{
@@ -45,6 +54,7 @@ multi_model$plot_comparison()
 \item \href{#method-SeroCOPMulti-compare_biomarkers}{\code{SeroCOPMulti$compare_biomarkers()}}
 \item \href{#method-SeroCOPMulti-plot_comparison}{\code{SeroCOPMulti$plot_comparison()}}
 \item \href{#method-SeroCOPMulti-plot_all_curves}{\code{SeroCOPMulti$plot_all_curves()}}
+\item \href{#method-SeroCOPMulti-extract_cop_multi}{\code{SeroCOPMulti$extract_cop_multi()}}
 \item \href{#method-SeroCOPMulti-clone}{\code{SeroCOPMulti$clone()}}
 }
 }
@@ -151,6 +161,39 @@ Plot all fitted curves
 \subsection{Returns}{
 A ggplot object
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOPMulti-extract_cop_multi"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOPMulti-extract_cop_multi}{}}}
+\subsection{Method \code{extract_cop_multi()}}{
+Extract the correlate of protection conditional on exposure for all biomarkers.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOPMulti$extract_cop_multi(correlate_of_risk_list, upper_bound = 0.7)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{correlate_of_risk_list}}{List of numeric vectors of correlates of risk for each biomarker.}
+
+\item{\code{upper_bound}}{Numeric value for the upper bound (default: 0.7).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+List of numeric vectors of correlates of protection for each biomarker.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{multi_model <- SeroCOPMulti$new(titre = titre_matrix, infected = infected)
+multi_model$fit_all()
+cor_list <- list(IgG = c(0.1, 0.2), IgA = c(0.3, 0.4))
+cop_list <- multi_model$extract_cop_multi(correlate_of_risk_list = cor_list, upper_bound = 0.7)
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOPMulti-clone"></a>}}

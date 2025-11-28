@@ -81,21 +81,21 @@ These inputs are required to initialize the `SeroCOP` object.
 
 The `definePrior` method allows you to specify prior distributions for the model parameters. Below is a detailed explanation of each option:
 
-- **`floor_alpha`**: Alpha parameter for the Beta prior distribution of the "floor" parameter. Default: `1`.
-- **`floor_beta`**: Beta parameter for the Beta prior distribution of the "floor" parameter. Default: `9`.
-- **`ceiling_alpha`**: Alpha parameter for the Beta prior distribution of the "ceiling" parameter. Default: `9`.
-- **`ceiling_beta`**: Beta parameter for the Beta prior distribution of the "ceiling" parameter. Default: `1`.
-- **`ec50_mean`**: Mean of the Normal prior distribution for the `ec50` parameter. Default: Midpoint of the `titre` range.
+- **`floor_alpha`**: Alpha parameter for the Beta prior distribution of the "floor" parameter (proportion of maximum risk at high titre). Default: `1`.
+- **`floor_beta`**: Beta parameter for the Beta prior distribution of the "floor" parameter. Default: `9` (favors low residual risk).
+- **`ceiling_alpha`**: Alpha parameter for the Beta prior distribution of the "ceiling" parameter (maximum infection risk at low titre). Default: `9`.
+- **`ceiling_beta`**: Beta parameter for the Beta prior distribution of the "ceiling" parameter. Default: `1` (favors high risk at low titre).
+- **`ec50_mean`**: Mean of the Normal prior distribution for the `ec50` parameter (titre at inflection point). Default: Midpoint of the `titre` range.
 - **`ec50_sd`**: Standard deviation of the Normal prior distribution for the `ec50` parameter. Default: One-fourth of the `titre` range.
-- **`slope_mean`**: Mean of the Normal prior distribution for the slope parameter. Default: `0`.
+- **`slope_mean`**: Mean of the Normal prior distribution for the slope parameter (steepness of protective curve). Default: `0`.
 - **`slope_sd`**: Standard deviation of the Normal prior distribution for the slope parameter. Default: `2`.
 
 ### Example Usage
 
 ```r
 model$definePrior(
-  floor_alpha = 2, floor_beta = 18,    # Stronger prior for low floor
-  ceiling_alpha = 18, ceiling_beta = 2, # Stronger prior for high ceiling
+  floor_alpha = 2, floor_beta = 18,    # Stronger prior for low residual risk (E[floor] ≈ 0.1)
+  ceiling_alpha = 18, ceiling_beta = 2, # Stronger prior for high baseline risk (E[ceiling] ≈ 0.9)
   ec50_mean = 1.5, ec50_sd = 0.5,      # Custom ec50 prior
   slope_mean = 0, slope_sd = 1         # More conservative slope
 )
