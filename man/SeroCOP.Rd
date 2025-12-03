@@ -70,6 +70,8 @@ model$definePrior(
 
 \item{\code{infected}}{Binary vector of infection status (0/1)}
 
+\item{\code{group}}{Optional factor vector for hierarchical modeling}
+
 \item{\code{fit}}{Stan fit object (after fitting)}
 
 \item{\code{loo}}{LOO-CV object (after fitting)}
@@ -86,10 +88,12 @@ model$definePrior(
 \item \href{#method-SeroCOP-fit_model}{\code{SeroCOP$fit_model()}}
 \item \href{#method-SeroCOP-predict}{\code{SeroCOP$predict()}}
 \item \href{#method-SeroCOP-predict_protection}{\code{SeroCOP$predict_protection()}}
+\item \href{#method-SeroCOP-extract_group_parameters}{\code{SeroCOP$extract_group_parameters()}}
 \item \href{#method-SeroCOP-summary}{\code{SeroCOP$summary()}}
 \item \href{#method-SeroCOP-get_metrics}{\code{SeroCOP$get_metrics()}}
 \item \href{#method-SeroCOP-plot_curve}{\code{SeroCOP$plot_curve()}}
 \item \href{#method-SeroCOP-plot_roc}{\code{SeroCOP$plot_roc()}}
+\item \href{#method-SeroCOP-plot_group_curves}{\code{SeroCOP$plot_group_curves()}}
 \item \href{#method-SeroCOP-plot_posteriors}{\code{SeroCOP$plot_posteriors()}}
 \item \href{#method-SeroCOP-extract_cop}{\code{SeroCOP$extract_cop()}}
 \item \href{#method-SeroCOP-clone}{\code{SeroCOP$clone()}}
@@ -101,7 +105,7 @@ model$definePrior(
 \subsection{Method \code{new()}}{
 Create a new SeroCOP object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$new(titre, infected)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$new(titre, infected, group = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -110,6 +114,8 @@ Create a new SeroCOP object
 \item{\code{titre}}{Numeric vector of antibody titres}
 
 \item{\code{infected}}{Binary vector (0/1) of infection outcomes}
+
+\item{\code{group}}{Optional factor or character vector for grouping (e.g., age groups)}
 }
 \if{html}{\out{</div>}}
 }
@@ -250,6 +256,19 @@ Matrix of protection probabilities (rows = MCMC samples, cols = observations)
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOP-extract_group_parameters"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOP-extract_group_parameters}{}}}
+\subsection{Method \code{extract_group_parameters()}}{
+Extract group-specific parameters from hierarchical model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$extract_group_parameters()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A data.frame with group-specific parameter estimates (NULL if not hierarchical)
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOP-summary"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-summary}{}}}
 \subsection{Method \code{summary()}}{
@@ -315,6 +334,26 @@ Plot ROC curve
 }
 \subsection{Returns}{
 A ggplot object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOP-plot_group_curves"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOP-plot_group_curves}{}}}
+\subsection{Method \code{plot_group_curves()}}{
+Plot group-specific curves for hierarchical models
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$plot_group_curves(title = "Group-Specific Correlates of Risk")}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{title}}{Plot title}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A ggplot object (returns NULL if not a hierarchical model)
 }
 }
 \if{html}{\out{<hr>}}

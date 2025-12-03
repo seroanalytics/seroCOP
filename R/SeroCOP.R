@@ -47,6 +47,9 @@ SeroCOP <- R6::R6Class(
     #' @field infected Binary vector of infection status (0/1)
     infected = NULL,
     
+    #' @field group Optional factor vector for hierarchical modeling
+    group = NULL,
+    
     #' @field fit Stan fit object (after fitting)
     fit = NULL,
     
@@ -60,8 +63,9 @@ SeroCOP <- R6::R6Class(
     #' Create a new SeroCOP object
     #' @param titre Numeric vector of antibody titres
     #' @param infected Binary vector (0/1) of infection outcomes
+    #' @param group Optional factor or character vector for grouping (e.g., age groups)
     #' @return A new SeroCOP object
-    initialize = function(titre, infected) {
+    initialize = function(titre, infected, group = NULL) {
       # Validate inputs
       if (!is.numeric(titre)) {
         stop("titre must be numeric")
@@ -75,6 +79,17 @@ SeroCOP <- R6::R6Class(
       if (any(is.na(titre)) || any(is.na(infected))) {
         stop("Missing values are not allowed")
       }
+      
+      # Validate group if provided
+      if (!is.null(group)) {
+        if (length(group) != length(titre)) {
+          stop("group must have the same length as titre")
+        }
+        if (any(is.na(group))) {
+          stop("Missing values in group are not allowed")
+        }
+        self$group <- as.factor(group)
+      }
 
       self$titre <- titre
       self$infected <- infected
@@ -83,6 +98,11 @@ SeroCOP <- R6::R6Class(
       self$priors <- private$get_default_priors()
 
       message(sprintf("SeroCOP initialized with %d observations", length(titre)))
+      if (!is.null(self$group)) {
+        message(sprintf("  Groups: %d levels (%s)", 
+                       nlevels(self$group), 
+                       paste(levels(self$group), collapse = ", ")))
+      }
       message(sprintf("  Infection rate: %.1f%%", mean(infected) * 100))
       message(sprintf("  Titre range: [%.2f, %.2f]", min(titre), max(titre)))
     },
@@ -159,6 +179,14 @@ SeroCOP <- R6::R6Class(
         titre = self$titre
       )
       
+      # Add group if provided
+      hierarchical <- FALSE
+      if (!is.null(self$group)) {
+        model_data$group <- self$group
+        hierarchical <- TRUE
+        message(sprintf("  Using hierarchical model with %d groups\n", nlevels(self$group)))
+      }
+      
       message("\nUsing prior distributions:")
       message(sprintf("  floor ~ Beta(%.1f, %.1f)", self$priors$floor_alpha, self$priors$floor_beta))
       message(sprintf("  ceiling ~ Beta(%.1f, %.1f)", self$priors$ceiling_alpha, self$priors$ceiling_beta))
@@ -177,16 +205,36 @@ SeroCOP <- R6::R6Class(
                        nlpar = "slope", lb = 0)
       )
       
-      # Define the non-linear formula
-      # prob_infection = ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor)
-      formula <- brms::bf(
-        infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
-        floor ~ 1,
-        ceiling ~ 1,
-        ec50 ~ 1,
-        slope ~ 1,
-        nl = TRUE
-      )
+      # Define the non-linear formula (with or without hierarchical effects)
+      if (hierarchical) {
+        message("  Adding group-level effects on slope and ec50\n")
+        # Hierarchical formula: group-level effects on slope and ec50
+        formula <- brms::bf(
+          infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
+          floor ~ 1,
+          ceiling ~ 1,
+          ec50 ~ 1 + (1 | group),      # Random intercept for ec50
+          slope ~ 1 + (1 | group),      # Random intercept for slope
+          nl = TRUE
+        )
+        
+        # Add priors for group-level standard deviations
+        priors <- c(
+          priors,
+          brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "ec50", group = "group"),
+          brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "slope", group = "group")
+        )
+      } else {
+        # Non-hierarchical formula
+        formula <- brms::bf(
+          infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
+          floor ~ 1,
+          ceiling ~ 1,
+          ec50 ~ 1,
+          slope ~ 1,
+          nl = TRUE
+        )
+      }
       
       # Fit the model
       # Handle cores argument - either from ... or default to chains
@@ -266,6 +314,54 @@ SeroCOP <- R6::R6Class(
       }
       
       return(prob_protection)
+    },
+    
+    #' @description
+    #' Extract group-specific parameters from hierarchical model
+    #' @return A data.frame with group-specific parameter estimates (NULL if not hierarchical)
+    extract_group_parameters = function() {
+      if (is.null(self$fit)) {
+        stop("Model has not been fitted yet. Run fit_model() first.")
+      }
+      
+      if (is.null(self$group)) {
+        message("Not a hierarchical model. Use summary() instead.")
+        return(invisible(NULL))
+      }
+      
+      # Get posterior samples
+      posterior <- brms::as_draws_df(self$fit)
+      
+      # Extract group levels
+      groups <- levels(self$group)
+      
+      # Initialize results
+      results <- list()
+      
+      for (g in groups) {
+        # Extract group-specific parameter deviations
+        ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
+        slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+        
+        # Calculate group-specific parameters (population + group deviation)
+        ec50_samples <- posterior$b_ec50_Intercept + posterior[[ec50_col]]
+        slope_samples <- posterior$b_slope_Intercept + posterior[[slope_col]]
+        
+        results[[g]] <- data.frame(
+          group = g,
+          parameter = c("ec50", "slope"),
+          mean = c(mean(ec50_samples), mean(slope_samples)),
+          median = c(median(ec50_samples), median(slope_samples)),
+          sd = c(sd(ec50_samples), sd(slope_samples)),
+          q025 = c(quantile(ec50_samples, 0.025), quantile(slope_samples, 0.025)),
+          q975 = c(quantile(ec50_samples, 0.975), quantile(slope_samples, 0.975))
+        )
+      }
+      
+      result_df <- do.call(rbind, results)
+      rownames(result_df) <- NULL
+      
+      return(result_df)
     },
     
     #' @description
@@ -417,6 +513,114 @@ SeroCOP <- R6::R6Class(
           panel.grid.minor = ggplot2::element_blank()
         ) +
         ggplot2::coord_equal()
+      
+      return(p)
+    },
+    
+    #' @description
+    #' Plot group-specific curves for hierarchical models
+    #' @param title Plot title
+    #' @return A ggplot object (returns NULL if not a hierarchical model)
+    plot_group_curves = function(title = "Group-Specific Correlates of Risk") {
+      if (is.null(self$fit)) {
+        stop("Model has not been fitted yet. Run fit_model() first.")
+      }
+      
+      if (is.null(self$group)) {
+        message("Not a hierarchical model. Use plot_curve() instead.")
+        return(invisible(NULL))
+      }
+      
+      # Get posterior samples
+      posterior <- brms::as_draws_df(self$fit)
+      
+      # Extract group levels
+      groups <- levels(self$group)
+      n_groups <- length(groups)
+      
+      # Create prediction grid for each group
+      titre_range <- range(self$titre)
+      titre_grid <- seq(titre_range[1], titre_range[2], length.out = 100)
+      
+      # Prepare data for plotting
+      plot_list <- list()
+      obs_list <- list()
+      
+      for (g in groups) {
+        # Extract group-specific parameters
+        ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
+        slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+        
+        # Calculate group-specific predictions
+        n_iter <- nrow(posterior)
+        predictions <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
+        
+        for (i in 1:n_iter) {
+          floor_i <- posterior$b_floor_Intercept[i]
+          ceiling_i <- posterior$b_ceiling_Intercept[i]
+          ec50_i <- posterior$b_ec50_Intercept[i] + posterior[[ec50_col]][i]
+          slope_i <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
+          
+          # Calculate predictions using the model formula
+          logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
+          predictions[i, ] <- ceiling_i * (logit_part * (1 - floor_i) + floor_i)
+        }
+        
+        # Calculate summary statistics
+        pred_mean <- colMeans(predictions)
+        pred_lower <- apply(predictions, 2, quantile, probs = 0.025)
+        pred_upper <- apply(predictions, 2, quantile, probs = 0.975)
+        
+        plot_list[[g]] <- data.frame(
+          group = g,
+          titre = titre_grid,
+          prob = pred_mean,
+          lower = pred_lower,
+          upper = pred_upper
+        )
+        
+        # Get observed data for this group
+        group_idx <- which(self$group == g)
+        obs_list[[g]] <- data.frame(
+          group = g,
+          titre = self$titre[group_idx],
+          infected = self$infected[group_idx]
+        )
+      }
+      
+      plot_df <- do.call(rbind, plot_list)
+      obs_df <- do.call(rbind, obs_list)
+      
+      # Create plot
+      p <- ggplot2::ggplot() +
+        ggplot2::geom_ribbon(
+          data = plot_df,
+          ggplot2::aes(x = titre, ymin = lower, ymax = upper, fill = group),
+          alpha = 0.2
+        ) +
+        ggplot2::geom_line(
+          data = plot_df,
+          ggplot2::aes(x = titre, y = prob, color = group),
+          linewidth = 1
+        ) +
+        ggplot2::geom_point(
+          data = obs_df,
+          ggplot2::aes(x = titre, y = infected),
+          alpha = 0.2, size = 0.8,
+          position = ggplot2::position_jitter(height = 0.02)
+        ) +
+        ggplot2::facet_wrap(~group) +
+        ggplot2::labs(
+          title = title,
+          x = "Antibody Titre (log scale)",
+          y = "Probability of Infection"
+        ) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"),
+          panel.grid.minor = ggplot2::element_blank(),
+          legend.position = "none"
+        )
       
       return(p)
     },
