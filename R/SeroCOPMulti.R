@@ -307,11 +307,6 @@ SeroCOPMulti <- R6::R6Class(
     #' @param correlate_of_risk_list List of numeric vectors of correlates of risk for each biomarker.
     #' @param upper_bound Numeric value for the upper bound (default: 0.7).
     #' @return List of numeric vectors of correlates of protection for each biomarker.
-    #' @examples
-    #' multi_model <- SeroCOPMulti$new(titre = titre_matrix, infected = infected)
-    #' multi_model$fit_all()
-    #' cor_list <- list(IgG = c(0.1, 0.2), IgA = c(0.3, 0.4))
-    #' cop_list <- multi_model$extract_cop_multi(correlate_of_risk_list = cor_list, upper_bound = 0.7)
     extract_cop_multi = function(correlate_of_risk_list, upper_bound = 0.7) {
       if (!is.list(correlate_of_risk_list)) {
         stop("correlate_of_risk_list must be a list of numeric vectors")

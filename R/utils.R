@@ -55,13 +55,13 @@ simulate_serocop_data <- function(n = 200,
   if (n <= 0) stop("n must be positive")
   
   # Generate titres
-  titre <- rnorm(n, mean = titre_mean, sd = titre_sd)
+  titre <- stats::rnorm(n, mean = titre_mean, sd = titre_sd)
   
   # Calculate infection probabilities
   prob_true <- floor + (ceiling - floor) / (1 + exp(slope * (titre - ec50)))
   
   # Generate infection outcomes
-  infected <- rbinom(n, size = 1, prob = prob_true)
+  infected <- stats::rbinom(n, size = 1, prob = prob_true)
   
   # Return results
   list(
@@ -137,16 +137,16 @@ extract_parameters <- function(serocop_obj, prob = 0.95) {
     parameter = c("floor", "ceiling", "ec50", "slope"),
     mean = c(mean(params$floor), mean(params$ceiling), 
              mean(params$ec50), mean(params$slope)),
-    median = c(median(params$floor), median(params$ceiling),
-               median(params$ec50), median(params$slope)),
-    lower = c(quantile(params$floor, probs[1]), 
-              quantile(params$ceiling, probs[1]),
-              quantile(params$ec50, probs[1]), 
-              quantile(params$slope, probs[1])),
-    upper = c(quantile(params$floor, probs[3]), 
-              quantile(params$ceiling, probs[3]),
-              quantile(params$ec50, probs[3]), 
-              quantile(params$slope, probs[3]))
+    median = c(stats::median(params$floor), stats::median(params$ceiling),
+               stats::median(params$ec50), stats::median(params$slope)),
+    lower = c(stats::quantile(params$floor, probs[1]), 
+              stats::quantile(params$ceiling, probs[1]),
+              stats::quantile(params$ec50, probs[1]), 
+              stats::quantile(params$slope, probs[1])),
+    upper = c(stats::quantile(params$floor, probs[3]), 
+              stats::quantile(params$ceiling, probs[3]),
+              stats::quantile(params$ec50, probs[3]), 
+              stats::quantile(params$slope, probs[3]))
   )
   
   rownames(result) <- NULL

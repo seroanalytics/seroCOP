@@ -150,17 +150,6 @@ SeroCOP <- R6::R6Class(
     #' @param thin Thinning interval (default: 1)
     #' @param ... Additional arguments passed to rstan::sampling
     #' @return Self (invisibly)
-    #' @description
-    #' Fits a Bayesian logistic model using Stan.
-    #' @param chains Number of MCMC chains (default: 4).
-    #' @param iter Total number of iterations per chain (default: 2000).
-    #' @param warmup Number of warmup iterations per chain (default: 1000).
-    #' @param thin Thinning interval for samples (default: 1).
-    #' @param ... Additional arguments passed to `rstan::stan`.
-    #' @return The fitted model object (invisible).
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model(chains = 4, iter = 2000)
     fit_model = function(chains = 4, iter = 2000, warmup = 1000, thin = 1, ...) {
       message("Fitting Bayesian logistic model...")
       
@@ -217,14 +206,6 @@ SeroCOP <- R6::R6Class(
     #' Get posterior predictions for infection probability
     #' @param newdata Optional new titre values for prediction
     #' @return Matrix of posterior predictions (iterations x observations)
-    #' @description
-    #' Generates posterior predictions for infection probability.
-    #' @param newdata Optional new titre values for prediction.
-    #' @return A matrix of posterior predictions (iterations x observations).
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model()
-    #' predictions <- sero$predict()
     predict = function(newdata = NULL) {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
@@ -256,10 +237,6 @@ SeroCOP <- R6::R6Class(
     #' Extract probability of protection from the fitted model
     #' @param newdata Optional vector of new titre values for prediction
     #' @return Matrix of protection probabilities (rows = MCMC samples, cols = observations)
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model()
-    #' protection <- sero$predict_protection()
     predict_protection = function(newdata = NULL) {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
@@ -294,13 +271,6 @@ SeroCOP <- R6::R6Class(
     #' @description
     #' Get summary statistics for model parameters
     #' @return Data frame with parameter summaries
-    #' @description
-    #' Provides summary statistics for model parameters.
-    #' @return A data frame with parameter summaries.
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model()
-    #' summary <- sero$summary()
     summary = function() {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
@@ -316,13 +286,6 @@ SeroCOP <- R6::R6Class(
     #' @description
     #' Calculate performance metrics
     #' @return List containing ROC AUC, Brier score, and LOO-CV metrics
-    #' @description
-    #' Calculates performance metrics such as ROC AUC, Brier score, and LOO-CV metrics.
-    #' @return A list containing performance metrics.
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model()
-    #' metrics <- sero$get_metrics()
     get_metrics = function() {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
@@ -365,15 +328,6 @@ SeroCOP <- R6::R6Class(
     #' @param title Plot title
     #' @param ... Additional arguments passed to ggplot2
     #' @return A ggplot object
-    #' @description
-    #' Plots the fitted curve with uncertainty.
-    #' @param title Title of the plot (default: "Correlates of Risk Curve").
-    #' @param ... Additional arguments passed to `ggplot2`.
-    #' @return A ggplot object.
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model()
-    #' plot <- sero$plot_curve()
     plot_curve = function(title = "Correlates of Risk Curve", ...) {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
@@ -436,14 +390,6 @@ SeroCOP <- R6::R6Class(
     #' Plot ROC curve
     #' @param title Plot title
     #' @return A ggplot object
-    #' @description
-    #' Plots the ROC curve.
-    #' @param title Title of the plot (default: "ROC Curve").
-    #' @return A ggplot object.
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model()
-    #' roc_plot <- sero$plot_roc()
     plot_roc = function(title = "ROC Curve") {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
@@ -479,14 +425,7 @@ SeroCOP <- R6::R6Class(
     #' @description
     #' Plot posterior distributions of parameters
     #' @return A ggplot object
-    #' @description
-    #' Visualizes posterior distributions of parameters.
-    #' @return A ggplot object.
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' sero$fit_model()
-    #' param_plot <- sero$plot_parameters()
-    plot_parameters = function() {
+    plot_posteriors = function() {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
@@ -528,10 +467,6 @@ SeroCOP <- R6::R6Class(
     #' @param correlate_of_risk Numeric vector of correlates of risk.
     #' @param upper_bound Numeric value for the upper bound (default: 0.7).
     #' @return Numeric vector of correlates of protection.
-    #' @examples
-    #' sero <- SeroCOP$new(titre = titre, infected = infected)
-    #' sero$fit_model()
-    #' cor <- sero$extract_cop(correlate_of_risk = c(0.1, 0.2), upper_bound = 0.7)
     extract_cop = function(correlate_of_risk, upper_bound = 0.7) {
       if (missing(correlate_of_risk)) {
         stop("correlate_of_risk must be provided")
@@ -548,15 +483,9 @@ SeroCOP <- R6::R6Class(
   ),
   
   private = list(
-    #' @description
-    #' Get default prior distributions based on data
-    #' @return List of default prior parameters
-    #' @description
-    #' Generates default prior distributions based on the data.
-    #' @return A list of default prior parameters.
-    #' @examples
-    #' sero <- SeroCOP$new()
-    #' priors <- sero$get_default_priors()
+    # Get default prior distributions based on data
+    # Internal method - generates default prior distributions based on the data
+    # Returns a list of default prior parameters
     get_default_priors = function() {
       # Calculate data-driven defaults for ec50
       titre_midpoint <- (max(self$titre) + min(self$titre)) / 2

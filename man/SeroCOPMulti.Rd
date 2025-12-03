@@ -22,15 +22,6 @@ multi_model$fit_all(chains = 4, iter = 2000)
 multi_model$compare_biomarkers()
 multi_model$plot_comparison()
 }
-
-## ------------------------------------------------
-## Method `SeroCOPMulti$extract_cop_multi`
-## ------------------------------------------------
-
-multi_model <- SeroCOPMulti$new(titre = titre_matrix, infected = infected)
-multi_model$fit_all()
-cor_list <- list(IgG = c(0.1, 0.2), IgA = c(0.3, 0.4))
-cop_list <- multi_model$extract_cop_multi(correlate_of_risk_list = cor_list, upper_bound = 0.7)
 }
 \concept{r6-classes}
 \section{Public fields}{
@@ -183,17 +174,6 @@ Extract the correlate of protection conditional on exposure for all biomarkers.
 \subsection{Returns}{
 List of numeric vectors of correlates of protection for each biomarker.
 }
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{multi_model <- SeroCOPMulti$new(titre = titre_matrix, infected = infected)
-multi_model$fit_all()
-cor_list <- list(IgG = c(0.1, 0.2), IgA = c(0.3, 0.4))
-cop_list <- multi_model$extract_cop_multi(correlate_of_risk_list = cor_list, upper_bound = 0.7)
-}
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SeroCOPMulti-clone"></a>}}
