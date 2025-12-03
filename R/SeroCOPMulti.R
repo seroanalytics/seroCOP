@@ -2,7 +2,8 @@
 #'
 #' @description
 #' An R6 class for analyzing multiple biomarkers simultaneously.
-#' Fits separate models for each biomarker and provides comparison tools.
+#' Fits separate models for each biomarker using brms and provides comparison tools.
+#' Supports hierarchical modeling with group-level effects.
 #'
 #' @concept r6-classes
 #' @export
@@ -20,6 +21,13 @@
 #' # Compare biomarkers
 #' multi_model$compare_biomarkers()
 #' multi_model$plot_comparison()
+#' 
+#' # With hierarchical effects
+#' age_group <- sample(c("Young", "Middle", "Old"), 200, replace = TRUE)
+#' hier_model <- SeroCOPMulti$new(titre = titres, infected = infected, group = age_group)
+#' hier_model$fit_all(chains = 4, iter = 2000)
+#' hier_model$plot_group_curves()
+#' hier_model$extract_group_parameters()
 #' }
 SeroCOPMulti <- R6::R6Class(
   "SeroCOPMulti",
@@ -37,13 +45,17 @@ SeroCOPMulti <- R6::R6Class(
     #' @field models List of fitted SeroCOP objects
     models = NULL,
     
+    #' @field group Optional factor vector for hierarchical modeling
+    group = NULL,
+    
     #' @description
     #' Create a new SeroCOPMulti object
     #' @param titre Matrix of antibody titres (rows = samples, cols = biomarkers)
     #' @param infected Binary vector (0/1) of infection outcomes
     #' @param biomarker_names Optional vector of biomarker names
+    #' @param group Optional grouping variable for hierarchical modeling
     #' @return A new SeroCOPMulti object
-    initialize = function(titre, infected, biomarker_names = NULL) {
+    initialize = function(titre, infected, biomarker_names = NULL, group = NULL) {
       # Convert to matrix if needed
       if (is.vector(titre)) {
         titre <- matrix(titre, ncol = 1)
@@ -72,12 +84,27 @@ SeroCOPMulti <- R6::R6Class(
       self$titre <- titre
       self$infected <- infected
       
+      # Handle group variable for hierarchical modeling
+      if (!is.null(group)) {
+        if (length(group) != nrow(titre)) {
+          stop("Length of group must equal number of rows in titre")
+        }
+        if (any(is.na(group))) {
+          stop("Missing values in group are not allowed")
+        }
+        # Convert to factor
+        self$group <- as.factor(group)
+        message(sprintf("  Groups: %d levels (%s)", 
+                       nlevels(self$group), 
+                       paste(levels(self$group), collapse = ", ")))
+      }
+      
       # Set biomarker names
       if (is.null(biomarker_names)) {
         if (!is.null(colnames(titre))) {
           self$biomarker_names <- colnames(titre)
         } else {
-          self$biomarker_names <- paste0("Biomarker", 1:ncol(titre))
+          self$biomarker_names <- paste0("Biomarker", seq_len(ncol(titre)))
         }
       } else {
         if (length(biomarker_names) != ncol(titre)) {
@@ -98,7 +125,7 @@ SeroCOPMulti <- R6::R6Class(
     #' @param iter Number of iterations per chain (default: 2000)
     #' @param warmup Number of warmup iterations (default: iter/2)
     #' @param cores Number of cores for parallel processing (default: 1)
-    #' @param ... Additional arguments passed to rstan::sampling
+    #' @param ... Additional arguments passed to brms::brm
     #' @return Self (invisibly)
     fit_all = function(chains = 4, iter = 2000, warmup = floor(iter/2), 
                       cores = 1, ...) {
@@ -109,14 +136,15 @@ SeroCOPMulti <- R6::R6Class(
       
       message(sprintf("\nFitting models for %d biomarkers...\n", n_biomarkers))
       
-      for (i in 1:n_biomarkers) {
+      for (i in seq_len(n_biomarkers)) {
         biomarker <- self$biomarker_names[i]
         message(sprintf("=== Fitting %s (%d/%d) ===", biomarker, i, n_biomarkers))
         
-        # Create individual SeroCOP model
+        # Create individual SeroCOP model (with or without group)
         model <- SeroCOP$new(
           titre = self$titre[, i],
-          infected = self$infected
+          infected = self$infected,
+          group = self$group  # Pass group for hierarchical modeling
         )
         
         # Fit the model
@@ -296,6 +324,154 @@ SeroCOPMulti <- R6::R6Class(
         ggplot2::theme_minimal() +
         ggplot2::theme(
           plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"),
+          legend.position = "none"
+        )
+      
+      return(p)
+    },
+    
+    #' @description
+    #' Extract group-specific parameters for all biomarkers (hierarchical models only)
+    #' @return A data.frame with group-specific parameter estimates for each biomarker
+    extract_group_parameters = function() {
+      if (is.null(self$models)) {
+        stop("Models have not been fitted yet. Run fit_all() first.")
+      }
+      
+      if (is.null(self$group)) {
+        message("Not a hierarchical model. Use compare_biomarkers() instead.")
+        return(invisible(NULL))
+      }
+      
+      # Extract group parameters from each biomarker model
+      results <- list()
+      
+      for (i in seq_along(self$models)) {
+        biomarker <- self$biomarker_names[i]
+        group_params <- self$models[[i]]$extract_group_parameters()
+        
+        if (!is.null(group_params)) {
+          group_params$biomarker <- biomarker
+          results[[i]] <- group_params
+        }
+      }
+      
+      result_df <- do.call(rbind, results)
+      rownames(result_df) <- NULL
+      
+      # Reorder columns to put biomarker first
+      col_order <- c("biomarker", setdiff(names(result_df), "biomarker"))
+      result_df <- result_df[, col_order]
+      
+      return(result_df)
+    },
+    
+    #' @description
+    #' Plot group-specific curves for all biomarkers (hierarchical models only)
+    #' @param title Plot title
+    #' @return A ggplot object (returns NULL if not a hierarchical model)
+    plot_group_curves = function(title = "Group-Specific Correlates by Biomarker") {
+      if (is.null(self$models)) {
+        stop("Models have not been fitted yet. Run fit_all() first.")
+      }
+      
+      if (is.null(self$group)) {
+        message("Not a hierarchical model. Use plot_all_curves() instead.")
+        return(invisible(NULL))
+      }
+      
+      # Collect data from all biomarker models
+      plot_data_list <- list()
+      obs_data_list <- list()
+      
+      for (i in seq_along(self$models)) {
+        model <- self$models[[i]]
+        biomarker <- self$biomarker_names[i]
+        
+        # Get posterior samples
+        posterior <- brms::as_draws_df(model$fit)
+        
+        # Extract group levels
+        groups <- levels(self$group)
+        titre_range <- range(model$titre)
+        titre_grid <- seq(titre_range[1], titre_range[2], length.out = 100)
+        
+        for (g in groups) {
+          # Extract group-specific parameters
+          ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
+          slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+          
+          # Calculate group-specific predictions
+          n_iter <- nrow(posterior)
+          predictions <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
+          
+          for (iter in seq_len(n_iter)) {
+            floor_i <- posterior$b_floor_Intercept[iter]
+            ceiling_i <- posterior$b_ceiling_Intercept[iter]
+            ec50_i <- posterior$b_ec50_Intercept[iter] + posterior[[ec50_col]][iter]
+            slope_i <- posterior$b_slope_Intercept[iter] + posterior[[slope_col]][iter]
+            
+            # Calculate predictions using the model formula
+            logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
+            predictions[iter, ] <- ceiling_i * (logit_part * (1 - floor_i) + floor_i)
+          }
+          
+          # Calculate summary statistics
+          pred_mean <- colMeans(predictions)
+          pred_lower <- apply(predictions, 2, quantile, probs = 0.025)
+          pred_upper <- apply(predictions, 2, quantile, probs = 0.975)
+          
+          plot_data_list[[paste(biomarker, g, sep = "_")]] <- data.frame(
+            biomarker = biomarker,
+            group = g,
+            titre = titre_grid,
+            prob = pred_mean,
+            lower = pred_lower,
+            upper = pred_upper
+          )
+          
+          # Get observed data for this group
+          group_idx <- which(self$group == g)
+          obs_data_list[[paste(biomarker, g, sep = "_")]] <- data.frame(
+            biomarker = biomarker,
+            group = g,
+            titre = model$titre[group_idx],
+            infected = model$infected[group_idx]
+          )
+        }
+      }
+      
+      plot_df <- do.call(rbind, plot_data_list)
+      obs_df <- do.call(rbind, obs_data_list)
+      
+      # Create faceted plot
+      p <- ggplot2::ggplot() +
+        ggplot2::geom_ribbon(
+          data = plot_df,
+          ggplot2::aes(x = titre, ymin = lower, ymax = upper, fill = group),
+          alpha = 0.2
+        ) +
+        ggplot2::geom_line(
+          data = plot_df,
+          ggplot2::aes(x = titre, y = prob, color = group),
+          linewidth = 1
+        ) +
+        ggplot2::geom_point(
+          data = obs_df,
+          ggplot2::aes(x = titre, y = infected),
+          alpha = 0.2, size = 0.8,
+          position = ggplot2::position_jitter(height = 0.02)
+        ) +
+        ggplot2::facet_grid(group ~ biomarker, scales = "free_x") +
+        ggplot2::labs(
+          title = title,
+          x = "Antibody Titre (log scale)",
+          y = "Probability of Infection"
+        ) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"),
+          panel.grid.minor = ggplot2::element_blank(),
           legend.position = "none"
         )
       

@@ -27,6 +27,8 @@ navbar:
         href: articles/simulation-recovery.html
       - text: Application 2; Multi-Biomarker Analysis
         href: articles/multi-biomarker.html
+      - text: Application 3; Hierarchical Group Effects
+        href: articles/hierarchical-groups.html
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/seroanalytics/seroCOP

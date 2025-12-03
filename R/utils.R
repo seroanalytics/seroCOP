@@ -130,8 +130,15 @@ extract_parameters <- function(serocop_obj, prob = 0.95) {
   alpha <- (1 - prob) / 2
   probs <- c(alpha, 0.5, 1 - alpha)
   
-  params <- rstan::extract(serocop_obj$fit, 
-                          pars = c("floor", "ceiling", "ec50", "slope"))
+  # Extract posterior samples from brms
+  posterior_samples <- brms::as_draws_df(serocop_obj$fit)
+  
+  params <- list(
+    floor = posterior_samples$b_floor_Intercept,
+    ceiling = posterior_samples$b_ceiling_Intercept,
+    ec50 = posterior_samples$b_ec50_Intercept,
+    slope = posterior_samples$b_slope_Intercept
+  )
   
   result <- data.frame(
     parameter = c("floor", "ceiling", "ec50", "slope"),

@@ -7,7 +7,7 @@
 #' @details
 #' This class provides a complete workflow for correlates of protection analysis:
 #' 1. Data input and validation
-#' 2. Bayesian model fitting using Stan
+#' 2. Bayesian model fitting using brms (which uses Stan backend)
 #' 3. Model diagnostics and validation
 #' 4. Performance metrics (ROC AUC, Brier score, LOO-CV)
 #' 5. Visualization
@@ -47,6 +47,9 @@ SeroCOP <- R6::R6Class(
     #' @field infected Binary vector of infection status (0/1)
     infected = NULL,
     
+    #' @field group Optional factor vector for hierarchical modeling
+    group = NULL,
+    
     #' @field fit Stan fit object (after fitting)
     fit = NULL,
     
@@ -60,8 +63,9 @@ SeroCOP <- R6::R6Class(
     #' Create a new SeroCOP object
     #' @param titre Numeric vector of antibody titres
     #' @param infected Binary vector (0/1) of infection outcomes
+    #' @param group Optional factor or character vector for grouping (e.g., age groups)
     #' @return A new SeroCOP object
-    initialize = function(titre, infected) {
+    initialize = function(titre, infected, group = NULL) {
       # Validate inputs
       if (!is.numeric(titre)) {
         stop("titre must be numeric")
@@ -75,6 +79,17 @@ SeroCOP <- R6::R6Class(
       if (any(is.na(titre)) || any(is.na(infected))) {
         stop("Missing values are not allowed")
       }
+      
+      # Validate group if provided
+      if (!is.null(group)) {
+        if (length(group) != length(titre)) {
+          stop("group must have the same length as titre")
+        }
+        if (any(is.na(group))) {
+          stop("Missing values in group are not allowed")
+        }
+        self$group <- as.factor(group)
+      }
 
       self$titre <- titre
       self$infected <- infected
@@ -83,6 +98,11 @@ SeroCOP <- R6::R6Class(
       self$priors <- private$get_default_priors()
 
       message(sprintf("SeroCOP initialized with %d observations", length(titre)))
+      if (!is.null(self$group)) {
+        message(sprintf("  Groups: %d levels (%s)", 
+                       nlevels(self$group), 
+                       paste(levels(self$group), collapse = ", ")))
+      }
       message(sprintf("  Infection rate: %.1f%%", mean(infected) * 100))
       message(sprintf("  Titre range: [%.2f, %.2f]", min(titre), max(titre)))
     },
@@ -148,26 +168,24 @@ SeroCOP <- R6::R6Class(
     #' @param iter Number of iterations per chain (default: 2000)
     #' @param warmup Number of warmup iterations (default: iter/2)
     #' @param thin Thinning interval (default: 1)
-    #' @param ... Additional arguments passed to rstan::sampling
+    #' @param ... Additional arguments passed to brms::brm
     #' @return Self (invisibly)
     fit_model = function(chains = 4, iter = 2000, warmup = 1000, thin = 1, ...) {
-      message("Fitting Bayesian logistic model...")
+      message("Fitting Bayesian logistic model using brms...")
       
-      # Prepare data for Stan (including priors)
-      stan_data <- list(
-        N = length(self$titre),
-        titre = self$titre,
-        infected = as.integer(self$infected),
-        # Prior parameters
-        floor_alpha = self$priors$floor_alpha,
-        floor_beta = self$priors$floor_beta,
-        ceiling_alpha = self$priors$ceiling_alpha,
-        ceiling_beta = self$priors$ceiling_beta,
-        ec50_mean = self$priors$ec50_mean,
-        ec50_sd = self$priors$ec50_sd,
-        slope_mean = self$priors$slope_mean,
-        slope_sd = self$priors$slope_sd
+      # Prepare data frame
+      model_data <- data.frame(
+        infected = self$infected,
+        titre = self$titre
       )
+      
+      # Add group if provided
+      hierarchical <- FALSE
+      if (!is.null(self$group)) {
+        model_data$group <- self$group
+        hierarchical <- TRUE
+        message(sprintf("  Using hierarchical model with %d groups\n", nlevels(self$group)))
+      }
       
       message("\nUsing prior distributions:")
       message(sprintf("  floor ~ Beta(%.1f, %.1f)", self$priors$floor_alpha, self$priors$floor_beta))
@@ -175,28 +193,74 @@ SeroCOP <- R6::R6Class(
       message(sprintf("  ec50 ~ Normal(%.2f, %.2f)", self$priors$ec50_mean, self$priors$ec50_sd))
       message(sprintf("  slope ~ Normal(%.2f, %.2f)\n", self$priors$slope_mean, self$priors$slope_sd))
       
-      # Get compiled Stan model
-      stan_file <- system.file("stan", "logistic_model.stan", package = "seroCOP")
+      # Define priors for brms
+      priors <- c(
+        brms::set_prior(sprintf("beta(%g, %g)", self$priors$floor_alpha, self$priors$floor_beta), 
+                       nlpar = "floor", lb = 0, ub = 1),
+        brms::set_prior(sprintf("beta(%g, %g)", self$priors$ceiling_alpha, self$priors$ceiling_beta),
+                       nlpar = "ceiling", lb = 0, ub = 1),
+        brms::set_prior(sprintf("normal(%g, %g)", self$priors$ec50_mean, self$priors$ec50_sd),
+                       nlpar = "ec50"),
+        brms::set_prior(sprintf("normal(%g, %g)", self$priors$slope_mean, self$priors$slope_sd),
+                       nlpar = "slope", lb = 0)
+      )
       
-      if (stan_file == "") {
-        stop("Stan model file not found. Make sure the package is properly installed.")
+      # Define the non-linear formula (with or without hierarchical effects)
+      if (hierarchical) {
+        message("  Adding group-level effects on slope and ec50\n")
+        # Hierarchical formula: group-level effects on slope and ec50
+        formula <- brms::bf(
+          infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
+          floor ~ 1,
+          ceiling ~ 1,
+          ec50 ~ 1 + (1 | group),      # Random intercept for ec50
+          slope ~ 1 + (1 | group),      # Random intercept for slope
+          nl = TRUE
+        )
+        
+        # Add priors for group-level standard deviations
+        priors <- c(
+          priors,
+          brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "ec50", group = "group"),
+          brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "slope", group = "group")
+        )
+      } else {
+        # Non-hierarchical formula
+        formula <- brms::bf(
+          infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
+          floor ~ 1,
+          ceiling ~ 1,
+          ec50 ~ 1,
+          slope ~ 1,
+          nl = TRUE
+        )
       }
       
       # Fit the model
-      self$fit <- rstan::stan(
-        file = stan_file,
-        data = stan_data,
-        chains = chains,
-        iter = iter,
-        warmup = warmup,
-        thin = thin,
-        ...
+      # Handle cores argument - either from ... or default to chains
+      dots <- list(...)
+      if (!"cores" %in% names(dots)) {
+        dots$cores <- min(chains, parallel::detectCores())
+      }
+      
+      self$fit <- do.call(
+        brms::brm,
+        c(list(
+          formula = formula,
+          data = model_data,
+          family = brms::bernoulli(link = "identity"),
+          prior = priors,
+          chains = chains,
+          iter = iter,
+          warmup = warmup,
+          thin = thin,
+          backend = "rstan"
+        ), dots)
       )
       
       # Compute LOO-CV
       message("Computing LOO-CV...")
-      log_lik <- loo::extract_log_lik(self$fit, parameter_name = "log_lik")
-      self$loo <- loo::loo(log_lik)
+      self$loo <- brms::loo(self$fit)
       
       message("Model fitting complete!")
       invisible(self)
@@ -212,23 +276,14 @@ SeroCOP <- R6::R6Class(
       }
       
       if (is.null(newdata)) {
-        # Extract fitted probabilities
-        prob_samples <- rstan::extract(self$fit, pars = "prob_infection")[[1]]
-        return(prob_samples)
+        # Extract fitted probabilities using brms
+        # Get posterior predictions (summary = FALSE gives us all samples)
+        fitted_vals <- fitted(self$fit, summary = FALSE)
+        return(fitted_vals)
       } else {
         # Predict for new data
-        params <- rstan::extract(self$fit)
-        n_iter <- length(params$floor)
-        n_new <- length(newdata)
-        
-        predictions <- matrix(NA, nrow = n_iter, ncol = n_new)
-        
-        for (i in 1:n_iter) {
-          # Using the new formula: ceiling * (floor + (1-floor) * inv_logit(-slope * (titre - ec50)))
-          logit_part <- 1 / (1 + exp(params$slope[i] * (newdata - params$ec50[i])))
-          predictions[i, ] <- params$ceiling[i] * (params$floor[i] + (1 - params$floor[i]) * logit_part)
-        }
-        
+        new_df <- data.frame(titre = newdata, infected = NA)
+        predictions <- fitted(self$fit, newdata = new_df, summary = FALSE)
         return(predictions)
       }
     },
@@ -242,30 +297,71 @@ SeroCOP <- R6::R6Class(
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
       
-      if (is.null(newdata)) {
-        # Extract fitted protection probabilities
-        prob_protection <- rstan::extract(self$fit, pars = "prob_protection")[[1]]
-        return(prob_protection)
-      } else {
-        # Predict protection for new data
-        # Get infection probabilities first
-        prob_infection <- self$predict(newdata = newdata)
-        
-        # Extract ceiling samples
-        params <- rstan::extract(self$fit)
-        ceiling_samples <- params$ceiling
-        
-        # Calculate protection: 1 - (prob_infection / ceiling)
-        n_iter <- nrow(prob_infection)
-        n_new <- ncol(prob_infection)
-        prob_protection <- matrix(NA, nrow = n_iter, ncol = n_new)
-        
-        for (i in 1:n_iter) {
-          prob_protection[i, ] <- 1 - (prob_infection[i, ] / ceiling_samples[i])
-        }
-        
-        return(prob_protection)
+      # Get infection probabilities
+      prob_infection <- self$predict(newdata = newdata)
+      
+      # Extract ceiling parameter samples from brms fit
+      posterior_samples <- brms::as_draws_df(self$fit)
+      ceiling_samples <- posterior_samples$b_ceiling_Intercept
+      
+      # Calculate protection: 1 - (prob_infection / ceiling)
+      n_iter <- nrow(prob_infection)
+      n_new <- ncol(prob_infection)
+      prob_protection <- matrix(NA, nrow = n_iter, ncol = n_new)
+      
+      for (i in 1:n_iter) {
+        prob_protection[i, ] <- 1 - (prob_infection[i, ] / ceiling_samples[i])
       }
+      
+      return(prob_protection)
+    },
+    
+    #' @description
+    #' Extract group-specific parameters from hierarchical model
+    #' @return A data.frame with group-specific parameter estimates (NULL if not hierarchical)
+    extract_group_parameters = function() {
+      if (is.null(self$fit)) {
+        stop("Model has not been fitted yet. Run fit_model() first.")
+      }
+      
+      if (is.null(self$group)) {
+        message("Not a hierarchical model. Use summary() instead.")
+        return(invisible(NULL))
+      }
+      
+      # Get posterior samples
+      posterior <- brms::as_draws_df(self$fit)
+      
+      # Extract group levels
+      groups <- levels(self$group)
+      
+      # Initialize results
+      results <- list()
+      
+      for (g in groups) {
+        # Extract group-specific parameter deviations
+        ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
+        slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+        
+        # Calculate group-specific parameters (population + group deviation)
+        ec50_samples <- posterior$b_ec50_Intercept + posterior[[ec50_col]]
+        slope_samples <- posterior$b_slope_Intercept + posterior[[slope_col]]
+        
+        results[[g]] <- data.frame(
+          group = g,
+          parameter = c("ec50", "slope"),
+          mean = c(mean(ec50_samples), mean(slope_samples)),
+          median = c(median(ec50_samples), median(slope_samples)),
+          sd = c(sd(ec50_samples), sd(slope_samples)),
+          q025 = c(quantile(ec50_samples, 0.025), quantile(slope_samples, 0.025)),
+          q975 = c(quantile(ec50_samples, 0.975), quantile(slope_samples, 0.975))
+        )
+      }
+      
+      result_df <- do.call(rbind, results)
+      rownames(result_df) <- NULL
+      
+      return(result_df)
     },
     
     #' @description
@@ -276,9 +372,8 @@ SeroCOP <- R6::R6Class(
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
       
-      summary_df <- as.data.frame(
-        rstan::summary(self$fit, pars = c("floor", "ceiling", "ec50", "slope"))$summary
-      )
+      # Get brms summary for the non-linear parameters
+      summary_df <- as.data.frame(brms::fixef(self$fit))
       
       return(summary_df)
     },
@@ -423,6 +518,114 @@ SeroCOP <- R6::R6Class(
     },
     
     #' @description
+    #' Plot group-specific curves for hierarchical models
+    #' @param title Plot title
+    #' @return A ggplot object (returns NULL if not a hierarchical model)
+    plot_group_curves = function(title = "Group-Specific Correlates of Risk") {
+      if (is.null(self$fit)) {
+        stop("Model has not been fitted yet. Run fit_model() first.")
+      }
+      
+      if (is.null(self$group)) {
+        message("Not a hierarchical model. Use plot_curve() instead.")
+        return(invisible(NULL))
+      }
+      
+      # Get posterior samples
+      posterior <- brms::as_draws_df(self$fit)
+      
+      # Extract group levels
+      groups <- levels(self$group)
+      n_groups <- length(groups)
+      
+      # Create prediction grid for each group
+      titre_range <- range(self$titre)
+      titre_grid <- seq(titre_range[1], titre_range[2], length.out = 100)
+      
+      # Prepare data for plotting
+      plot_list <- list()
+      obs_list <- list()
+      
+      for (g in groups) {
+        # Extract group-specific parameters
+        ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
+        slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+        
+        # Calculate group-specific predictions
+        n_iter <- nrow(posterior)
+        predictions <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
+        
+        for (i in 1:n_iter) {
+          floor_i <- posterior$b_floor_Intercept[i]
+          ceiling_i <- posterior$b_ceiling_Intercept[i]
+          ec50_i <- posterior$b_ec50_Intercept[i] + posterior[[ec50_col]][i]
+          slope_i <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
+          
+          # Calculate predictions using the model formula
+          logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
+          predictions[i, ] <- ceiling_i * (logit_part * (1 - floor_i) + floor_i)
+        }
+        
+        # Calculate summary statistics
+        pred_mean <- colMeans(predictions)
+        pred_lower <- apply(predictions, 2, quantile, probs = 0.025)
+        pred_upper <- apply(predictions, 2, quantile, probs = 0.975)
+        
+        plot_list[[g]] <- data.frame(
+          group = g,
+          titre = titre_grid,
+          prob = pred_mean,
+          lower = pred_lower,
+          upper = pred_upper
+        )
+        
+        # Get observed data for this group
+        group_idx <- which(self$group == g)
+        obs_list[[g]] <- data.frame(
+          group = g,
+          titre = self$titre[group_idx],
+          infected = self$infected[group_idx]
+        )
+      }
+      
+      plot_df <- do.call(rbind, plot_list)
+      obs_df <- do.call(rbind, obs_list)
+      
+      # Create plot
+      p <- ggplot2::ggplot() +
+        ggplot2::geom_ribbon(
+          data = plot_df,
+          ggplot2::aes(x = titre, ymin = lower, ymax = upper, fill = group),
+          alpha = 0.2
+        ) +
+        ggplot2::geom_line(
+          data = plot_df,
+          ggplot2::aes(x = titre, y = prob, color = group),
+          linewidth = 1
+        ) +
+        ggplot2::geom_point(
+          data = obs_df,
+          ggplot2::aes(x = titre, y = infected),
+          alpha = 0.2, size = 0.8,
+          position = ggplot2::position_jitter(height = 0.02)
+        ) +
+        ggplot2::facet_wrap(~group) +
+        ggplot2::labs(
+          title = title,
+          x = "Antibody Titre (log scale)",
+          y = "Probability of Infection"
+        ) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"),
+          panel.grid.minor = ggplot2::element_blank(),
+          legend.position = "none"
+        )
+      
+      return(p)
+    },
+    
+    #' @description
     #' Plot posterior distributions of parameters
     #' @return A ggplot object
     plot_posteriors = function() {
@@ -430,13 +633,14 @@ SeroCOP <- R6::R6Class(
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
       
-      params <- rstan::extract(self$fit, pars = c("floor", "ceiling", "ec50", "slope"))
+      # Extract posterior samples from brms
+      posterior_samples <- brms::as_draws_df(self$fit)
       
       param_df <- data.frame(
-        floor = params$floor,
-        ceiling = params$ceiling,
-        ec50 = params$ec50,
-        slope = params$slope
+        floor = posterior_samples$b_floor_Intercept,
+        ceiling = posterior_samples$b_ceiling_Intercept,
+        ec50 = posterior_samples$b_ec50_Intercept,
+        slope = posterior_samples$b_slope_Intercept
       )
       
       param_long <- tidyr::pivot_longer(

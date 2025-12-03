@@ -17,7 +17,7 @@ install.packages("devtools")
 devtools::install_github("seroanalytics/seroCOP")
 ```
 
-**Note**: This package requires a working installation of RStan. See [RStan Getting Started](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for installation instructions.
+**Note**: This package requires a working installation of brms and Stan. The brms package will handle Stan installation automatically when you first use it.
 
 ## Quick Start
 
@@ -40,29 +40,47 @@ model <- SeroCOP$new(
   infected = sim_data$infected
 )
 
-# Optional: Customize priors (defaults are data-driven)
-model$definePrior(
-  floor_alpha = 2, floor_beta = 18,    # E[floor] ≈ 0.1
-  ec50_mean = 2.0, ec50_sd = 1.0       # Informative prior on ec50
-)
-
-# Fit the model
+# Fit the model (uses brms with sensible defaults)
 model$fit_model(chains = 4, iter = 2000)
 
 # Get performance metrics
-model$get_metrics()
+metrics <- model$get_metrics()
 
 # Visualize results
 model$plot_curve()
 model$plot_roc()
 
 # Extract parameter estimates
-extract_parameters(model)
+model$summary()
+```
+
+## Hierarchical Group Effects
+
+Model group-level heterogeneity (e.g., age groups with different correlates):
+
+```r
+# Simulate age-stratified data
+age_group <- sample(c("Young", "Middle", "Old"), 200, replace = TRUE)
+
+# Fit hierarchical model
+hier_model <- SeroCOP$new(
+  titre = sim_data$titre,
+  infected = sim_data$infected,
+  group = age_group  # Adds random effects on slope and ec50
+)
+
+hier_model$fit_model(chains = 4, iter = 2000)
+
+# Extract group-specific parameters
+group_params <- hier_model$extract_group_parameters()
+
+# Plot group-specific curves
+hier_model$plot_group_curves()
 ```
 
 ## Multi-Biomarker Analysis
 
-Compare multiple biomarkers simultaneously:
+Compare multiple biomarkers simultaneously with optional hierarchical effects:
 
 ```r
 # Prepare multi-biomarker data (matrix with columns = biomarkers)
@@ -72,7 +90,7 @@ titre_matrix <- cbind(
   Neutralization = rnorm(200, 3, 1.2)
 )
 
-# Initialize and fit
+# Initialize and fit (without groups)
 multi_model <- SeroCOPMulti$new(
   titre = titre_matrix,
   infected = infected
@@ -83,47 +101,62 @@ multi_model$fit_all(chains = 4, iter = 2000)
 multi_model$compare_biomarkers()
 multi_model$plot_comparison()  # AUC vs LOO-ELPD plot
 multi_model$plot_all_curves()
-```
 
-## Flexible Prior Distributions
-
-The package automatically sets sensible default priors based on your data:
-
-- **ec50** centered at the midpoint of observed titre range
-- **floor** and **ceiling** with weak priors favoring low/high infection probabilities
-
-You can easily customize priors using the `definePrior()` method:
-
-```r
-model$definePrior(
-  floor_alpha = 2, floor_beta = 18,      # Beta prior for floor
-  ceiling_alpha = 18, ceiling_beta = 2,  # Beta prior for ceiling
-  ec50_mean = 2.0, ec50_sd = 1.0,        # Normal prior for ec50
-  slope_mean = 0, slope_sd = 2           # Normal prior for slope (truncated at 0)
+# With hierarchical effects across biomarkers
+hier_multi <- SeroCOPMulti$new(
+  titre = titre_matrix,
+  infected = infected,
+  group = age_group
 )
+hier_multi$fit_all(chains = 4, iter = 2000)
+hier_multi$plot_group_curves()  # Shows all biomarkers × groups
+hier_multi$extract_group_parameters()
 ```
 
 ## Model
 
-The package fits a four-parameter logistic model:
+The package fits a four-parameter logistic model using brms (Bayesian Regression Models using Stan):
 
-$$P(\text{infection} | \text{titre}) = \text{floor} + \frac{\text{ceiling} - \text{floor}}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}}$$
+$$P(\text{infection} | \text{titre}) = \text{ceiling} \times \left[\frac{1}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}} \times (1 - \text{floor}) + \text{floor}\right]$$
 
 Where:
-- **floor**: Lower asymptote (minimum infection probability)
-- **ceiling**: Upper asymptote (maximum infection probability)  
+- **floor**: Lower asymptote (baseline infection probability at high titres)
+- **ceiling**: Upper asymptote (maximum infection probability at low titres)  
 - **ec50**: Titre at 50% between floor and ceiling (inflection point)
-- **slope**: Steepness of the curve
+- **slope**: Steepness of the dose-response curve
+
+### Hierarchical Extension
+
+When group variables are provided, the model adds random intercepts:
+
+$$\text{ec50}_g \sim \mathcal{N}(\text{ec50}_{\text{population}}, \sigma_{\text{ec50}})$$
+$$\text{slope}_g \sim \mathcal{N}(\text{slope}_{\text{population}}, \sigma_{\text{slope}})$$
+
+This allows for group-specific parameters while borrowing strength across groups.
+
+## Priors
+
+The package automatically sets weakly informative priors based on your data:
+
+- **floor** ~ Beta(1, 9): Favors low baseline infection (mean ≈ 0.1)
+- **ceiling** ~ Beta(9, 1): Favors high maximum infection (mean ≈ 0.9)
+- **ec50** ~ Normal(μ, σ): Centered at midpoint of titre range
+- **slope** ~ Normal(0, 2): Weakly informative, truncated at 0
+- **Group-level SDs** ~ student_t(3, 0, 2.5): Weakly informative for hierarchical models
 
 
 ## Documentation
 
 See the package vignettes for detailed examples:
 
+- **SeroCOP Overview**: Basic usage and model details
+- **Simulation and Recovery**: Parameter recovery validation
+- **Multi-Biomarker Analysis**: Comparing multiple antibody types
+- **Hierarchical Group Effects**: Age-stratified and group-specific modeling
+
 ```r
 # View available vignettes
 browseVignettes("seroCOP")
-
 ```
 
 ## Performance Metrics

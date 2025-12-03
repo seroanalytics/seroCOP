@@ -6,7 +6,7 @@
 \alias{seroCOP-package}
 \title{seroCOP: Correlates of Protection Analysis Using Bayesian Methods}
 \description{
-Fits generalized logistic functions to serological data (antibody titres) and infection outcomes using Bayesian methods implemented in Stan. Provides tools for assessing correlates of risk/protection including ROC AUC, LOO-CV, and Brier scores. Built around an R6 class for streamlined workflow.
+Fits generalized logistic functions to serological data (antibody titres) and infection outcomes using Bayesian methods implemented via brms. Provides tools for assessing correlates of risk/protection including ROC AUC, LOO-CV, and Brier scores. Built around an R6 class for streamlined workflow.
 }
 \seealso{
 Useful links:
