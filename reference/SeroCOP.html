@@ -49,6 +49,9 @@ It provides methods for model fitting, prediction, performance evaluation, and v
     <li>
       <a href="../articles/multi-biomarker.html">Application 2; Multi-Biomarker Analysis</a>
     </li>
+    <li>
+      <a href="../articles/hierarchical-groups.html">Application 3; Hierarchical Group Effects</a>
+    </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
   <a href="https://github.com/seroanalytics/seroCOP" class="external-link">
@@ -82,7 +85,7 @@ It provides methods for model fitting, prediction, performance evaluation, and v
     <h2>Details</h2>
     <p>SeroCOP R6 Class for Correlates of Protection Analysis</p>
 <p>This class provides a complete workflow for correlates of protection analysis:</p><ol><li><p>Data input and validation</p></li>
-<li><p>Bayesian model fitting using Stan</p></li>
+<li><p>Bayesian model fitting using brms (which uses Stan backend)</p></li>
 <li><p>Model diagnostics and validation</p></li>
 <li><p>Performance metrics (ROC AUC, Brier score, LOO-CV)</p></li>
 <li><p>Visualization</p></li>
@@ -95,6 +98,10 @@ It provides methods for model fitting, prediction, performance evaluation, and v
 
 <dt><code>infected</code></dt>
 <dd><p>Binary vector of infection status (0/1)</p></dd>
+
+
+<dt><code>group</code></dt>
+<dd><p>Optional factor vector for hierarchical modeling</p></dd>
 
 
 <dt><code>fit</code></dt>
@@ -122,10 +129,12 @@ It provides methods for model fitting, prediction, performance evaluation, and v
 <li><p><a href="#method-SeroCOP-fit_model"><code>SeroCOP$fit_model()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-predict"><code>SeroCOP$predict()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-predict_protection"><code>SeroCOP$predict_protection()</code></a></p></li>
+<li><p><a href="#method-SeroCOP-extract_group_parameters"><code>SeroCOP$extract_group_parameters()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-summary"><code>SeroCOP$summary()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-get_metrics"><code>SeroCOP$get_metrics()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-plot_curve"><code>SeroCOP$plot_curve()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-plot_roc"><code>SeroCOP$plot_roc()</code></a></p></li>
+<li><p><a href="#method-SeroCOP-plot_group_curves"><code>SeroCOP$plot_group_curves()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-plot_posteriors"><code>SeroCOP$plot_posteriors()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-extract_cop"><code>SeroCOP$extract_cop()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-clone"><code>SeroCOP$clone()</code></a></p></li>
@@ -133,7 +142,7 @@ It provides methods for model fitting, prediction, performance evaluation, and v
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new SeroCOP object</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">titre</span>, <span class="va">infected</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">titre</span>, <span class="va">infected</span>, group <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -144,6 +153,10 @@ It provides methods for model fitting, prediction, performance evaluation, and v
 
 <dt><code>infected</code></dt>
 <dd><p>Binary vector (0/1) of infection outcomes</p></dd>
+
+
+<dt><code>group</code></dt>
+<dd><p>Optional factor or character vector for grouping (e.g., age groups)</p></dd>
 
 
 </dl><p></p></div>
@@ -255,7 +268,7 @@ model$definePrior(
 
 
 <dt><code>...</code></dt>
-<dd><p>Additional arguments passed to rstan::sampling</p></dd>
+<dd><p>Additional arguments passed to brms::brm</p></dd>
 
 
 </dl><p></p></div>
@@ -305,34 +318,46 @@ model$definePrior(
 <p>Matrix of protection probabilities (rows = MCMC samples, cols = observations)</p>
 </div>
 
-</div><p></p><hr><a id="method-SeroCOP-summary"></a><div class="section">
-<h3 id="method-summary-">Method <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code><a class="anchor" aria-label="anchor" href="#method-summary-"></a></h3>
-<p>Get summary statistics for model parameters</p><div class="section">
+</div><p></p><hr><a id="method-SeroCOP-extract_group_parameters"></a><div class="section">
+<h3 id="method-extract-group-parameters-">Method <code>extract_group_parameters()</code><a class="anchor" aria-label="anchor" href="#method-extract-group-parameters-"></a></h3>
+<p>Extract group-specific parameters from hierarchical model</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>A data.frame with group-specific parameter estimates (NULL if not hierarchical)</p>
+</div>
+
+</div><p></p><hr><a id="method-SeroCOP-summary"></a><div class="section">
+<h3 id="method-summary-">Method <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code><a class="anchor" aria-label="anchor" href="#method-summary-"></a></h3>
+<p>Get summary statistics for model parameters</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>Data frame with parameter summaries</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-get_metrics"></a><div class="section">
 <h3 id="method-get-metrics-">Method <code>get_metrics()</code><a class="anchor" aria-label="anchor" href="#method-get-metrics-"></a></h3>
 <p>Calculate performance metrics</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">get_metrics</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
 <p>List containing ROC AUC, Brier score, and LOO-CV metrics</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-plot_curve"></a><div class="section">
 <h3 id="method-plot-curve-">Method <code>plot_curve()</code><a class="anchor" aria-label="anchor" href="#method-plot-curve-"></a></h3>
 <p>Plot the fitted curve with uncertainty</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_curve</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Correlates of Risk Curve"</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -349,14 +374,14 @@ model$definePrior(
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
 <p>A ggplot object</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-plot_roc"></a><div class="section">
 <h3 id="method-plot-roc-">Method <code>plot_roc()</code><a class="anchor" aria-label="anchor" href="#method-plot-roc-"></a></h3>
 <p>Plot ROC curve</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_roc</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"ROC Curve"</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -369,31 +394,51 @@ model$definePrior(
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
 <p>A ggplot object</p>
+</div>
+
+</div><p></p><hr><a id="method-SeroCOP-plot_group_curves"></a><div class="section">
+<h3 id="method-plot-group-curves-">Method <code>plot_group_curves()</code><a class="anchor" aria-label="anchor" href="#method-plot-group-curves-"></a></h3>
+<p>Plot group-specific curves for hierarchical models</p><div class="section">
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Group-Specific Correlates of Risk"</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>title</code></dt>
+<dd><p>Plot title</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<p>A ggplot object (returns NULL if not a hierarchical model)</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-plot_posteriors"></a><div class="section">
 <h3 id="method-plot-posteriors-">Method <code>plot_posteriors()</code><a class="anchor" aria-label="anchor" href="#method-plot-posteriors-"></a></h3>
 <p>Plot posterior distributions of parameters</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_posteriors</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
 <p>A ggplot object</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-extract_cop"></a><div class="section">
 <h3 id="method-extract-cop-">Method <code>extract_cop()</code><a class="anchor" aria-label="anchor" href="#method-extract-cop-"></a></h3>
 <p>Extract the correlate of protection conditional on exposure.</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">extract_cop</span><span class="op">(</span><span class="va">correlate_of_risk</span>, upper_bound <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>correlate_of_risk</code></dt>
 <dd><p>Numeric vector of correlates of risk.</p></dd>
 
@@ -405,19 +450,19 @@ model$definePrior(
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
 <p>Numeric vector of correlates of protection.</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

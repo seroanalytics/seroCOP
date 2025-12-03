@@ -2,10 +2,11 @@ pandoc: 3.1.11
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
+  hierarchical-groups: hierarchical-groups.html
   multi-biomarker: multi-biomarker.html
   serocop-overview: serocop-overview.html
   simulation-recovery: simulation-recovery.html
-last_built: 2025-12-03T11:50Z
+last_built: 2025-12-03T14:38Z
 urls:
   reference: https://seroanalytics.org/seroCOP/reference
   article: https://seroanalytics.org/seroCOP/articles

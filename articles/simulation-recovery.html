@@ -63,6 +63,9 @@
     <li>
       <a href="../articles/multi-biomarker.html">Application 2; Multi-Biomarker Analysis</a>
     </li>
+    <li>
+      <a href="../articles/hierarchical-groups.html">Application 3; Hierarchical Group Effects</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -289,11 +292,11 @@ compare them to the true values:</p>
 <code class="sourceCode R"><span><span class="co"># Get parameter summary</span></span>
 <span><span class="va">param_est</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_parameters.html">extract_parameters</a></span><span class="op">(</span><span class="va">model</span>, prob <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">param_est</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   parameter      mean     median       lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.0786748 0.07047749 0.002937892 0.2026531</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.7920545 0.79384520 0.555198764 0.9920451</span></span>
-<span><span class="co">#&gt; 3      ec50 0.8901055 0.90553122 0.007872437 1.6827384</span></span>
-<span><span class="co">#&gt; 4     slope 1.4031424 1.15488003 0.628554353 3.4710576</span></span>
+<span><span class="co">#&gt;   parameter      mean     median        lower     upper</span></span>
+<span><span class="co">#&gt; 1     floor 0.0794394 0.07514709  0.003264366 0.1882319</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.7976989 0.80514135  0.579668753 0.9923265</span></span>
+<span><span class="co">#&gt; 3      ec50 0.8457242 0.87565133 -0.068102074 1.6261539</span></span>
+<span><span class="co">#&gt; 4     slope 1.3594123 1.13635618  0.616379401 3.2693185</span></span>
 <span></span>
 <span><span class="co"># Compare to true values</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nTrue Parameters:\n"</span><span class="op">)</span></span>
@@ -348,16 +351,16 @@ compare them to the true values:</p>
 <span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">get_metrics</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Performance Metrics:</span></span>
 <span><span class="co">#&gt;   ROC AUC: 0.760</span></span>
-<span><span class="co">#&gt;   Brier Score: 0.163</span></span>
-<span><span class="co">#&gt;   LOO ELPD: -152.71 (SE: 9.22)</span></span></code></pre></div>
+<span><span class="co">#&gt;   Brier Score: 0.164</span></span>
+<span><span class="co">#&gt;   LOO ELPD: -152.67 (SE: 9.16)</span></span></code></pre></div>
 <p>The model shows good performance:</p>
 <ul>
 <li>
 <strong>ROC AUC</strong>: 0.760 (closer to 1 is better)</li>
 <li>
-<strong>Brier Score</strong>: 0.163 (closer to 0 is better)</li>
+<strong>Brier Score</strong>: 0.164 (closer to 0 is better)</li>
 <li>
-<strong>LOO ELPD</strong>: -152.71 (higher is better)</li>
+<strong>LOO ELPD</strong>: -152.67 (higher is better)</li>
 </ul>
 </div>
 <div class="section level2">
@@ -404,16 +407,16 @@ model. The correlate of protection is calculated within the model as
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">summary_df</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       titre correlate_of_risk correlate_of_protection</span></span>
-<span><span class="co">#&gt; 1  2.931135        0.12556653               0.8393098</span></span>
-<span><span class="co">#&gt; 2  2.053462        0.20923919               0.7306512</span></span>
-<span><span class="co">#&gt; 3  3.159732        0.11308471               0.8550244</span></span>
-<span><span class="co">#&gt; 4  3.908734        0.08673651               0.8876443</span></span>
-<span><span class="co">#&gt; 5  2.556463        0.15296298               0.8043141</span></span>
-<span><span class="co">#&gt; 6  1.755718        0.25671268               0.6672890</span></span>
-<span><span class="co">#&gt; 7  2.595668        0.14961150               0.8086298</span></span>
-<span><span class="co">#&gt; 8  1.880016        0.23549186               0.6957009</span></span>
-<span><span class="co">#&gt; 9  1.482552        0.30974896               0.5960728</span></span>
-<span><span class="co">#&gt; 10 3.053227        0.11856402               0.8481449</span></span></code></pre></div>
+<span><span class="co">#&gt; 1  2.931135        0.12710867               0.8391943</span></span>
+<span><span class="co">#&gt; 2  2.053462        0.20936968               0.7334891</span></span>
+<span><span class="co">#&gt; 3  3.159732        0.11476592               0.8545936</span></span>
+<span><span class="co">#&gt; 4  3.908734        0.08862574               0.8866631</span></span>
+<span><span class="co">#&gt; 5  2.556463        0.15413779               0.8049936</span></span>
+<span><span class="co">#&gt; 6  1.755718        0.25570859               0.6723733</span></span>
+<span><span class="co">#&gt; 7  2.595668        0.15083593               0.8092037</span></span>
+<span><span class="co">#&gt; 8  1.880016        0.23501588               0.6997510</span></span>
+<span><span class="co">#&gt; 9  1.482552        0.30739069               0.6037427</span></span>
+<span><span class="co">#&gt; 10 3.053227        0.12018647               0.8478490</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="correlate-of-protection-curve">Correlate of Protection Curve<a class="anchor" aria-label="anchor" href="#correlate-of-protection-curve"></a>
 </h4>
@@ -517,11 +520,11 @@ out-of-sample predictive performance:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
 <span><span class="co">#&gt; elpd_loo   -152.7  9.2</span></span>
-<span><span class="co">#&gt; p_loo         3.4  0.3</span></span>
-<span><span class="co">#&gt; looic       305.4 18.4</span></span>
+<span><span class="co">#&gt; p_loo         3.3  0.3</span></span>
+<span><span class="co">#&gt; looic       305.3 18.3</span></span>
 <span><span class="co">#&gt; ------</span></span>
-<span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume independent draws (r_eff=1).</span></span>
+<span><span class="co">#&gt; MCSE of elpd_loo is 0.1.</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 0.9]).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span></code></pre></div>
@@ -582,26 +585,32 @@ through Bayesian inference.</p>
 <span><span class="co">#&gt; [1] ggplot2_4.0.1 seroCOP_0.1.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] sass_0.4.10           generics_0.1.4        pROC_1.19.0.1        </span></span>
-<span><span class="co">#&gt;  [4] digest_0.6.39         magrittr_2.0.4        evaluate_1.0.5       </span></span>
-<span><span class="co">#&gt;  [7] grid_4.5.2            RColorBrewer_1.1-3    fastmap_1.2.0        </span></span>
-<span><span class="co">#&gt; [10] jsonlite_2.0.0        processx_3.8.6        pkgbuild_1.4.8       </span></span>
-<span><span class="co">#&gt; [13] ps_1.9.1              gridExtra_2.3         QuickJSR_1.8.1       </span></span>
-<span><span class="co">#&gt; [16] scales_1.4.0          codetools_0.2-20      textshaping_1.0.4    </span></span>
-<span><span class="co">#&gt; [19] jquerylib_0.1.4       cli_3.6.5             rlang_1.1.6          </span></span>
-<span><span class="co">#&gt; [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.11          </span></span>
-<span><span class="co">#&gt; [25] StanHeaders_2.32.10   tools_4.5.2           rstan_2.32.7         </span></span>
-<span><span class="co">#&gt; [28] inline_0.3.21         parallel_4.5.2        dplyr_1.1.4          </span></span>
-<span><span class="co">#&gt; [31] vctrs_0.6.5           R6_2.6.1              matrixStats_1.5.0    </span></span>
-<span><span class="co">#&gt; [34] stats4_4.5.2          lifecycle_1.0.4       fs_1.6.6             </span></span>
-<span><span class="co">#&gt; [37] ragg_1.5.0            pkgconfig_2.0.3       desc_1.4.3           </span></span>
-<span><span class="co">#&gt; [40] callr_3.7.6           pkgdown_2.2.0         RcppParallel_5.1.11-1</span></span>
-<span><span class="co">#&gt; [43] pillar_1.11.1         bslib_0.9.0           gtable_0.3.6         </span></span>
-<span><span class="co">#&gt; [46] loo_2.8.0             glue_1.8.0            Rcpp_1.1.0           </span></span>
-<span><span class="co">#&gt; [49] systemfonts_1.3.1     xfun_0.54             tibble_3.3.0         </span></span>
-<span><span class="co">#&gt; [52] tidyselect_1.2.1      knitr_1.50            farver_2.1.2         </span></span>
-<span><span class="co">#&gt; [55] htmltools_0.5.8.1     rmarkdown_2.30        labeling_0.4.3       </span></span>
-<span><span class="co">#&gt; [58] compiler_4.5.2        S7_0.2.1</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] gtable_0.3.6          tensorA_0.36.2.1      xfun_0.54            </span></span>
+<span><span class="co">#&gt;  [4] bslib_0.9.0           QuickJSR_1.8.1        processx_3.8.6       </span></span>
+<span><span class="co">#&gt;  [7] inline_0.3.21         lattice_0.22-7        callr_3.7.6          </span></span>
+<span><span class="co">#&gt; [10] ps_1.9.1              vctrs_0.6.5           tools_4.5.2          </span></span>
+<span><span class="co">#&gt; [13] generics_0.1.4        stats4_4.5.2          parallel_4.5.2       </span></span>
+<span><span class="co">#&gt; [16] tibble_3.3.0          pkgconfig_2.0.3       brms_2.23.0          </span></span>
+<span><span class="co">#&gt; [19] Matrix_1.7-4          checkmate_2.3.3       RColorBrewer_1.1-3   </span></span>
+<span><span class="co">#&gt; [22] S7_0.2.1              desc_1.4.3            distributional_0.5.0 </span></span>
+<span><span class="co">#&gt; [25] RcppParallel_5.1.11-1 lifecycle_1.0.4       compiler_4.5.2       </span></span>
+<span><span class="co">#&gt; [28] farver_2.1.2          stringr_1.6.0         textshaping_1.0.4    </span></span>
+<span><span class="co">#&gt; [31] Brobdingnag_1.2-9     codetools_0.2-20      htmltools_0.5.8.1    </span></span>
+<span><span class="co">#&gt; [34] sass_0.4.10           bayesplot_1.14.0      yaml_2.3.11          </span></span>
+<span><span class="co">#&gt; [37] pillar_1.11.1         pkgdown_2.2.0         jquerylib_0.1.4      </span></span>
+<span><span class="co">#&gt; [40] cachem_1.1.0          StanHeaders_2.32.10   bridgesampling_1.2-1 </span></span>
+<span><span class="co">#&gt; [43] abind_1.4-8           nlme_3.1-168          posterior_1.6.1      </span></span>
+<span><span class="co">#&gt; [46] rstan_2.32.7          tidyselect_1.2.1      digest_0.6.39        </span></span>
+<span><span class="co">#&gt; [49] mvtnorm_1.3-3         stringi_1.8.7         dplyr_1.1.4          </span></span>
+<span><span class="co">#&gt; [52] labeling_0.4.3        fastmap_1.2.0         grid_4.5.2           </span></span>
+<span><span class="co">#&gt; [55] cli_3.6.5             magrittr_2.0.4        loo_2.8.0            </span></span>
+<span><span class="co">#&gt; [58] pkgbuild_1.4.8        withr_3.0.2           scales_1.4.0         </span></span>
+<span><span class="co">#&gt; [61] backports_1.5.0       rmarkdown_2.30        matrixStats_1.5.0    </span></span>
+<span><span class="co">#&gt; [64] gridExtra_2.3         ragg_1.5.0            coda_0.19-4.1        </span></span>
+<span><span class="co">#&gt; [67] evaluate_1.0.5        knitr_1.50            rstantools_2.5.0     </span></span>
+<span><span class="co">#&gt; [70] rlang_1.1.6           Rcpp_1.1.0            glue_1.8.0           </span></span>
+<span><span class="co">#&gt; [73] pROC_1.19.0.1         jsonlite_2.0.0        R6_2.6.1             </span></span>
+<span><span class="co">#&gt; [76] systemfonts_1.3.1     fs_1.6.6</span></span></code></pre></div>
 </div>
 </div>
   </div>

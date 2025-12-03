@@ -66,6 +66,9 @@
     <li>
       <a href="articles/multi-biomarker.html">Application 2; Multi-Biomarker Analysis</a>
     </li>
+    <li>
+      <a href="articles/hierarchical-groups.html">Application 3; Hierarchical Group Effects</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -104,7 +107,7 @@
 <span></span>
 <span><span class="co"># Install seroCOP</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"seroanalytics/seroCOP"</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Note</strong>: This package requires a working installation of RStan. See <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started" class="external-link">RStan Getting Started</a> for installation instructions.</p>
+<p><strong>Note</strong>: This package requires a working installation of brms and Stan. The brms package will handle Stan installation automatically when you first use it.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
@@ -128,30 +131,47 @@
 <span>  infected <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">infected</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Optional: Customize priors (defaults are data-driven)</span></span>
-<span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span></span>
-<span>  floor_alpha <span class="op">=</span> <span class="fl">2</span>, floor_beta <span class="op">=</span> <span class="fl">18</span>,    <span class="co"># E[floor] ≈ 0.1</span></span>
-<span>  ec50_mean <span class="op">=</span> <span class="fl">2.0</span>, ec50_sd <span class="op">=</span> <span class="fl">1.0</span>       <span class="co"># Informative prior on ec50</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Fit the model</span></span>
+<span><span class="co"># Fit the model (uses brms with sensible defaults)</span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Get performance metrics</span></span>
-<span><span class="va">model</span><span class="op">$</span><span class="fu">get_metrics</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">get_metrics</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Visualize results</span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="fu">plot_curve</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="fu">plot_roc</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract parameter estimates</span></span>
-<span><span class="fu"><a href="reference/extract_parameters.html">extract_parameters</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">model</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="hierarchical-group-effects">Hierarchical Group Effects<a class="anchor" aria-label="anchor" href="#hierarchical-group-effects"></a>
+</h2>
+<p>Model group-level heterogeneity (e.g., age groups with different correlates):</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Simulate age-stratified data</span></span>
+<span><span class="va">age_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Young"</span>, <span class="st">"Middle"</span>, <span class="st">"Old"</span><span class="op">)</span>, <span class="fl">200</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Fit hierarchical model</span></span>
+<span><span class="va">hier_model</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  titre <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span>,</span>
+<span>  infected <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">infected</span>,</span>
+<span>  group <span class="op">=</span> <span class="va">age_group</span>  <span class="co"># Adds random effects on slope and ec50</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">hier_model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Extract group-specific parameters</span></span>
+<span><span class="va">group_params</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plot group-specific curves</span></span>
+<span><span class="va">hier_model</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="multi-biomarker-analysis">Multi-Biomarker Analysis<a class="anchor" aria-label="anchor" href="#multi-biomarker-analysis"></a>
 </h2>
-<p>Compare multiple biomarkers simultaneously:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>Compare multiple biomarkers simultaneously with optional hierarchical effects:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Prepare multi-biomarker data (matrix with columns = biomarkers)</span></span>
 <span><span class="va">titre_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span></span>
 <span>  IgG <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span>,</span>
@@ -159,7 +179,7 @@
 <span>  Neutralization <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span>, <span class="fl">1.2</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Initialize and fit</span></span>
+<span><span class="co"># Initialize and fit (without groups)</span></span>
 <span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre <span class="op">=</span> <span class="va">titre_matrix</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">infected</span></span>
@@ -169,39 +189,64 @@
 <span><span class="co"># Compare biomarkers</span></span>
 <span><span class="va">multi_model</span><span class="op">$</span><span class="fu">compare_biomarkers</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">multi_model</span><span class="op">$</span><span class="fu">plot_comparison</span><span class="op">(</span><span class="op">)</span>  <span class="co"># AUC vs LOO-ELPD plot</span></span>
-<span><span class="va">multi_model</span><span class="op">$</span><span class="fu">plot_all_curves</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="flexible-prior-distributions">Flexible Prior Distributions<a class="anchor" aria-label="anchor" href="#flexible-prior-distributions"></a>
-</h2>
-<p>The package automatically sets sensible default priors based on your data:</p>
-<ul>
-<li>
-<strong>ec50</strong> centered at the midpoint of observed titre range</li>
-<li>
-<strong>floor</strong> and <strong>ceiling</strong> with weak priors favoring low/high infection probabilities</li>
-</ul>
-<p>You can easily customize priors using the <code>definePrior()</code> method:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span></span>
-<span>  floor_alpha <span class="op">=</span> <span class="fl">2</span>, floor_beta <span class="op">=</span> <span class="fl">18</span>,      <span class="co"># Beta prior for floor</span></span>
-<span>  ceiling_alpha <span class="op">=</span> <span class="fl">18</span>, ceiling_beta <span class="op">=</span> <span class="fl">2</span>,  <span class="co"># Beta prior for ceiling</span></span>
-<span>  ec50_mean <span class="op">=</span> <span class="fl">2.0</span>, ec50_sd <span class="op">=</span> <span class="fl">1.0</span>,        <span class="co"># Normal prior for ec50</span></span>
-<span>  slope_mean <span class="op">=</span> <span class="fl">0</span>, slope_sd <span class="op">=</span> <span class="fl">2</span>           <span class="co"># Normal prior for slope (truncated at 0)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">multi_model</span><span class="op">$</span><span class="fu">plot_all_curves</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># With hierarchical effects across biomarkers</span></span>
+<span><span class="va">hier_multi</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  titre <span class="op">=</span> <span class="va">titre_matrix</span>,</span>
+<span>  infected <span class="op">=</span> <span class="va">infected</span>,</span>
+<span>  group <span class="op">=</span> <span class="va">age_group</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">hier_multi</span><span class="op">$</span><span class="fu">fit_all</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<span><span class="va">hier_multi</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span><span class="op">)</span>  <span class="co"># Shows all biomarkers × groups</span></span>
+<span><span class="va">hier_multi</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="model">Model<a class="anchor" aria-label="anchor" href="#model"></a>
 </h2>
-<p>The package fits a four-parameter logistic model:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo stretchy="false" form="prefix">|</mo><mtext mathvariant="normal">titre</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mtext mathvariant="normal">floor</mtext><mo>+</mo><mfrac><mrow><mtext mathvariant="normal">ceiling</mtext><mo>−</mo><mtext mathvariant="normal">floor</mtext></mrow><mrow><mn>1</mn><mo>+</mo><msup><mi>e</mi><mrow><mtext mathvariant="normal">slope</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">titre</mtext><mo>−</mo><mtext mathvariant="normal">ec50</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msup></mrow></mfrac></mrow><annotation encoding="application/x-tex">P(\text{infection} | \text{titre}) = \text{floor} + \frac{\text{ceiling} - \text{floor}}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}}</annotation></semantics></math></p>
-<p>Where: - <strong>floor</strong>: Lower asymptote (minimum infection probability) - <strong>ceiling</strong>: Upper asymptote (maximum infection probability)<br>
-- <strong>ec50</strong>: Titre at 50% between floor and ceiling (inflection point) - <strong>slope</strong>: Steepness of the curve</p>
+<p>The package fits a four-parameter logistic model using brms (Bayesian Regression Models using Stan):</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo stretchy="false" form="prefix">|</mo><mtext mathvariant="normal">titre</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mtext mathvariant="normal">ceiling</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">[</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><msup><mi>e</mi><mrow><mtext mathvariant="normal">slope</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">titre</mtext><mo>−</mo><mtext mathvariant="normal">ec50</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msup></mrow></mfrac><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">P(\text{infection} | \text{titre}) = \text{ceiling} \times \left[\frac{1}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}} \times (1 - \text{floor}) + \text{floor}\right]</annotation></semantics></math></p>
+<p>Where: - <strong>floor</strong>: Lower asymptote (baseline infection probability at high titres) - <strong>ceiling</strong>: Upper asymptote (maximum infection probability at low titres)<br>
+- <strong>ec50</strong>: Titre at 50% between floor and ceiling (inflection point) - <strong>slope</strong>: Steepness of the dose-response curve</p>
+<div class="section level3">
+<h3 id="hierarchical-extension">Hierarchical Extension<a class="anchor" aria-label="anchor" href="#hierarchical-extension"></a>
+</h3>
+<p>When group variables are provided, the model adds random intercepts:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">ec50</mtext><mi>g</mi></msub><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mtext mathvariant="normal">ec50</mtext><mtext mathvariant="normal">population</mtext></msub><mo>,</mo><msub><mi>σ</mi><mtext mathvariant="normal">ec50</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{ec50}_g \sim \mathcal{N}(\text{ec50}_{\text{population}}, \sigma_{\text{ec50}})</annotation></semantics></math><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">slope</mtext><mi>g</mi></msub><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mtext mathvariant="normal">slope</mtext><mtext mathvariant="normal">population</mtext></msub><mo>,</mo><msub><mi>σ</mi><mtext mathvariant="normal">slope</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{slope}_g \sim \mathcal{N}(\text{slope}_{\text{population}}, \sigma_{\text{slope}})</annotation></semantics></math></p>
+<p>This allows for group-specific parameters while borrowing strength across groups.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="priors">Priors<a class="anchor" aria-label="anchor" href="#priors"></a>
+</h2>
+<p>The package automatically sets weakly informative priors based on your data:</p>
+<ul>
+<li>
+<strong>floor</strong> ~ Beta(1, 9): Favors low baseline infection (mean ≈ 0.1)</li>
+<li>
+<strong>ceiling</strong> ~ Beta(9, 1): Favors high maximum infection (mean ≈ 0.9)</li>
+<li>
+<strong>ec50</strong> ~ Normal(μ, σ): Centered at midpoint of titre range</li>
+<li>
+<strong>slope</strong> ~ Normal(0, 2): Weakly informative, truncated at 0</li>
+<li>
+<strong>Group-level SDs</strong> ~ student_t(3, 0, 2.5): Weakly informative for hierarchical models</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
 <p>See the package vignettes for detailed examples:</p>
+<ul>
+<li>
+<strong>SeroCOP Overview</strong>: Basic usage and model details</li>
+<li>
+<strong>Simulation and Recovery</strong>: Parameter recovery validation</li>
+<li>
+<strong>Multi-Biomarker Analysis</strong>: Comparing multiple antibody types</li>
+<li>
+<strong>Hierarchical Group Effects</strong>: Age-stratified and group-specific modeling</li>
+</ul>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># View available vignettes</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/browseVignettes.html" class="external-link">browseVignettes</a></span><span class="op">(</span><span class="st">"seroCOP"</span><span class="op">)</span></span></code></pre></div>
