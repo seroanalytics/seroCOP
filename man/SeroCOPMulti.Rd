@@ -6,6 +6,7 @@
 \description{
 An R6 class for analyzing multiple biomarkers simultaneously.
 Fits separate models for each biomarker using brms and provides comparison tools.
+Supports hierarchical modeling with group-level effects.
 }
 \examples{
 \dontrun{
@@ -21,6 +22,13 @@ multi_model$fit_all(chains = 4, iter = 2000)
 # Compare biomarkers
 multi_model$compare_biomarkers()
 multi_model$plot_comparison()
+
+# With hierarchical effects
+age_group <- sample(c("Young", "Middle", "Old"), 200, replace = TRUE)
+hier_model <- SeroCOPMulti$new(titre = titres, infected = infected, group = age_group)
+hier_model$fit_all(chains = 4, iter = 2000)
+hier_model$plot_group_curves()
+hier_model$extract_group_parameters()
 }
 }
 \concept{r6-classes}
@@ -34,6 +42,8 @@ multi_model$plot_comparison()
 \item{\code{biomarker_names}}{Names of biomarkers}
 
 \item{\code{models}}{List of fitted SeroCOP objects}
+
+\item{\code{group}}{Optional factor vector for hierarchical modeling}
 }
 \if{html}{\out{</div>}}
 }
@@ -45,6 +55,8 @@ multi_model$plot_comparison()
 \item \href{#method-SeroCOPMulti-compare_biomarkers}{\code{SeroCOPMulti$compare_biomarkers()}}
 \item \href{#method-SeroCOPMulti-plot_comparison}{\code{SeroCOPMulti$plot_comparison()}}
 \item \href{#method-SeroCOPMulti-plot_all_curves}{\code{SeroCOPMulti$plot_all_curves()}}
+\item \href{#method-SeroCOPMulti-extract_group_parameters}{\code{SeroCOPMulti$extract_group_parameters()}}
+\item \href{#method-SeroCOPMulti-plot_group_curves}{\code{SeroCOPMulti$plot_group_curves()}}
 \item \href{#method-SeroCOPMulti-extract_cop_multi}{\code{SeroCOPMulti$extract_cop_multi()}}
 \item \href{#method-SeroCOPMulti-clone}{\code{SeroCOPMulti$clone()}}
 }
@@ -55,7 +67,7 @@ multi_model$plot_comparison()
 \subsection{Method \code{new()}}{
 Create a new SeroCOPMulti object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOPMulti$new(titre, infected, biomarker_names = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOPMulti$new(titre, infected, biomarker_names = NULL, group = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -66,6 +78,8 @@ Create a new SeroCOPMulti object
 \item{\code{infected}}{Binary vector (0/1) of infection outcomes}
 
 \item{\code{biomarker_names}}{Optional vector of biomarker names}
+
+\item{\code{group}}{Optional grouping variable for hierarchical modeling}
 }
 \if{html}{\out{</div>}}
 }
@@ -151,6 +165,41 @@ Plot all fitted curves
 
 \subsection{Returns}{
 A ggplot object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOPMulti-extract_group_parameters"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOPMulti-extract_group_parameters}{}}}
+\subsection{Method \code{extract_group_parameters()}}{
+Extract group-specific parameters for all biomarkers (hierarchical models only)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOPMulti$extract_group_parameters()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A data.frame with group-specific parameter estimates for each biomarker
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOPMulti-plot_group_curves"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOPMulti-plot_group_curves}{}}}
+\subsection{Method \code{plot_group_curves()}}{
+Plot group-specific curves for all biomarkers (hierarchical models only)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOPMulti$plot_group_curves(
+  title = "Group-Specific Correlates by Biomarker"
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{title}}{Plot title}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A ggplot object (returns NULL if not a hierarchical model)
 }
 }
 \if{html}{\out{<hr>}}
