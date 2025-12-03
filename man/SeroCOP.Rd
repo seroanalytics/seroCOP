@@ -16,7 +16,7 @@ SeroCOP R6 Class for Correlates of Protection Analysis
 This class provides a complete workflow for correlates of protection analysis:
 \enumerate{
 \item Data input and validation
-\item Bayesian model fitting using Stan
+\item Bayesian model fitting using brms (which uses Stan backend)
 \item Model diagnostics and validation
 \item Performance metrics (ROC AUC, Brier score, LOO-CV)
 \item Visualization
@@ -201,7 +201,7 @@ Fit the Bayesian logistic model
 
 \item{\code{thin}}{Thinning interval (default: 1)}
 
-\item{\code{...}}{Additional arguments passed to rstan::sampling}
+\item{\code{...}}{Additional arguments passed to brms::brm}
 }
 \if{html}{\out{</div>}}
 }

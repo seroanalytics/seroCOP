@@ -2,7 +2,7 @@
 #'
 #' @description
 #' An R6 class for analyzing multiple biomarkers simultaneously.
-#' Fits separate models for each biomarker and provides comparison tools.
+#' Fits separate models for each biomarker using brms and provides comparison tools.
 #'
 #' @concept r6-classes
 #' @export
@@ -98,7 +98,7 @@ SeroCOPMulti <- R6::R6Class(
     #' @param iter Number of iterations per chain (default: 2000)
     #' @param warmup Number of warmup iterations (default: iter/2)
     #' @param cores Number of cores for parallel processing (default: 1)
-    #' @param ... Additional arguments passed to rstan::sampling
+    #' @param ... Additional arguments passed to brms::brm
     #' @return Self (invisibly)
     fit_all = function(chains = 4, iter = 2000, warmup = floor(iter/2), 
                       cores = 1, ...) {

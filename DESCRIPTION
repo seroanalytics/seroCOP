@@ -4,7 +4,7 @@ Version: 0.1.0
 Authors@R: 
     person("David", "Hodgson", , "david.hodgson@example.com", role = c("aut", "cre"))
 Description: Fits generalized logistic functions to serological data (antibody titres)
-    and infection outcomes using Bayesian methods implemented in Stan. Provides
+    and infection outcomes using Bayesian methods implemented via brms. Provides
     tools for assessing correlates of risk/protection including ROC AUC, LOO-CV,
     and Brier scores. Built around an R6 class for streamlined workflow.
 License: MIT + file LICENSE
@@ -16,6 +16,7 @@ RoxygenNote: 7.3.2
 Depends: 
     R (>= 3.5.0)
 Imports:
+    brms (>= 2.19.0),
     rstan (>= 2.21.0),
     rstantools (>= 2.1.1),
     R6 (>= 2.5.0),

@@ -5,7 +5,7 @@
 \title{SeroCOPMulti R6 Class for Multi-Biomarker Correlates of Protection Analysis}
 \description{
 An R6 class for analyzing multiple biomarkers simultaneously.
-Fits separate models for each biomarker and provides comparison tools.
+Fits separate models for each biomarker using brms and provides comparison tools.
 }
 \examples{
 \dontrun{
@@ -99,7 +99,7 @@ Fit models for all biomarkers
 
 \item{\code{cores}}{Number of cores for parallel processing (default: 1)}
 
-\item{\code{...}}{Additional arguments passed to rstan::sampling}
+\item{\code{...}}{Additional arguments passed to brms::brm}
 }
 \if{html}{\out{</div>}}
 }

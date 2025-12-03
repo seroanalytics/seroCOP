@@ -7,7 +7,7 @@
 #' @details
 #' This class provides a complete workflow for correlates of protection analysis:
 #' 1. Data input and validation
-#' 2. Bayesian model fitting using Stan
+#' 2. Bayesian model fitting using brms (which uses Stan backend)
 #' 3. Model diagnostics and validation
 #' 4. Performance metrics (ROC AUC, Brier score, LOO-CV)
 #' 5. Visualization
@@ -148,25 +148,15 @@ SeroCOP <- R6::R6Class(
     #' @param iter Number of iterations per chain (default: 2000)
     #' @param warmup Number of warmup iterations (default: iter/2)
     #' @param thin Thinning interval (default: 1)
-    #' @param ... Additional arguments passed to rstan::sampling
+    #' @param ... Additional arguments passed to brms::brm
     #' @return Self (invisibly)
     fit_model = function(chains = 4, iter = 2000, warmup = 1000, thin = 1, ...) {
-      message("Fitting Bayesian logistic model...")
+      message("Fitting Bayesian logistic model using brms...")
       
-      # Prepare data for Stan (including priors)
-      stan_data <- list(
-        N = length(self$titre),
-        titre = self$titre,
-        infected = as.integer(self$infected),
-        # Prior parameters
-        floor_alpha = self$priors$floor_alpha,
-        floor_beta = self$priors$floor_beta,
-        ceiling_alpha = self$priors$ceiling_alpha,
-        ceiling_beta = self$priors$ceiling_beta,
-        ec50_mean = self$priors$ec50_mean,
-        ec50_sd = self$priors$ec50_sd,
-        slope_mean = self$priors$slope_mean,
-        slope_sd = self$priors$slope_sd
+      # Prepare data frame
+      model_data <- data.frame(
+        infected = self$infected,
+        titre = self$titre
       )
       
       message("\nUsing prior distributions:")
@@ -175,28 +165,54 @@ SeroCOP <- R6::R6Class(
       message(sprintf("  ec50 ~ Normal(%.2f, %.2f)", self$priors$ec50_mean, self$priors$ec50_sd))
       message(sprintf("  slope ~ Normal(%.2f, %.2f)\n", self$priors$slope_mean, self$priors$slope_sd))
       
-      # Get compiled Stan model
-      stan_file <- system.file("stan", "logistic_model.stan", package = "seroCOP")
+      # Define priors for brms
+      priors <- c(
+        brms::set_prior(sprintf("beta(%g, %g)", self$priors$floor_alpha, self$priors$floor_beta), 
+                       nlpar = "floor", lb = 0, ub = 1),
+        brms::set_prior(sprintf("beta(%g, %g)", self$priors$ceiling_alpha, self$priors$ceiling_beta),
+                       nlpar = "ceiling", lb = 0, ub = 1),
+        brms::set_prior(sprintf("normal(%g, %g)", self$priors$ec50_mean, self$priors$ec50_sd),
+                       nlpar = "ec50"),
+        brms::set_prior(sprintf("normal(%g, %g)", self$priors$slope_mean, self$priors$slope_sd),
+                       nlpar = "slope", lb = 0)
+      )
       
-      if (stan_file == "") {
-        stop("Stan model file not found. Make sure the package is properly installed.")
-      }
+      # Define the non-linear formula
+      # prob_infection = ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor)
+      formula <- brms::bf(
+        infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
+        floor ~ 1,
+        ceiling ~ 1,
+        ec50 ~ 1,
+        slope ~ 1,
+        nl = TRUE
+      )
       
       # Fit the model
-      self$fit <- rstan::stan(
-        file = stan_file,
-        data = stan_data,
-        chains = chains,
-        iter = iter,
-        warmup = warmup,
-        thin = thin,
-        ...
+      # Handle cores argument - either from ... or default to chains
+      dots <- list(...)
+      if (!"cores" %in% names(dots)) {
+        dots$cores <- min(chains, parallel::detectCores())
+      }
+      
+      self$fit <- do.call(
+        brms::brm,
+        c(list(
+          formula = formula,
+          data = model_data,
+          family = brms::bernoulli(link = "identity"),
+          prior = priors,
+          chains = chains,
+          iter = iter,
+          warmup = warmup,
+          thin = thin,
+          backend = "rstan"
+        ), dots)
       )
       
       # Compute LOO-CV
       message("Computing LOO-CV...")
-      log_lik <- loo::extract_log_lik(self$fit, parameter_name = "log_lik")
-      self$loo <- loo::loo(log_lik)
+      self$loo <- brms::loo(self$fit)
       
       message("Model fitting complete!")
       invisible(self)
@@ -212,23 +228,14 @@ SeroCOP <- R6::R6Class(
       }
       
       if (is.null(newdata)) {
-        # Extract fitted probabilities
-        prob_samples <- rstan::extract(self$fit, pars = "prob_infection")[[1]]
-        return(prob_samples)
+        # Extract fitted probabilities using brms
+        # Get posterior predictions (summary = FALSE gives us all samples)
+        fitted_vals <- fitted(self$fit, summary = FALSE)
+        return(fitted_vals)
       } else {
         # Predict for new data
-        params <- rstan::extract(self$fit)
-        n_iter <- length(params$floor)
-        n_new <- length(newdata)
-        
-        predictions <- matrix(NA, nrow = n_iter, ncol = n_new)
-        
-        for (i in 1:n_iter) {
-          # Using the new formula: ceiling * (floor + (1-floor) * inv_logit(-slope * (titre - ec50)))
-          logit_part <- 1 / (1 + exp(params$slope[i] * (newdata - params$ec50[i])))
-          predictions[i, ] <- params$ceiling[i] * (params$floor[i] + (1 - params$floor[i]) * logit_part)
-        }
-        
+        new_df <- data.frame(titre = newdata, infected = NA)
+        predictions <- fitted(self$fit, newdata = new_df, summary = FALSE)
         return(predictions)
       }
     },
@@ -242,30 +249,23 @@ SeroCOP <- R6::R6Class(
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
       
-      if (is.null(newdata)) {
-        # Extract fitted protection probabilities
-        prob_protection <- rstan::extract(self$fit, pars = "prob_protection")[[1]]
-        return(prob_protection)
-      } else {
-        # Predict protection for new data
-        # Get infection probabilities first
-        prob_infection <- self$predict(newdata = newdata)
-        
-        # Extract ceiling samples
-        params <- rstan::extract(self$fit)
-        ceiling_samples <- params$ceiling
-        
-        # Calculate protection: 1 - (prob_infection / ceiling)
-        n_iter <- nrow(prob_infection)
-        n_new <- ncol(prob_infection)
-        prob_protection <- matrix(NA, nrow = n_iter, ncol = n_new)
-        
-        for (i in 1:n_iter) {
-          prob_protection[i, ] <- 1 - (prob_infection[i, ] / ceiling_samples[i])
-        }
-        
-        return(prob_protection)
+      # Get infection probabilities
+      prob_infection <- self$predict(newdata = newdata)
+      
+      # Extract ceiling parameter samples from brms fit
+      posterior_samples <- brms::as_draws_df(self$fit)
+      ceiling_samples <- posterior_samples$b_ceiling_Intercept
+      
+      # Calculate protection: 1 - (prob_infection / ceiling)
+      n_iter <- nrow(prob_infection)
+      n_new <- ncol(prob_infection)
+      prob_protection <- matrix(NA, nrow = n_iter, ncol = n_new)
+      
+      for (i in 1:n_iter) {
+        prob_protection[i, ] <- 1 - (prob_infection[i, ] / ceiling_samples[i])
       }
+      
+      return(prob_protection)
     },
     
     #' @description
@@ -276,9 +276,8 @@ SeroCOP <- R6::R6Class(
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
       
-      summary_df <- as.data.frame(
-        rstan::summary(self$fit, pars = c("floor", "ceiling", "ec50", "slope"))$summary
-      )
+      # Get brms summary for the non-linear parameters
+      summary_df <- as.data.frame(brms::fixef(self$fit))
       
       return(summary_df)
     },
@@ -430,13 +429,14 @@ SeroCOP <- R6::R6Class(
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
       
-      params <- rstan::extract(self$fit, pars = c("floor", "ceiling", "ec50", "slope"))
+      # Extract posterior samples from brms
+      posterior_samples <- brms::as_draws_df(self$fit)
       
       param_df <- data.frame(
-        floor = params$floor,
-        ceiling = params$ceiling,
-        ec50 = params$ec50,
-        slope = params$slope
+        floor = posterior_samples$b_floor_Intercept,
+        ceiling = posterior_samples$b_ceiling_Intercept,
+        ec50 = posterior_samples$b_ec50_Intercept,
+        slope = posterior_samples$b_slope_Intercept
       )
       
       param_long <- tidyr::pivot_longer(
