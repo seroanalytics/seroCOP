@@ -213,31 +213,32 @@ of each option:</p>
 <ul>
 <li>
 <strong><code>floor_alpha</code></strong>: Alpha parameter for the
-Beta prior distribution of the “floor” parameter. Default:
-<code>1</code>.</li>
+Beta prior distribution of the “floor” parameter (proportion of maximum
+risk at high titre). Default: <code>1</code>.</li>
 <li>
 <strong><code>floor_beta</code></strong>: Beta parameter for the
 Beta prior distribution of the “floor” parameter. Default:
-<code>9</code>.</li>
+<code>9</code> (favors low residual risk).</li>
 <li>
 <strong><code>ceiling_alpha</code></strong>: Alpha parameter for the
-Beta prior distribution of the “ceiling” parameter. Default:
-<code>9</code>.</li>
+Beta prior distribution of the “ceiling” parameter (maximum infection
+risk at low titre). Default: <code>9</code>.</li>
 <li>
 <strong><code>ceiling_beta</code></strong>: Beta parameter for the
 Beta prior distribution of the “ceiling” parameter. Default:
-<code>1</code>.</li>
+<code>1</code> (favors high risk at low titre).</li>
 <li>
 <strong><code>ec50_mean</code></strong>: Mean of the Normal prior
-distribution for the <code>ec50</code> parameter. Default: Midpoint of
-the <code>titre</code> range.</li>
+distribution for the <code>ec50</code> parameter (titre at inflection
+point). Default: Midpoint of the <code>titre</code> range.</li>
 <li>
 <strong><code>ec50_sd</code></strong>: Standard deviation of the
 Normal prior distribution for the <code>ec50</code> parameter. Default:
 One-fourth of the <code>titre</code> range.</li>
 <li>
 <strong><code>slope_mean</code></strong>: Mean of the Normal prior
-distribution for the slope parameter. Default: <code>0</code>.</li>
+distribution for the slope parameter (steepness of protective curve).
+Default: <code>0</code>.</li>
 <li>
 <strong><code>slope_sd</code></strong>: Standard deviation of the
 Normal prior distribution for the slope parameter. Default:
@@ -248,8 +249,8 @@ Normal prior distribution for the slope parameter. Default:
 </h4>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span></span>
-<span>  floor_alpha <span class="op">=</span> <span class="fl">2</span>, floor_beta <span class="op">=</span> <span class="fl">18</span>,    <span class="co"># Stronger prior for low floor</span></span>
-<span>  ceiling_alpha <span class="op">=</span> <span class="fl">18</span>, ceiling_beta <span class="op">=</span> <span class="fl">2</span>, <span class="co"># Stronger prior for high ceiling</span></span>
+<span>  floor_alpha <span class="op">=</span> <span class="fl">2</span>, floor_beta <span class="op">=</span> <span class="fl">18</span>,    <span class="co"># Stronger prior for low residual risk (E[floor] ≈ 0.1)</span></span>
+<span>  ceiling_alpha <span class="op">=</span> <span class="fl">18</span>, ceiling_beta <span class="op">=</span> <span class="fl">2</span>, <span class="co"># Stronger prior for high baseline risk (E[ceiling] ≈ 0.9)</span></span>
 <span>  ec50_mean <span class="op">=</span> <span class="fl">1.5</span>, ec50_sd <span class="op">=</span> <span class="fl">0.5</span>,      <span class="co"># Custom ec50 prior</span></span>
 <span>  slope_mean <span class="op">=</span> <span class="fl">0</span>, slope_sd <span class="op">=</span> <span class="fl">1</span>         <span class="co"># More conservative slope</span></span>
 <span><span class="op">)</span></span></code></pre></div>

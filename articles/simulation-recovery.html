@@ -120,16 +120,16 @@ four-parameter logistic curve as a function of antibody titre. The
 parameters we’ll use are:</p>
 <ul>
 <li>
-<strong>floor</strong> = 0.05 (5% minimum infection
-probability)</li>
+<strong>floor</strong> = 0.05 (5% of maximum risk remaining at high
+titre - 95% protection at high titre)</li>
 <li>
-<strong>ceiling</strong> = 0.90 (90% maximum infection
-probability)</li>
+<strong>ceiling</strong> = 0.70 (70% maximum infection probability
+at low titre)</li>
 <li>
-<strong>ec50</strong> = 1.5 (titre at 50% infection
-probability)</li>
+<strong>ec50</strong> = 1.5 (titre at inflection point)</li>
 <li>
-<strong>slope</strong> = 2.0 (steepness of the curve)</li>
+<strong>slope</strong> = 2.0 (steepness of the protective
+curve)</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set parameters for simulation</span></span>
@@ -137,7 +137,7 @@ probability)</li>
 <span></span>
 <span><span class="va">true_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  floor <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  ceiling <span class="op">=</span> <span class="fl">0.90</span>,</span>
+<span>  ceiling <span class="op">=</span> <span class="fl">0.70</span>,</span>
 <span>  ec50 <span class="op">=</span> <span class="fl">1.5</span>,</span>
 <span>  slope <span class="op">=</span> <span class="fl">2.0</span></span>
 <span><span class="op">)</span></span>
@@ -158,7 +158,7 @@ probability)</li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Sample size: %d\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Sample size: 300</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Infection rate: %.1f%%\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">$</span><span class="va">infected</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Infection rate: 39.0%</span></span>
+<span><span class="co">#&gt; Infection rate: 27.3%</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Titre range: [%.2f, %.2f]\n"</span>, </span>
 <span>            <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Titre range: [-2.27, 6.28]</span></span></code></pre></div>
@@ -204,10 +204,10 @@ titre range</li>
 <strong>ec50_sd</strong> is set to titre_range / 4</li>
 <li>
 <strong>floor</strong> ~ Beta(1, 9) - weak prior favoring low
-infection at high titres</li>
+residual risk at high titres (strong protection)</li>
 <li>
 <strong>ceiling</strong> ~ Beta(9, 1) - weak prior favoring high
-infection at low titres</li>
+infection risk at low titres</li>
 <li>
 <strong>slope</strong> ~ Normal(0, 2) - weakly informative,
 truncated at 0</li>
@@ -219,7 +219,7 @@ truncated at 0</li>
 <span>  infected <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">infected</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; SeroCOP initialized with 300 observations</span></span>
-<span><span class="co">#&gt;   Infection rate: 39.0%</span></span>
+<span><span class="co">#&gt;   Infection rate: 27.3%</span></span>
 <span><span class="co">#&gt;   Titre range: [-2.27, 6.28]</span></span>
 <span></span>
 <span><span class="co"># View default priors (automatically set based on data)</span></span>
@@ -253,8 +253,8 @@ truncated at 0</li>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example: Set custom priors (not run in this vignette)</span></span>
 <span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span></span>
-<span>  floor_alpha <span class="op">=</span> <span class="fl">2</span>, floor_beta <span class="op">=</span> <span class="fl">18</span>,      <span class="co"># Stronger prior: E[floor] ≈ 0.1</span></span>
-<span>  ceiling_alpha <span class="op">=</span> <span class="fl">18</span>, ceiling_beta <span class="op">=</span> <span class="fl">2</span>,  <span class="co"># Stronger prior: E[ceiling] ≈ 0.9</span></span>
+<span>  floor_alpha <span class="op">=</span> <span class="fl">2</span>, floor_beta <span class="op">=</span> <span class="fl">18</span>,      <span class="co"># Stronger prior: E[floor] ≈ 0.1 (10% residual risk at high titre)</span></span>
+<span>  ceiling_alpha <span class="op">=</span> <span class="fl">18</span>, ceiling_beta <span class="op">=</span> <span class="fl">2</span>,  <span class="co"># Stronger prior: E[ceiling] ≈ 0.9 (90% risk at low titre)</span></span>
 <span>  ec50_mean <span class="op">=</span> <span class="fl">2.0</span>, ec50_sd <span class="op">=</span> <span class="fl">1.0</span>,        <span class="co"># Informative prior on ec50</span></span>
 <span>  slope_mean <span class="op">=</span> <span class="fl">0</span>, slope_sd <span class="op">=</span> <span class="fl">1</span>           <span class="co"># More conservative slope</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -274,10 +274,7 @@ truncated at 0</li>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span>
-<span><span class="co">#&gt; Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span></span>
-<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#tail-ess</span></span></code></pre></div>
+<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -292,11 +289,11 @@ compare them to the true values:</p>
 <code class="sourceCode R"><span><span class="co"># Get parameter summary</span></span>
 <span><span class="va">param_est</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_parameters.html">extract_parameters</a></span><span class="op">(</span><span class="va">model</span>, prob <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">param_est</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   parameter       mean     median      lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.09642708 0.09786847 0.02485813 0.1676064</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.88623967 0.88434593 0.77492731 0.9929769</span></span>
-<span><span class="co">#&gt; 3      ec50 1.45779155 1.46501599 1.13277387 1.7373545</span></span>
-<span><span class="co">#&gt; 4     slope 2.58401348 2.44805019 1.19778888 4.7727179</span></span>
+<span><span class="co">#&gt;   parameter      mean     median       lower     upper</span></span>
+<span><span class="co">#&gt; 1     floor 0.0786748 0.07047749 0.002937892 0.2026531</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.7920545 0.79384520 0.555198764 0.9920451</span></span>
+<span><span class="co">#&gt; 3      ec50 0.8901055 0.90553122 0.007872437 1.6827384</span></span>
+<span><span class="co">#&gt; 4     slope 1.4031424 1.15488003 0.628554353 3.4710576</span></span>
 <span></span>
 <span><span class="co"># Compare to true values</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nTrue Parameters:\n"</span><span class="op">)</span></span>
@@ -305,7 +302,7 @@ compare them to the true values:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  floor:   %.3f\n"</span>, <span class="va">true_params</span><span class="op">$</span><span class="va">floor</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   floor:   0.050</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  ceiling: %.3f\n"</span>, <span class="va">true_params</span><span class="op">$</span><span class="va">ceiling</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   ceiling: 0.900</span></span>
+<span><span class="co">#&gt;   ceiling: 0.700</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  ec50:    %.3f\n"</span>, <span class="va">true_params</span><span class="op">$</span><span class="va">ec50</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   ec50:    1.500</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  slope:   %.3f\n"</span>, <span class="va">true_params</span><span class="op">$</span><span class="va">slope</span><span class="op">)</span><span class="op">)</span></span>
@@ -350,17 +347,17 @@ compare them to the true values:</p>
 <code class="sourceCode R"><span><span class="co"># Get performance metrics</span></span>
 <span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">get_metrics</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Performance Metrics:</span></span>
-<span><span class="co">#&gt;   ROC AUC: 0.839</span></span>
-<span><span class="co">#&gt;   Brier Score: 0.150</span></span>
-<span><span class="co">#&gt;   LOO ELPD: -145.51 (SE: 9.96)</span></span></code></pre></div>
+<span><span class="co">#&gt;   ROC AUC: 0.760</span></span>
+<span><span class="co">#&gt;   Brier Score: 0.163</span></span>
+<span><span class="co">#&gt;   LOO ELPD: -152.71 (SE: 9.22)</span></span></code></pre></div>
 <p>The model shows good performance:</p>
 <ul>
 <li>
-<strong>ROC AUC</strong>: 0.839 (closer to 1 is better)</li>
+<strong>ROC AUC</strong>: 0.760 (closer to 1 is better)</li>
 <li>
-<strong>Brier Score</strong>: 0.150 (closer to 0 is better)</li>
+<strong>Brier Score</strong>: 0.163 (closer to 0 is better)</li>
 <li>
-<strong>LOO ELPD</strong>: -145.51 (higher is better)</li>
+<strong>LOO ELPD</strong>: -152.71 (higher is better)</li>
 </ul>
 </div>
 <div class="section level2">
@@ -384,9 +381,82 @@ visibility)</li>
 </ul>
 </div>
 <div class="section level3">
+<h3 id="correlate-of-protection">Correlate of Protection<a class="anchor" aria-label="anchor" href="#correlate-of-protection"></a>
+</h3>
+<p>Now let’s extract the correlate of protection directly from the Stan
+model. The correlate of protection is calculated within the model as
+<code>1 - (prob_infection / ceiling)</code>.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Extract protection probabilities directly from Stan model</span></span>
+<span><span class="va">protection_samples</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">correlate_of_protection</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">protection_samples</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Also extract risk for comparison</span></span>
+<span><span class="va">risk_samples</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">correlate_of_risk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">risk_samples</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Display summary</span></span>
+<span><span class="va">summary_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  titre <span class="op">=</span> <span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span>,</span>
+<span>  correlate_of_risk <span class="op">=</span> <span class="va">correlate_of_risk</span>,</span>
+<span>  correlate_of_protection <span class="op">=</span> <span class="va">correlate_of_protection</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">summary_df</span>, <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       titre correlate_of_risk correlate_of_protection</span></span>
+<span><span class="co">#&gt; 1  2.931135        0.12556653               0.8393098</span></span>
+<span><span class="co">#&gt; 2  2.053462        0.20923919               0.7306512</span></span>
+<span><span class="co">#&gt; 3  3.159732        0.11308471               0.8550244</span></span>
+<span><span class="co">#&gt; 4  3.908734        0.08673651               0.8876443</span></span>
+<span><span class="co">#&gt; 5  2.556463        0.15296298               0.8043141</span></span>
+<span><span class="co">#&gt; 6  1.755718        0.25671268               0.6672890</span></span>
+<span><span class="co">#&gt; 7  2.595668        0.14961150               0.8086298</span></span>
+<span><span class="co">#&gt; 8  1.880016        0.23549186               0.6957009</span></span>
+<span><span class="co">#&gt; 9  1.482552        0.30974896               0.5960728</span></span>
+<span><span class="co">#&gt; 10 3.053227        0.11856402               0.8481449</span></span></code></pre></div>
+<div class="section level4">
+<h4 id="correlate-of-protection-curve">Correlate of Protection Curve<a class="anchor" aria-label="anchor" href="#correlate-of-protection-curve"></a>
+</h4>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create prediction grid</span></span>
+<span><span class="va">titre_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Extract protection probabilities from Stan model</span></span>
+<span><span class="va">cop_matrix</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span>newdata <span class="op">=</span> <span class="va">titre_grid</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Calculate summary statistics</span></span>
+<span><span class="va">cop_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">cop_matrix</span><span class="op">)</span></span>
+<span><span class="va">cop_lower</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cop_matrix</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span>
+<span><span class="va">cop_upper</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cop_matrix</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.975</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create plot data</span></span>
+<span><span class="va">cop_plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  titre <span class="op">=</span> <span class="va">titre_grid</span>,</span>
+<span>  cop <span class="op">=</span> <span class="va">cop_mean</span>,</span>
+<span>  lower <span class="op">=</span> <span class="va">cop_lower</span>,</span>
+<span>  upper <span class="op">=</span> <span class="va">cop_upper</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plot</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">cop_plot_df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">cop</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">lower</span>, ymax <span class="op">=</span> <span class="va">upper</span><span class="op">)</span>, fill <span class="op">=</span> <span class="st">"steelblue"</span>, alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"steelblue"</span>, linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title <span class="op">=</span> <span class="st">"Correlate of Protection Curve"</span>,</span>
+<span>    x <span class="op">=</span> <span class="st">"Antibody Titre (log scale)"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"Correlate of Protection"</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span>, face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="simulation-recovery_files/figure-html/plot-cop-curve-1.png" class="r-plt" width="672"></p>
+<p>The correlate of protection curve shows how protection increases with
+antibody titre.</p>
+</div>
+</div>
+<div class="section level3">
 <h3 id="roc-curve">ROC Curve<a class="anchor" aria-label="anchor" href="#roc-curve"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">plot_roc</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="simulation-recovery_files/figure-html/plot-roc-1.png" class="r-plt" width="672"></p>
 </div>
@@ -395,7 +465,7 @@ visibility)</li>
 <h2 id="posterior-predictive-checks">Posterior Predictive Checks<a class="anchor" aria-label="anchor" href="#posterior-predictive-checks"></a>
 </h2>
 <p>Let’s examine the posterior predictive distribution:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get predictions</span></span>
 <span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -439,16 +509,16 @@ visibility)</li>
 </h2>
 <p>The Leave-One-Out Cross-Validation (LOO-CV) provides an estimate of
 out-of-sample predictive performance:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Print LOO details</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">loo</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Computed from 2000 by 300 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -145.5 10.0</span></span>
-<span><span class="co">#&gt; p_loo         3.9  0.4</span></span>
-<span><span class="co">#&gt; looic       291.0 19.9</span></span>
+<span><span class="co">#&gt; elpd_loo   -152.7  9.2</span></span>
+<span><span class="co">#&gt; p_loo         3.4  0.3</span></span>
+<span><span class="co">#&gt; looic       305.4 18.4</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
 <span><span class="co">#&gt; MCSE and ESS estimates assume independent draws (r_eff=1).</span></span>
@@ -486,7 +556,7 @@ through Bayesian inference.</p>
 <div class="section level3">
 <h3 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
@@ -509,17 +579,17 @@ through Bayesian inference.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_4.0.0 seroCOP_0.1.0</span></span>
+<span><span class="co">#&gt; [1] ggplot2_4.0.1 seroCOP_0.1.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] sass_0.4.10           generics_0.1.4        pROC_1.19.0.1        </span></span>
-<span><span class="co">#&gt;  [4] digest_0.6.38         magrittr_2.0.4        evaluate_1.0.5       </span></span>
+<span><span class="co">#&gt;  [4] digest_0.6.39         magrittr_2.0.4        evaluate_1.0.5       </span></span>
 <span><span class="co">#&gt;  [7] grid_4.5.2            RColorBrewer_1.1-3    fastmap_1.2.0        </span></span>
 <span><span class="co">#&gt; [10] jsonlite_2.0.0        processx_3.8.6        pkgbuild_1.4.8       </span></span>
 <span><span class="co">#&gt; [13] ps_1.9.1              gridExtra_2.3         QuickJSR_1.8.1       </span></span>
 <span><span class="co">#&gt; [16] scales_1.4.0          codetools_0.2-20      textshaping_1.0.4    </span></span>
 <span><span class="co">#&gt; [19] jquerylib_0.1.4       cli_3.6.5             rlang_1.1.6          </span></span>
-<span><span class="co">#&gt; [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.10          </span></span>
+<span><span class="co">#&gt; [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.11          </span></span>
 <span><span class="co">#&gt; [25] StanHeaders_2.32.10   tools_4.5.2           rstan_2.32.7         </span></span>
 <span><span class="co">#&gt; [28] inline_0.3.21         parallel_4.5.2        dplyr_1.1.4          </span></span>
 <span><span class="co">#&gt; [31] vctrs_0.6.5           R6_2.6.1              matrixStats_1.5.0    </span></span>
@@ -531,7 +601,7 @@ through Bayesian inference.</p>
 <span><span class="co">#&gt; [49] systemfonts_1.3.1     xfun_0.54             tibble_3.3.0         </span></span>
 <span><span class="co">#&gt; [52] tidyselect_1.2.1      knitr_1.50            farver_2.1.2         </span></span>
 <span><span class="co">#&gt; [55] htmltools_0.5.8.1     rmarkdown_2.30        labeling_0.4.3       </span></span>
-<span><span class="co">#&gt; [58] compiler_4.5.2        S7_0.2.0</span></span></code></pre></div>
+<span><span class="co">#&gt; [58] compiler_4.5.2        S7_0.2.1</span></span></code></pre></div>
 </div>
 </div>
   </div>

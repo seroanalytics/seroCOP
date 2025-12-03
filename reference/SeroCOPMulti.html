@@ -105,6 +105,7 @@ Fits separate models for each biomarker and provides comparison tools.</p>
 <li><p><a href="#method-SeroCOPMulti-compare_biomarkers"><code>SeroCOPMulti$compare_biomarkers()</code></a></p></li>
 <li><p><a href="#method-SeroCOPMulti-plot_comparison"><code>SeroCOPMulti$plot_comparison()</code></a></p></li>
 <li><p><a href="#method-SeroCOPMulti-plot_all_curves"><code>SeroCOPMulti$plot_all_curves()</code></a></p></li>
+<li><p><a href="#method-SeroCOPMulti-extract_cop_multi"><code>SeroCOPMulti$extract_cop_multi()</code></a></p></li>
 <li><p><a href="#method-SeroCOPMulti-clone"><code>SeroCOPMulti$clone()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-SeroCOPMulti-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -220,15 +221,39 @@ Fits separate models for each biomarker and provides comparison tools.</p>
 <p>A ggplot object</p>
 </div>
 
-</div><p></p><hr><a id="method-SeroCOPMulti-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
+</div><p></p><hr><a id="method-SeroCOPMulti-extract_cop_multi"></a><div class="section">
+<h3 id="method-extract-cop-multi-">Method <code>extract_cop_multi()</code><a class="anchor" aria-label="anchor" href="#method-extract-cop-multi-"></a></h3>
+<p>Extract the correlate of protection conditional on exposure for all biomarkers.</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOPMulti</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOPMulti</span><span class="op">$</span><span class="fu">extract_cop_multi</span><span class="op">(</span><span class="va">correlate_of_risk_list</span>, upper_bound <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>correlate_of_risk_list</code></dt>
+<dd><p>List of numeric vectors of correlates of risk for each biomarker.</p></dd>
+
+
+<dt><code>upper_bound</code></dt>
+<dd><p>Numeric value for the upper bound (default: 0.7).</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>List of numeric vectors of correlates of protection for each biomarker.</p>
+</div>
+
+</div><p></p><hr><a id="method-SeroCOPMulti-clone"></a><div class="section">
+<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+<p>The objects of this class are cloneable with this method.</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOPMulti</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

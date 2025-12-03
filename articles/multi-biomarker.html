@@ -131,12 +131,12 @@ effect</li>
 <span><span class="co"># Biomarker 1: Strong CoP (IgG)</span></span>
 <span><span class="co"># High ceiling-floor difference, clear dose-response</span></span>
 <span><span class="va">titre_IgG</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, mean <span class="op">=</span> <span class="fl">2.5</span>, sd <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span></span>
-<span><span class="va">prob_IgG</span> <span class="op">&lt;-</span> <span class="fl">0.02</span> <span class="op">+</span> <span class="fl">0.90</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">2.5</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre_IgG</span> <span class="op">-</span> <span class="fl">2.0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">prob_IgG</span> <span class="op">&lt;-</span> <span class="fl">0.02</span> <span class="op">+</span> <span class="fl">0.68</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">2.5</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre_IgG</span> <span class="op">-</span> <span class="fl">2.0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Biomarker 2: Weak CoP (IgA)  </span></span>
 <span><span class="co"># Moderate ceiling-floor difference, weaker slope</span></span>
 <span><span class="va">titre_IgA</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, mean <span class="op">=</span> <span class="fl">1.8</span>, sd <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span>
-<span><span class="va">prob_IgA</span> <span class="op">&lt;-</span> <span class="fl">0.15</span> <span class="op">+</span> <span class="fl">0.50</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">1.0</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre_IgA</span> <span class="op">-</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">prob_IgA</span> <span class="op">&lt;-</span> <span class="fl">0.15</span> <span class="op">+</span> <span class="fl">0.55</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">1.0</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre_IgA</span> <span class="op">-</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Biomarker 3: No CoP (Non-specific)</span></span>
 <span><span class="co"># No relationship with infection - flat line</span></span>
@@ -157,15 +157,15 @@ effect</li>
 <span></span>
 <span><span class="co"># Store true parameters for later comparison</span></span>
 <span><span class="va">true_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  IgG <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>floor <span class="op">=</span> <span class="fl">0.02</span>, ceiling <span class="op">=</span> <span class="fl">0.92</span>, ec50 <span class="op">=</span> <span class="fl">2.0</span>, slope <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span>,</span>
-<span>  IgA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>floor <span class="op">=</span> <span class="fl">0.15</span>, ceiling <span class="op">=</span> <span class="fl">0.65</span>, ec50 <span class="op">=</span> <span class="fl">1.5</span>, slope <span class="op">=</span> <span class="fl">1.0</span><span class="op">)</span>,</span>
-<span>  Nonspecific <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>floor <span class="op">=</span> <span class="fl">0.35</span>, ceiling <span class="op">=</span> <span class="fl">0.35</span>, ec50 <span class="op">=</span> <span class="fl">3.0</span>, slope <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
+<span>  IgG <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>floor <span class="op">=</span> <span class="fl">0.02</span>, ceiling <span class="op">=</span> <span class="fl">0.70</span>, ec50 <span class="op">=</span> <span class="fl">2.0</span>, slope <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span>,</span>
+<span>  IgA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>floor <span class="op">=</span> <span class="fl">0.15</span>, ceiling <span class="op">=</span> <span class="fl">0.70</span>, ec50 <span class="op">=</span> <span class="fl">1.5</span>, slope <span class="op">=</span> <span class="fl">1.0</span><span class="op">)</span>,</span>
+<span>  Nonspecific <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>floor <span class="op">=</span> <span class="fl">0.35</span>, ceiling <span class="op">=</span> <span class="fl">0.70</span>, ec50 <span class="op">=</span> <span class="fl">3.0</span>, slope <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Simulated %d samples with 3 biomarkers\n"</span>, <span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Simulated 250 samples with 3 biomarkers</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Overall infection rate: %.1f%%\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">infected</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Overall infection rate: 34.8%</span></span></code></pre></div>
+<span><span class="co">#&gt; Overall infection rate: 30.4%</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="visualize-simulated-relationships">Visualize Simulated Relationships<a class="anchor" aria-label="anchor" href="#visualize-simulated-relationships"></a>
 </h3>
@@ -207,7 +207,7 @@ all biomarkers:</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; SeroCOPMulti initialized with 250 observations and 3 biomarkers</span></span>
 <span><span class="co">#&gt;   Biomarkers: IgG, IgA, Nonspecific</span></span>
-<span><span class="co">#&gt;   Infection rate: 34.8%</span></span></code></pre></div>
+<span><span class="co">#&gt;   Infection rate: 30.4%</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fit all models</span></span>
 <span><span class="co"># Note: Using reduced iterations for vignette speed</span></span>
@@ -217,19 +217,12 @@ all biomarkers:</p>
 <span>  warmup <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span></span>
-<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#tail-ess</span></span>
-<span><span class="co">#&gt; Warning: There were 12 divergent transitions after warmup. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></span>
-<span><span class="co">#&gt; to find out why this is a problem and how to eliminate them.</span></span>
-<span><span class="co">#&gt; Warning: Examine the pairs() plot to diagnose sampling problems</span></span>
-<span><span class="co">#&gt; Warning: The largest R-hat is 1.07, indicating chains have not mixed.</span></span>
-<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#r-hat</span></span>
 <span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span></code></pre></div>
+<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span>
+<span><span class="co">#&gt; Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span></span>
+<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
+<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#tail-ess</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="compare-biomarkers">Compare Biomarkers<a class="anchor" aria-label="anchor" href="#compare-biomarkers"></a>
@@ -242,17 +235,127 @@ all biomarkers:</p>
 <p><img src="multi-biomarker_files/figure-html/plot-all-curves-1.png" class="r-plt" width="768"></p>
 </div>
 <div class="section level3">
+<h3 id="correlate-of-protection-for-all-biomarkers">Correlate of Protection for All Biomarkers<a class="anchor" aria-label="anchor" href="#correlate-of-protection-for-all-biomarkers"></a>
+</h3>
+<p>Now let’s extract the correlate of protection directly from the Stan
+model for each biomarker. The protection probability is calculated
+within the model as <code>1 - (prob_infection / ceiling)</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Extract protection probabilities for each biomarker</span></span>
+<span><span class="va">cop_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">biomarker</span> <span class="kw">in</span> <span class="va">multi_model</span><span class="op">$</span><span class="va">biomarker_names</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">model</span> <span class="op">&lt;-</span> <span class="va">multi_model</span><span class="op">$</span><span class="va">models</span><span class="op">[[</span><span class="va">biomarker</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="co"># Get protection probabilities directly from Stan model</span></span>
+<span>  <span class="va">protection_samples</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="va">correlate_of_protection</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">protection_samples</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Also get risk for comparison</span></span>
+<span>  <span class="va">risk_samples</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="va">correlate_of_risk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">risk_samples</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">cop_results</span><span class="op">[[</span><span class="va">biomarker</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    titre <span class="op">=</span> <span class="va">model</span><span class="op">$</span><span class="va">titre</span>,</span>
+<span>    correlate_of_risk <span class="op">=</span> <span class="va">correlate_of_risk</span>,</span>
+<span>    correlate_of_protection <span class="op">=</span> <span class="va">correlate_of_protection</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Display summary for each biomarker</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">biomarker</span> <span class="kw">in</span> <span class="va">multi_model</span><span class="op">$</span><span class="va">biomarker_names</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\n=== %s ===\n"</span>, <span class="va">biomarker</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">cop_results</span><span class="op">[[</span><span class="va">biomarker</span><span class="op">]</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; === IgG ===</span></span>
+<span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
+<span><span class="co">#&gt; 1 3.244908         0.2348300               0.7239202</span></span>
+<span><span class="co">#&gt; 2 2.542770         0.2746595               0.6769958</span></span>
+<span><span class="co">#&gt; 3 3.427785         0.2268588               0.7332975</span></span>
+<span><span class="co">#&gt; 4 4.026987         0.2057507               0.7581256</span></span>
+<span><span class="co">#&gt; 5 2.945171         0.2498480               0.7062435</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; === IgA ===</span></span>
+<span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
+<span><span class="co">#&gt; 1 2.835740         0.2757555               0.6360938</span></span>
+<span><span class="co">#&gt; 2 2.701161         0.2801299               0.6303986</span></span>
+<span><span class="co">#&gt; 3 2.604183         0.2833343               0.6262315</span></span>
+<span><span class="co">#&gt; 4 3.136495         0.2662833               0.6484527</span></span>
+<span><span class="co">#&gt; 5 1.077544         0.3395551               0.5538458</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; === Nonspecific ===</span></span>
+<span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
+<span><span class="co">#&gt; 1 1.706775         0.3493647               0.5267015</span></span>
+<span><span class="co">#&gt; 2 4.967871         0.2714346               0.6296827</span></span>
+<span><span class="co">#&gt; 3 3.522967         0.2975509               0.5936768</span></span>
+<span><span class="co">#&gt; 4 3.957672         0.2889142               0.6054322</span></span>
+<span><span class="co">#&gt; 5 4.374356         0.2813161               0.6159015</span></span></code></pre></div>
+<div class="section level4">
+<h4 id="correlate-of-protection-curves">Correlate of Protection Curves<a class="anchor" aria-label="anchor" href="#correlate-of-protection-curves"></a>
+</h4>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Combine CoP data for all biomarkers</span></span>
+<span><span class="va">cop_plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">multi_model</span><span class="op">$</span><span class="va">biomarker_names</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">biomarker</span> <span class="op">&lt;-</span> <span class="va">multi_model</span><span class="op">$</span><span class="va">biomarker_names</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span>  <span class="va">model</span> <span class="op">&lt;-</span> <span class="va">multi_model</span><span class="op">$</span><span class="va">models</span><span class="op">[[</span><span class="va">biomarker</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="co"># Create prediction grid</span></span>
+<span>  <span class="va">titre_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Extract protection probabilities from Stan model</span></span>
+<span>  <span class="va">cop_matrix</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span>newdata <span class="op">=</span> <span class="va">titre_grid</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Calculate summary statistics</span></span>
+<span>  <span class="va">cop_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">cop_matrix</span><span class="op">)</span></span>
+<span>  <span class="va">cop_lower</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cop_matrix</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span>
+<span>  <span class="va">cop_upper</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cop_matrix</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.975</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">cop_plot_data</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    biomarker <span class="op">=</span> <span class="va">biomarker</span>,</span>
+<span>    titre <span class="op">=</span> <span class="va">titre_grid</span>,</span>
+<span>    cop <span class="op">=</span> <span class="va">cop_mean</span>,</span>
+<span>    lower <span class="op">=</span> <span class="va">cop_lower</span>,</span>
+<span>    upper <span class="op">=</span> <span class="va">cop_upper</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">cop_plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">cop_plot_data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plot all CoP curves</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">cop_plot_df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">cop</span>, color <span class="op">=</span> <span class="va">biomarker</span>, fill <span class="op">=</span> <span class="va">biomarker</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">lower</span>, ymax <span class="op">=</span> <span class="va">upper</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.2</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">biomarker</span>, scales <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title <span class="op">=</span> <span class="st">"Correlate of Protection Curves by Biomarker"</span>,</span>
+<span>    x <span class="op">=</span> <span class="st">"Antibody Titre (log scale)"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"Correlate of Protection"</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span>, face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span>,</span>
+<span>    legend.position <span class="op">=</span> <span class="st">"none"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<p><img src="multi-biomarker_files/figure-html/plot-cop-curves-1.png" class="r-plt" width="768"></p>
+<p>The correlate of protection curves show how protection increases with
+titre for each biomarker.</p>
+</div>
+</div>
+<div class="section level3">
 <h3 id="performance-metrics-comparison">Performance Metrics Comparison<a class="anchor" aria-label="anchor" href="#performance-metrics-comparison"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">comparison</span> <span class="op">&lt;-</span> <span class="va">multi_model</span><span class="op">$</span><span class="fu">compare_biomarkers</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === Biomarker Comparison ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se</span></span>
-<span><span class="co">#&gt;          IgG 0.6582046 0.5829271 0.7334822 0.2072601 -154.1994 6.544413</span></span>
-<span><span class="co">#&gt;          IgA 0.5468585 0.4722618 0.6214551 0.2260122 -162.8842 4.665918</span></span>
-<span><span class="co">#&gt;  Nonspecific 0.5017982 0.4247284 0.5788680 0.2268769 -163.6162 4.660890</span></span></code></pre></div>
+<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2026050 -151.2619 6.859816</span></span>
+<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2106404 -154.7413 5.969839</span></span>
+<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2124826 -156.1723 5.927390</span></span></code></pre></div>
 <p>The comparison table shows:</p>
 <ul>
 <li>
@@ -271,15 +374,15 @@ random</li>
 </h3>
 <p>This plot shows biomarkers positioned by their predictive
 performance:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multi_model</span><span class="op">$</span><span class="fu">plot_comparison</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === Biomarker Comparison ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se</span></span>
-<span><span class="co">#&gt;          IgG 0.6582046 0.5829271 0.7334822 0.2072601 -154.1994 6.544413</span></span>
-<span><span class="co">#&gt;          IgA 0.5468585 0.4722618 0.6214551 0.2260122 -162.8842 4.665918</span></span>
-<span><span class="co">#&gt;  Nonspecific 0.5017982 0.4247284 0.5788680 0.2268769 -163.6162 4.660890</span></span>
+<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2026050 -151.2619 6.859816</span></span>
+<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2106404 -154.7413 5.969839</span></span>
+<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2124826 -156.1723 5.927390</span></span>
 <span><span class="co">#&gt; `height` was translated to `width`.</span></span></code></pre></div>
 <p><img src="multi-biomarker_files/figure-html/plot-comparison-1.png" class="r-plt" width="768"></p>
 <p>Interpretation:</p>
@@ -300,7 +403,7 @@ LOO-ELPD)</li>
 </h2>
 <p>Let’s check if we recovered the true parameters for each
 biomarker:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract parameters for each biomarker</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">biomarker</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IgG"</span>, <span class="st">"IgA"</span>, <span class="st">"Nonspecific"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\n=== %s ===\n"</span>, <span class="va">biomarker</span><span class="op">)</span><span class="op">)</span></span>
@@ -322,30 +425,30 @@ biomarker:</p>
 <span><span class="co">#&gt; === IgG ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
-<span><span class="co">#&gt;   parameter      mean      lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.1719731 0.01995582 0.2858089</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.8729742 0.65037485 0.9961169</span></span>
-<span><span class="co">#&gt; 3      ec50 1.1228755 0.22232689 2.0414593</span></span>
-<span><span class="co">#&gt; 4     slope 1.3597713 0.42230112 3.1277511</span></span>
+<span><span class="co">#&gt;   parameter      mean        lower     upper</span></span>
+<span><span class="co">#&gt; 1     floor 0.1633561  0.009778519 0.3279373</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.8652779  0.602965280 0.9963460</span></span>
+<span><span class="co">#&gt; 3      ec50 0.5415860 -0.907140188 1.8421129</span></span>
+<span><span class="co">#&gt; 4     slope 0.9403615  0.263902168 2.4281221</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.020</span></span>
-<span><span class="co">#&gt;   ceiling: 0.920</span></span>
+<span><span class="co">#&gt;   ceiling: 0.700</span></span>
 <span><span class="co">#&gt;   ec50:    2.000</span></span>
 <span><span class="co">#&gt;   slope:   2.500</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === IgA ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
-<span><span class="co">#&gt;   parameter        mean        lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor  0.08839946  0.002603836 0.3310646</span></span>
-<span><span class="co">#&gt; 2   ceiling  0.79373918  0.522643007 0.9907708</span></span>
-<span><span class="co">#&gt; 3      ec50 -0.07922047 -3.240520644 3.9734660</span></span>
-<span><span class="co">#&gt; 4     slope  0.32865864  0.016487435 1.9151297</span></span>
+<span><span class="co">#&gt;   parameter       mean        lower     upper</span></span>
+<span><span class="co">#&gt; 1     floor  0.1013643  0.002424629 0.3325832</span></span>
+<span><span class="co">#&gt; 2   ceiling  0.7869086  0.513558718 0.9891411</span></span>
+<span><span class="co">#&gt; 3      ec50 -0.5609656 -3.341918391 3.2793951</span></span>
+<span><span class="co">#&gt; 4     slope  0.3880733  0.063200454 1.8025875</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.150</span></span>
-<span><span class="co">#&gt;   ceiling: 0.650</span></span>
+<span><span class="co">#&gt;   ceiling: 0.700</span></span>
 <span><span class="co">#&gt;   ec50:    1.500</span></span>
 <span><span class="co">#&gt;   slope:   1.000</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -353,20 +456,20 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
 <span><span class="co">#&gt;   parameter      mean        lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.1511990  0.002941631 0.3597803</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.7893157  0.539220278 0.9845812</span></span>
-<span><span class="co">#&gt; 3      ec50 1.4381978 -0.913237426 4.8762568</span></span>
-<span><span class="co">#&gt; 4     slope 0.8487359  0.012967226 3.7070817</span></span>
+<span><span class="co">#&gt; 1     floor 0.1554209  0.003067885 0.3771468</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.7684040  0.500451420 0.9898034</span></span>
+<span><span class="co">#&gt; 3      ec50 1.2527973 -1.539557449 5.1231907</span></span>
+<span><span class="co">#&gt; 4     slope 0.8408969  0.008025970 3.8072422</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.350</span></span>
-<span><span class="co">#&gt;   ceiling: 0.350</span></span>
+<span><span class="co">#&gt;   ceiling: 0.700</span></span>
 <span><span class="co">#&gt;   ec50:    3.000</span></span>
 <span><span class="co">#&gt;   slope:   0.010</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="visualize-parameter-recovery">Visualize Parameter Recovery<a class="anchor" aria-label="anchor" href="#visualize-parameter-recovery"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create combined recovery plot</span></span>
 <span><span class="va">recovery_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -425,7 +528,7 @@ biomarker:</p>
 <div class="section level2">
 <h2 id="individual-roc-curves">Individual ROC Curves<a class="anchor" aria-label="anchor" href="#individual-roc-curves"></a>
 </h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Plot ROC curves for each biomarker</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -442,14 +545,14 @@ biomarker:</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">0</span>, b <span class="op">=</span> <span class="fl">1</span>, lty <span class="op">=</span> <span class="fl">2</span>, col <span class="op">=</span> <span class="st">"gray"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p><img src="multi-biomarker_files/figure-html/individual-roc-1.png" class="r-plt" width="768"></p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="cross-validation-results">Cross-Validation Results<a class="anchor" aria-label="anchor" href="#cross-validation-results"></a>
 </h2>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compare LOO-CV across biomarkers</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n=== Leave-One-Out Cross-Validation Comparison ===\n\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -466,9 +569,9 @@ biomarker:</p>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -154.2  6.5</span></span>
-<span><span class="co">#&gt; p_loo         3.0  0.3</span></span>
-<span><span class="co">#&gt; looic       308.4 13.1</span></span>
+<span><span class="co">#&gt; elpd_loo   -151.3  6.9</span></span>
+<span><span class="co">#&gt; p_loo         2.6  0.2</span></span>
+<span><span class="co">#&gt; looic       302.5 13.7</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
 <span><span class="co">#&gt; MCSE and ESS estimates assume independent draws (r_eff=1).</span></span>
@@ -480,10 +583,10 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;          Estimate  SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -162.9 4.7</span></span>
-<span><span class="co">#&gt; p_loo         1.8 0.1</span></span>
-<span><span class="co">#&gt; looic       325.8 9.3</span></span>
+<span><span class="co">#&gt;          Estimate   SE</span></span>
+<span><span class="co">#&gt; elpd_loo   -154.7  6.0</span></span>
+<span><span class="co">#&gt; p_loo         1.8  0.1</span></span>
+<span><span class="co">#&gt; looic       309.5 11.9</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
 <span><span class="co">#&gt; MCSE and ESS estimates assume independent draws (r_eff=1).</span></span>
@@ -495,10 +598,10 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;          Estimate  SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -163.6 4.7</span></span>
-<span><span class="co">#&gt; p_loo         2.0 0.2</span></span>
-<span><span class="co">#&gt; looic       327.2 9.3</span></span>
+<span><span class="co">#&gt;          Estimate   SE</span></span>
+<span><span class="co">#&gt; elpd_loo   -156.2  5.9</span></span>
+<span><span class="co">#&gt; p_loo         2.1  0.2</span></span>
+<span><span class="co">#&gt; looic       312.3 11.9</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
 <span><span class="co">#&gt; MCSE and ESS estimates assume independent draws (r_eff=1).</span></span>
@@ -540,7 +643,7 @@ multiple biomarkers to identify the best correlates of protection.</p>
 <div class="section level3">
 <h3 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
@@ -563,17 +666,17 @@ multiple biomarkers to identify the best correlates of protection.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_4.0.0 seroCOP_0.1.0</span></span>
+<span><span class="co">#&gt; [1] ggplot2_4.0.1 seroCOP_0.1.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] sass_0.4.10           generics_0.1.4        pROC_1.19.0.1        </span></span>
-<span><span class="co">#&gt;  [4] digest_0.6.38         magrittr_2.0.4        evaluate_1.0.5       </span></span>
+<span><span class="co">#&gt;  [4] digest_0.6.39         magrittr_2.0.4        evaluate_1.0.5       </span></span>
 <span><span class="co">#&gt;  [7] grid_4.5.2            RColorBrewer_1.1-3    fastmap_1.2.0        </span></span>
 <span><span class="co">#&gt; [10] jsonlite_2.0.0        processx_3.8.6        pkgbuild_1.4.8       </span></span>
 <span><span class="co">#&gt; [13] ps_1.9.1              gridExtra_2.3         QuickJSR_1.8.1       </span></span>
 <span><span class="co">#&gt; [16] scales_1.4.0          codetools_0.2-20      textshaping_1.0.4    </span></span>
 <span><span class="co">#&gt; [19] jquerylib_0.1.4       cli_3.6.5             rlang_1.1.6          </span></span>
-<span><span class="co">#&gt; [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.10          </span></span>
+<span><span class="co">#&gt; [22] withr_3.0.2           cachem_1.1.0          yaml_2.3.11          </span></span>
 <span><span class="co">#&gt; [25] StanHeaders_2.32.10   tools_4.5.2           rstan_2.32.7         </span></span>
 <span><span class="co">#&gt; [28] inline_0.3.21         parallel_4.5.2        dplyr_1.1.4          </span></span>
 <span><span class="co">#&gt; [31] vctrs_0.6.5           R6_2.6.1              matrixStats_1.5.0    </span></span>
@@ -585,7 +688,7 @@ multiple biomarkers to identify the best correlates of protection.</p>
 <span><span class="co">#&gt; [49] systemfonts_1.3.1     xfun_0.54             tibble_3.3.0         </span></span>
 <span><span class="co">#&gt; [52] tidyselect_1.2.1      knitr_1.50            farver_2.1.2         </span></span>
 <span><span class="co">#&gt; [55] htmltools_0.5.8.1     rmarkdown_2.30        labeling_0.4.3       </span></span>
-<span><span class="co">#&gt; [58] compiler_4.5.2        S7_0.2.0</span></span></code></pre></div>
+<span><span class="co">#&gt; [58] compiler_4.5.2        S7_0.2.1</span></span></code></pre></div>
 </div>
 </div>
   </div>
