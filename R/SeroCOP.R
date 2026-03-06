@@ -58,14 +58,20 @@ SeroCOP <- R6::R6Class(
     
     #' @field priors List of prior distributions for model parameters
     priors = NULL,
+
+    #' @field weights Optional numeric vector of observation weights
+    weights = NULL,
     
     #' @description
     #' Create a new SeroCOP object
     #' @param titre Numeric vector of antibody titres
     #' @param infected Binary vector (0/1) of infection outcomes
     #' @param group Optional factor or character vector for grouping (e.g., age groups)
+    #' @param weights Optional numeric vector of non-negative observation weights.
+    #'   When supplied, a weighted Bernoulli likelihood is used. If \code{NULL}
+    #'   (the default) all observations are given equal weight.
     #' @return A new SeroCOP object
-    initialize = function(titre, infected, group = NULL) {
+    initialize = function(titre, infected, group = NULL, weights = NULL) {
       # Validate inputs
       if (!is.numeric(titre)) {
         stop("titre must be numeric")
@@ -78,6 +84,23 @@ SeroCOP <- R6::R6Class(
       }
       if (any(is.na(titre)) || any(is.na(infected))) {
         stop("Missing values are not allowed")
+      }
+
+      # Validate weights if provided
+      if (!is.null(weights)) {
+        if (!is.numeric(weights)) {
+          stop("weights must be numeric")
+        }
+        if (length(weights) != length(titre)) {
+          stop("weights must have the same length as titre")
+        }
+        if (any(is.na(weights))) {
+          stop("Missing values in weights are not allowed")
+        }
+        if (any(weights < 0)) {
+          stop("weights must be non-negative")
+        }
+        self$weights <- weights
       }
       
       # Validate group if provided
@@ -102,6 +125,10 @@ SeroCOP <- R6::R6Class(
         message(sprintf("  Groups: %d levels (%s)", 
                        nlevels(self$group), 
                        paste(levels(self$group), collapse = ", ")))
+      }
+      if (!is.null(self$weights)) {
+        message(sprintf("  Weights: supplied (range [%.3g, %.3g], mean %.3g)",
+                        min(self$weights), max(self$weights), mean(self$weights)))
       }
       message(sprintf("  Infection rate: %.1f%%", mean(infected) * 100))
       message(sprintf("  Titre range: [%.2f, %.2f]", min(titre), max(titre)))
@@ -178,6 +205,14 @@ SeroCOP <- R6::R6Class(
         infected = self$infected,
         titre = self$titre
       )
+
+      # Add observation weights if provided
+      weighted <- FALSE
+      if (!is.null(self$weights)) {
+        model_data$obs_weights <- self$weights
+        weighted <- TRUE
+        message("  Using weighted Bernoulli likelihood\n")
+      }
       
       # Add group if provided
       hierarchical <- FALSE
@@ -206,11 +241,16 @@ SeroCOP <- R6::R6Class(
       )
       
       # Define the non-linear formula (with or without hierarchical effects)
+      # Build LHS: add weights term when supplied
+      lhs <- if (weighted) "infected | weights(obs_weights)" else "infected"
+      rhs <- "ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor)"
+      nl_formula <- stats::as.formula(paste(lhs, "~", rhs))
+
       if (hierarchical) {
         message("  Adding group-level effects on slope and ec50\n")
         # Hierarchical formula: group-level effects on slope and ec50
         formula <- brms::bf(
-          infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
+          nl_formula,
           floor ~ 1,
           ceiling ~ 1,
           ec50 ~ 1 + (1 | group),      # Random intercept for ec50
@@ -227,7 +267,7 @@ SeroCOP <- R6::R6Class(
       } else {
         # Non-hierarchical formula
         formula <- brms::bf(
-          infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor),
+          nl_formula,
           floor ~ 1,
           ceiling ~ 1,
           ec50 ~ 1,

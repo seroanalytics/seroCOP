@@ -77,6 +77,8 @@ model$definePrior(
 \item{\code{loo}}{LOO-CV object (after fitting)}
 
 \item{\code{priors}}{List of prior distributions for model parameters}
+
+\item{\code{weights}}{Optional numeric vector of observation weights}
 }
 \if{html}{\out{</div>}}
 }
@@ -105,7 +107,7 @@ model$definePrior(
 \subsection{Method \code{new()}}{
 Create a new SeroCOP object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$new(titre, infected, group = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$new(titre, infected, group = NULL, weights = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -116,6 +118,10 @@ Create a new SeroCOP object
 \item{\code{infected}}{Binary vector (0/1) of infection outcomes}
 
 \item{\code{group}}{Optional factor or character vector for grouping (e.g., age groups)}
+
+\item{\code{weights}}{Optional numeric vector of non-negative observation weights.
+  When supplied, a weighted Bernoulli likelihood is used.
+  If \code{NULL} (the default) all observations receive equal weight.}
 }
 \if{html}{\out{</div>}}
 }

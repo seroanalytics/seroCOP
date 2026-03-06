@@ -44,6 +44,8 @@ hier_model$extract_group_parameters()
 \item{\code{models}}{List of fitted SeroCOP objects}
 
 \item{\code{group}}{Optional factor vector for hierarchical modeling}
+
+\item{\code{weights}}{Optional numeric vector of observation weights}
 }
 \if{html}{\out{</div>}}
 }
@@ -67,7 +69,13 @@ hier_model$extract_group_parameters()
 \subsection{Method \code{new()}}{
 Create a new SeroCOPMulti object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOPMulti$new(titre, infected, biomarker_names = NULL, group = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOPMulti$new(
+  titre,
+  infected,
+  biomarker_names = NULL,
+  group = NULL,
+  weights = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -80,6 +88,11 @@ Create a new SeroCOPMulti object
 \item{\code{biomarker_names}}{Optional vector of biomarker names}
 
 \item{\code{group}}{Optional grouping variable for hierarchical modeling}
+
+\item{\code{weights}}{Optional numeric vector of non-negative observation weights.
+  When supplied, a weighted Bernoulli likelihood is used for each
+  biomarker sub-model. If \code{NULL} (the default) all observations
+  receive equal weight.}
 }
 \if{html}{\out{</div>}}
 }

@@ -47,15 +47,22 @@ SeroCOPMulti <- R6::R6Class(
     
     #' @field group Optional factor vector for hierarchical modeling
     group = NULL,
-    
+
+    #' @field weights Optional numeric vector of observation weights
+    weights = NULL,
+
     #' @description
     #' Create a new SeroCOPMulti object
     #' @param titre Matrix of antibody titres (rows = samples, cols = biomarkers)
     #' @param infected Binary vector (0/1) of infection outcomes
     #' @param biomarker_names Optional vector of biomarker names
     #' @param group Optional grouping variable for hierarchical modeling
+    #' @param weights Optional numeric vector of non-negative observation weights.
+    #'   When supplied, a weighted Bernoulli likelihood is used for every
+    #'   biomarker sub-model. If \code{NULL} (the default) all observations
+    #'   are given equal weight.
     #' @return A new SeroCOPMulti object
-    initialize = function(titre, infected, biomarker_names = NULL, group = NULL) {
+    initialize = function(titre, infected, biomarker_names = NULL, group = NULL, weights = NULL) {
       # Convert to matrix if needed
       if (is.vector(titre)) {
         titre <- matrix(titre, ncol = 1)
@@ -84,6 +91,25 @@ SeroCOPMulti <- R6::R6Class(
       self$titre <- titre
       self$infected <- infected
       
+      # Validate and store weights if provided
+      if (!is.null(weights)) {
+        if (!is.numeric(weights)) {
+          stop("weights must be numeric")
+        }
+        if (length(weights) != nrow(titre)) {
+          stop("Length of weights must equal number of rows in titre")
+        }
+        if (any(is.na(weights))) {
+          stop("Missing values in weights are not allowed")
+        }
+        if (any(weights < 0)) {
+          stop("weights must be non-negative")
+        }
+        self$weights <- weights
+        message(sprintf("  Weights: supplied (range [%.3g, %.3g], mean %.3g)",
+                        min(weights), max(weights), mean(weights)))
+      }
+
       # Handle group variable for hierarchical modeling
       if (!is.null(group)) {
         if (length(group) != nrow(titre)) {
@@ -144,7 +170,8 @@ SeroCOPMulti <- R6::R6Class(
         model <- SeroCOP$new(
           titre = self$titre[, i],
           infected = self$infected,
-          group = self$group  # Pass group for hierarchical modeling
+          group = self$group,  # Pass group for hierarchical modeling
+          weights = self$weights  # Pass weights (NULL if not supplied)
         )
         
         # Fit the model
