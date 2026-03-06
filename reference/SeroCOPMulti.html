@@ -102,7 +102,7 @@ Supports hierarchical modeling with group-level effects.</p>
 
 
 <dt><code>weights</code></dt>
-<dd><p>Optional numeric vector of observation weights</p></dd>
+<dd><p>Optional numeric matrix of observation weights (rows = observations, cols = biomarkers)</p></dd>
 
 
 </dl><p></p></div>
@@ -154,10 +154,12 @@ Supports hierarchical modeling with group-level effects.</p>
 
 
 <dt><code>weights</code></dt>
-<dd><p>Optional numeric vector of non-negative observation weights.
-  When supplied, a weighted Bernoulli likelihood is used for each
-  biomarker sub-model. If <code>NULL</code> (the default) all observations
-  receive equal weight.</p></dd>
+<dd><p>Optional numeric matrix of non-negative observation weights with
+  the same dimensions as <code>titre</code>. Column <code>i</code> is passed as per-observation
+  weights for biomarker <code>i</code>, multiplying each observation's log-likelihood
+  contribution in the Stan model. A plain vector of length <code>nrow(titre)</code> is
+  also accepted and broadcast across all biomarkers.
+  If <code>NULL</code> (the default) all observations receive equal weight.</p></dd>
 
 
 </dl><p></p></div>

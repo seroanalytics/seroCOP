@@ -252,12 +252,12 @@ group-specific deviations:</p>
 <span><span class="va">group_params</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">group_params</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    group parameter      mean    median        sd        q025     q975</span></span>
-<span><span class="co">#&gt; 1 Middle      ec50 0.6405409 0.6390613 0.8762769 -1.11439181 2.323976</span></span>
-<span><span class="co">#&gt; 2 Middle     slope 1.1521118 0.8681711 1.0026434  0.38638697 4.135096</span></span>
-<span><span class="co">#&gt; 3    Old      ec50 1.3124618 1.2088511 1.2496108 -0.74596164 4.142903</span></span>
-<span><span class="co">#&gt; 4    Old     slope 0.5455005 0.4056623 0.6015624  0.05877584 2.046851</span></span>
-<span><span class="co">#&gt; 5  Young      ec50 0.6103011 0.7324318 0.6729391 -0.93276691 1.608088</span></span>
-<span><span class="co">#&gt; 6  Young     slope 2.1677195 1.7099582 1.5965171  0.55708343 6.231649</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 Middle      ec50 0.6751251 0.6970675 0.8216176 -1.03383083 2.182794</span></span>
+<span><span class="co">#&gt; 2 Middle     slope 1.1876256 0.8967312 1.1424993  0.39440876 4.225539</span></span>
+<span><span class="co">#&gt; 3    Old      ec50 1.2567569 1.1545897 1.1250230 -0.85891889 3.736645</span></span>
+<span><span class="co">#&gt; 4    Old     slope 0.4976774 0.3965877 0.4686220  0.08377631 1.567158</span></span>
+<span><span class="co">#&gt; 5  Young      ec50 0.6478719 0.7629551 0.6320537 -0.83053563 1.600603</span></span>
+<span><span class="co">#&gt; 6  Young     slope 2.2411552 1.8338174 1.5044853  0.58477472 6.100427</span></span></code></pre></div>
 <p>The table shows:</p>
 <ul>
 <li>
@@ -332,15 +332,15 @@ fit:</p>
 <span><span class="co">#&gt; === Model Comparison (LOO-CV) ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Hierarchical model ELPD: %.2f (SE: %.2f)\n"</span>, </span>
 <span>           <span class="va">hier_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Hierarchical model ELPD: -119.99 (SE: 8.30)</span></span>
+<span><span class="co">#&gt; Hierarchical model ELPD: -119.59 (SE: 8.32)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Pooled model ELPD:       %.2f (SE: %.2f)\n"</span>, </span>
 <span>           <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Pooled model ELPD:       -123.08 (SE: 8.29)</span></span>
+<span><span class="co">#&gt; Pooled model ELPD:       -123.07 (SE: 8.29)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\nDifference: %.2f (SE: %.2f)\n"</span>, <span class="va">loo_diff</span>, <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Difference: 3.09 (SE: 11.73)</span></span>
+<span><span class="co">#&gt; Difference: 3.48 (SE: 11.75)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Z-score: %.2f\n"</span>, <span class="va">loo_diff</span> <span class="op">/</span> <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Z-score: 0.26</span></span>
+<span><span class="co">#&gt; Z-score: 0.30</span></span>
 <span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">loo_diff</span> <span class="op">&gt;</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">loo_se</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n✓ Strong evidence favoring hierarchical model\n"</span><span class="op">)</span></span>

@@ -220,13 +220,6 @@ all biomarkers:</p>
 <span>  warmup <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span></span>
-<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#tail-ess</span></span>
-<span><span class="co">#&gt; Warning: There were 6 divergent transitions after warmup. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></span>
-<span><span class="co">#&gt; to find out why this is a problem and how to eliminate them.</span></span>
-<span><span class="co">#&gt; Warning: Examine the pairs() plot to diagnose sampling problems</span></span>
 <span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
 <span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span>
@@ -280,27 +273,27 @@ within the model as <code>1 - (prob_infection / ceiling)</code>.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === IgG ===</span></span>
 <span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
-<span><span class="co">#&gt; 1 3.244908         0.2350993               0.7241534</span></span>
-<span><span class="co">#&gt; 2 2.542770         0.2745879               0.6777537</span></span>
-<span><span class="co">#&gt; 3 3.427785         0.2271960               0.7334393</span></span>
-<span><span class="co">#&gt; 4 4.026987         0.2062438               0.7580863</span></span>
-<span><span class="co">#&gt; 5 2.945171         0.2499843               0.7066689</span></span>
+<span><span class="co">#&gt; 1 3.244908         0.2364666               0.7223901</span></span>
+<span><span class="co">#&gt; 2 2.542770         0.2754423               0.6766729</span></span>
+<span><span class="co">#&gt; 3 3.427785         0.2287129               0.7314694</span></span>
+<span><span class="co">#&gt; 4 4.026987         0.2082517               0.7554199</span></span>
+<span><span class="co">#&gt; 5 2.945171         0.2511160               0.7052245</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === IgA ===</span></span>
 <span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
-<span><span class="co">#&gt; 1 2.835740         0.2748820               0.6365828</span></span>
-<span><span class="co">#&gt; 2 2.701161         0.2792596               0.6308719</span></span>
-<span><span class="co">#&gt; 3 2.604183         0.2824677               0.6266921</span></span>
-<span><span class="co">#&gt; 4 3.136495         0.2654109               0.6489665</span></span>
-<span><span class="co">#&gt; 5 1.077544         0.3388471               0.5540012</span></span>
+<span><span class="co">#&gt; 1 2.835740         0.2770538               0.6338361</span></span>
+<span><span class="co">#&gt; 2 2.701161         0.2812786               0.6283589</span></span>
+<span><span class="co">#&gt; 3 2.604183         0.2843735               0.6243526</span></span>
+<span><span class="co">#&gt; 4 3.136495         0.2679048               0.6457309</span></span>
+<span><span class="co">#&gt; 5 1.077544         0.3387245               0.5547959</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === Nonspecific ===</span></span>
 <span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
-<span><span class="co">#&gt; 1 1.706775         0.3542919               0.5070754</span></span>
-<span><span class="co">#&gt; 2 4.967871         0.2725439               0.6163766</span></span>
-<span><span class="co">#&gt; 3 3.522967         0.3024546               0.5751616</span></span>
-<span><span class="co">#&gt; 4 3.957672         0.2927348               0.5884239</span></span>
-<span><span class="co">#&gt; 5 4.374356         0.2840306               0.6004114</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 1.706775         0.3543644               0.5068290</span></span>
+<span><span class="co">#&gt; 2 4.967871         0.2692623               0.6217700</span></span>
+<span><span class="co">#&gt; 3 3.522967         0.3004423               0.5786341</span></span>
+<span><span class="co">#&gt; 4 3.957672         0.2903202               0.5925361</span></span>
+<span><span class="co">#&gt; 5 4.374356         0.2812439               0.6050875</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="correlate-of-protection-curves">Correlate of Protection Curves<a class="anchor" aria-label="anchor" href="#correlate-of-protection-curves"></a>
 </h4>
@@ -363,9 +356,9 @@ titre for each biomarker.</p>
 <span><span class="co">#&gt; === Biomarker Comparison ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se</span></span>
-<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2026009 -151.3703 6.859041</span></span>
-<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2106273 -154.8565 6.003689</span></span>
-<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2126321 -156.0305 5.772234</span></span></code></pre></div>
+<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2025819 -151.3406 6.809398</span></span>
+<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2105973 -154.9310 5.961846</span></span>
+<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2126666 -156.0876 5.835013</span></span></code></pre></div>
 <p>The comparison table shows:</p>
 <ul>
 <li>
@@ -390,9 +383,9 @@ performance:</p>
 <span><span class="co">#&gt; === Biomarker Comparison ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se</span></span>
-<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2026009 -151.3703 6.859041</span></span>
-<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2106273 -154.8565 6.003689</span></span>
-<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2126321 -156.0305 5.772234</span></span>
+<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2025819 -151.3406 6.809398</span></span>
+<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2105973 -154.9310 5.961846</span></span>
+<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2126666 -156.0876 5.835013</span></span>
 <span><span class="co">#&gt; `height` was translated to `width`.</span></span></code></pre></div>
 <p><img src="multi-biomarker_files/figure-html/plot-comparison-1.png" class="r-plt" alt="" width="768"></p>
 <p>Interpretation:</p>
@@ -436,10 +429,10 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
 <span><span class="co">#&gt;   parameter      mean        lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.1616683  0.008192773 0.3272066</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.8681148  0.596231967 0.9962787</span></span>
-<span><span class="co">#&gt; 3      ec50 0.5459283 -0.968787835 2.0079843</span></span>
-<span><span class="co">#&gt; 4     slope 0.9386756  0.259109811 2.4807317</span></span>
+<span><span class="co">#&gt; 1     floor 0.1669707  0.007365164 0.3292052</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.8675695  0.608399940 0.9941804</span></span>
+<span><span class="co">#&gt; 3      ec50 0.5362243 -1.061514895 1.9445036</span></span>
+<span><span class="co">#&gt; 4     slope 0.9496260  0.243386923 2.3426238</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.020</span></span>
@@ -451,10 +444,10 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
 <span><span class="co">#&gt;   parameter       mean        lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor  0.1035914  0.003891235 0.3316412</span></span>
-<span><span class="co">#&gt; 2   ceiling  0.7863336  0.507612454 0.9884916</span></span>
-<span><span class="co">#&gt; 3      ec50 -0.5295618 -3.466948708 3.4337003</span></span>
-<span><span class="co">#&gt; 4     slope  0.3909373  0.051726941 1.9641530</span></span>
+<span><span class="co">#&gt; 1     floor  0.1007791  0.002557078 0.3354787</span></span>
+<span><span class="co">#&gt; 2   ceiling  0.7877007  0.503167614 0.9906825</span></span>
+<span><span class="co">#&gt; 3      ec50 -0.5692617 -3.563215138 3.6810402</span></span>
+<span><span class="co">#&gt; 4     slope  0.3900120  0.053158214 2.0936205</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.150</span></span>
@@ -465,11 +458,11 @@ biomarker:</p>
 <span><span class="co">#&gt; === Nonspecific ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
-<span><span class="co">#&gt;   parameter      mean       lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.1259018  0.00293369 0.3618288</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.7434147  0.49813216 0.9829608</span></span>
-<span><span class="co">#&gt; 3      ec50 1.4344001 -1.40706556 5.0187850</span></span>
-<span><span class="co">#&gt; 4     slope 0.5810807  0.01019262 3.2236936</span></span>
+<span><span class="co">#&gt;   parameter      mean        lower     upper</span></span>
+<span><span class="co">#&gt; 1     floor 0.1244972  0.002211754 0.3677708</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.7416855  0.506019227 0.9797891</span></span>
+<span><span class="co">#&gt; 3      ec50 1.4075104 -1.268568863 4.8941903</span></span>
+<span><span class="co">#&gt; 4     slope 0.5858958  0.013517063 3.1631598</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.350</span></span>
@@ -579,12 +572,12 @@ biomarker:</p>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -151.4  6.9</span></span>
+<span><span class="co">#&gt; elpd_loo   -151.3  6.8</span></span>
 <span><span class="co">#&gt; p_loo         2.7  0.2</span></span>
-<span><span class="co">#&gt; looic       302.7 13.7</span></span>
+<span><span class="co">#&gt; looic       302.7 13.6</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.1.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 0.8]).</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 0.6]).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span>
@@ -595,11 +588,11 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
 <span><span class="co">#&gt; elpd_loo   -154.9  6.0</span></span>
-<span><span class="co">#&gt; p_loo         1.9  0.1</span></span>
-<span><span class="co">#&gt; looic       309.7 12.0</span></span>
+<span><span class="co">#&gt; p_loo         2.0  0.2</span></span>
+<span><span class="co">#&gt; looic       309.9 11.9</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 0.9]).</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.4, 0.9]).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span>
@@ -609,12 +602,12 @@ biomarker:</p>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -156.0  5.8</span></span>
+<span><span class="co">#&gt; elpd_loo   -156.1  5.8</span></span>
 <span><span class="co">#&gt; p_loo         1.9  0.1</span></span>
-<span><span class="co">#&gt; looic       312.1 11.5</span></span>
+<span><span class="co">#&gt; looic       312.2 11.7</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.1.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.1, 0.5]).</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.1, 0.7]).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span></code></pre></div>
