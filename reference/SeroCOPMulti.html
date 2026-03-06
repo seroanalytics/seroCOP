@@ -101,6 +101,10 @@ Supports hierarchical modeling with group-level effects.</p>
 <dd><p>Optional factor vector for hierarchical modeling</p></dd>
 
 
+<dt><code>weights</code></dt>
+<dd><p>Optional numeric vector of observation weights</p></dd>
+
+
 </dl><p></p></div>
     </div>
     <div id="methods">
@@ -122,7 +126,13 @@ Supports hierarchical modeling with group-level effects.</p>
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a new SeroCOPMulti object</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">titre</span>, <span class="va">infected</span>, biomarker_names <span class="op">=</span> <span class="cn">NULL</span>, group <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  <span class="va">titre</span>,</span>
+<span>  <span class="va">infected</span>,</span>
+<span>  biomarker_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  weights <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -141,6 +151,13 @@ Supports hierarchical modeling with group-level effects.</p>
 
 <dt><code>group</code></dt>
 <dd><p>Optional grouping variable for hierarchical modeling</p></dd>
+
+
+<dt><code>weights</code></dt>
+<dd><p>Optional numeric vector of non-negative observation weights.
+  When supplied, a weighted Bernoulli likelihood is used for each
+  biomarker sub-model. If <code>NULL</code> (the default) all observations
+  receive equal weight.</p></dd>
 
 
 </dl><p></p></div>
