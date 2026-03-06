@@ -45,7 +45,7 @@ hier_model$extract_group_parameters()
 
 \item{\code{group}}{Optional factor vector for hierarchical modeling}
 
-\item{\code{weights}}{Optional numeric vector of observation weights}
+\item{\code{weights}}{Optional numeric matrix of observation weights (rows = observations, cols = biomarkers)}
 }
 \if{html}{\out{</div>}}
 }
@@ -89,10 +89,12 @@ Create a new SeroCOPMulti object
 
 \item{\code{group}}{Optional grouping variable for hierarchical modeling}
 
-\item{\code{weights}}{Optional numeric vector of non-negative observation weights.
-  When supplied, a weighted Bernoulli likelihood is used for each
-  biomarker sub-model. If \code{NULL} (the default) all observations
-  receive equal weight.}
+\item{\code{weights}}{Optional numeric matrix of non-negative observation weights with
+  the same dimensions as \code{titre}. Column \code{i} is passed as per-observation
+  weights for biomarker \code{i}, multiplying each observation's log-likelihood
+  contribution in the Stan model. A plain vector of length \code{nrow(titre)} is
+  also accepted and broadcast across all biomarkers.
+  If \code{NULL} (the default) all observations receive equal weight.}
 }
 \if{html}{\out{</div>}}
 }

@@ -48,7 +48,8 @@ SeroCOPMulti <- R6::R6Class(
     #' @field group Optional factor vector for hierarchical modeling
     group = NULL,
 
-    #' @field weights Optional numeric vector of observation weights
+    #' @field weights Optional numeric matrix of observation weights (rows = observations,
+    #'   cols = biomarkers). Column \code{i} is passed to the \code{i}th biomarker model.
     weights = NULL,
 
     #' @description
@@ -57,10 +58,13 @@ SeroCOPMulti <- R6::R6Class(
     #' @param infected Binary vector (0/1) of infection outcomes
     #' @param biomarker_names Optional vector of biomarker names
     #' @param group Optional grouping variable for hierarchical modeling
-    #' @param weights Optional numeric vector of non-negative observation weights.
-    #'   When supplied, a weighted Bernoulli likelihood is used for every
-    #'   biomarker sub-model. If \code{NULL} (the default) all observations
-    #'   are given equal weight.
+    #' @param weights Optional numeric matrix of non-negative observation weights with
+    #'   the same dimensions as \code{titre} (rows = observations, cols = biomarkers).
+    #'   Column \code{i} is used as the per-observation weights for biomarker \code{i},
+    #'   multiplying each observation's log-likelihood contribution in the Stan model.
+    #'   A single vector of length \code{nrow(titre)} is also accepted and is broadcast
+    #'   across all biomarkers. If \code{NULL} (the default) all observations receive
+    #'   equal weight.
     #' @return A new SeroCOPMulti object
     initialize = function(titre, infected, biomarker_names = NULL, group = NULL, weights = NULL) {
       # Convert to matrix if needed
@@ -96,8 +100,16 @@ SeroCOPMulti <- R6::R6Class(
         if (!is.numeric(weights)) {
           stop("weights must be numeric")
         }
-        if (length(weights) != nrow(titre)) {
-          stop("Length of weights must equal number of rows in titre")
+        # Accept a plain vector and broadcast it across all biomarkers
+        if (is.vector(weights)) {
+          if (length(weights) != nrow(titre)) {
+            stop("A vector of weights must have length equal to nrow(titre)")
+          }
+          weights <- matrix(weights, nrow = nrow(titre), ncol = ncol(titre))
+        }
+        weights <- as.matrix(weights)
+        if (!identical(dim(weights), dim(titre))) {
+          stop("weights must have the same dimensions as titre (rows = observations, cols = biomarkers)")
         }
         if (any(is.na(weights))) {
           stop("Missing values in weights are not allowed")
@@ -106,8 +118,8 @@ SeroCOPMulti <- R6::R6Class(
           stop("weights must be non-negative")
         }
         self$weights <- weights
-        message(sprintf("  Weights: supplied (range [%.3g, %.3g], mean %.3g)",
-                        min(weights), max(weights), mean(weights)))
+        message(sprintf("  Weights: supplied as %d x %d matrix (range [%.3g, %.3g])",
+                        nrow(weights), ncol(weights), min(weights), max(weights)))
       }
 
       # Handle group variable for hierarchical modeling
@@ -167,11 +179,13 @@ SeroCOPMulti <- R6::R6Class(
         message(sprintf("=== Fitting %s (%d/%d) ===", biomarker, i, n_biomarkers))
         
         # Create individual SeroCOP model (with or without group)
+        # Pass the i-th column of the weights matrix (NULL if no weights supplied)
+        biomarker_weights <- if (!is.null(self$weights)) self$weights[, i] else NULL
         model <- SeroCOP$new(
           titre = self$titre[, i],
           infected = self$infected,
-          group = self$group,  # Pass group for hierarchical modeling
-          weights = self$weights  # Pass weights (NULL if not supplied)
+          group = self$group,
+          weights = biomarker_weights
         )
         
         # Fit the model
