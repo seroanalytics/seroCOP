@@ -254,13 +254,16 @@ group-specific deviations:</p>
 <code class="sourceCode R"><span><span class="co"># Extract group-specific estimates</span></span>
 <span><span class="va">group_params</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">group_params</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    group parameter      mean    median        sd        q025     q975</span></span>
-<span><span class="co">#&gt; 1 Middle      ec50 0.6928441 0.6896699 0.8399503 -1.03692875 2.263926</span></span>
-<span><span class="co">#&gt; 2 Middle     slope 1.2786158 0.8960131 1.7064126  0.39470380 4.916474</span></span>
-<span><span class="co">#&gt; 3    Old      ec50 1.3419453 1.2567962 1.1769834 -0.89383479 3.714378</span></span>
-<span><span class="co">#&gt; 4    Old     slope 0.5358810 0.4182317 0.5308947  0.09559395 1.765156</span></span>
-<span><span class="co">#&gt; 5  Young      ec50 0.6413999 0.7731695 0.6524016 -0.89612557 1.620707</span></span>
-<span><span class="co">#&gt; 6  Young     slope 2.2796920 1.8633320 1.6158331  0.56209917 6.292798</span></span></code></pre></div>
+<span><span class="co">#&gt;    group parameter      mean    median        sd       q025     q975</span></span>
+<span><span class="co">#&gt; 1 Middle   ceiling 0.6258615 0.6001679 0.1810434  0.3351707 1.000000</span></span>
+<span><span class="co">#&gt; 2 Middle      ec50 1.2208834 1.3509744 1.0489945 -1.0505385 2.897496</span></span>
+<span><span class="co">#&gt; 3 Middle     slope 1.9026316 1.2140542 1.8379125  0.3977485 6.758034</span></span>
+<span><span class="co">#&gt; 4    Old   ceiling 0.7671251 0.7732928 0.1572387  0.4228977 1.000000</span></span>
+<span><span class="co">#&gt; 5    Old      ec50 1.5566731 1.4304752 1.5872436 -1.3067207 5.213811</span></span>
+<span><span class="co">#&gt; 6    Old     slope 0.7073677 0.4777072 0.9445221  0.1142225 3.011993</span></span>
+<span><span class="co">#&gt; 7  Young   ceiling 0.6661553 0.6616788 0.1534055  0.3722268 1.000000</span></span>
+<span><span class="co">#&gt; 8  Young      ec50 0.8981806 1.0057785 0.6475540 -0.7558377 1.886408</span></span>
+<span><span class="co">#&gt; 9  Young     slope 2.8092492 2.3884836 1.9647780  0.6164553 7.762248</span></span></code></pre></div>
 <p>The table shows:</p>
 <ul>
 <li>
@@ -335,13 +338,13 @@ fit:</p>
 <span><span class="co">#&gt; === Model Comparison (LOO-CV) ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Hierarchical model ELPD: %.2f (SE: %.2f)\n"</span>, </span>
 <span>           <span class="va">hier_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Hierarchical model ELPD: -119.77 (SE: 8.30)</span></span>
+<span><span class="co">#&gt; Hierarchical model ELPD: -119.84 (SE: 8.30)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Pooled model ELPD:       %.2f (SE: %.2f)\n"</span>, </span>
 <span>           <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Pooled model ELPD:       -123.05 (SE: 8.27)</span></span>
+<span><span class="co">#&gt; Pooled model ELPD:       -123.06 (SE: 8.26)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\nDifference: %.2f (SE: %.2f)\n"</span>, <span class="va">loo_diff</span>, <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Difference: 3.28 (SE: 11.71)</span></span>
+<span><span class="co">#&gt; Difference: 3.22 (SE: 11.71)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Z-score: %.2f\n"</span>, <span class="va">loo_diff</span> <span class="op">/</span> <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Z-score: 0.28</span></span>
 <span></span>
@@ -521,7 +524,7 @@ factors.</p>
 <span><span class="co">#&gt; [19] Matrix_1.7-4          checkmate_2.3.4       RColorBrewer_1.1-3   </span></span>
 <span><span class="co">#&gt; [22] S7_0.2.1              desc_1.4.3            distributional_0.6.0 </span></span>
 <span><span class="co">#&gt; [25] RcppParallel_5.1.11-2 lifecycle_1.0.5       compiler_4.5.2       </span></span>
-<span><span class="co">#&gt; [28] farver_2.1.2          stringr_1.6.0         textshaping_1.0.4    </span></span>
+<span><span class="co">#&gt; [28] farver_2.1.2          stringr_1.6.0         textshaping_1.0.5    </span></span>
 <span><span class="co">#&gt; [31] Brobdingnag_1.2-9     codetools_0.2-20      htmltools_0.5.9      </span></span>
 <span><span class="co">#&gt; [34] sass_0.4.10           bayesplot_1.15.0      yaml_2.3.12          </span></span>
 <span><span class="co">#&gt; [37] pillar_1.11.1         pkgdown_2.2.0         jquerylib_0.1.4      </span></span>
@@ -533,11 +536,11 @@ factors.</p>
 <span><span class="co">#&gt; [55] grid_4.5.2            cli_3.6.5             magrittr_2.0.4       </span></span>
 <span><span class="co">#&gt; [58] loo_2.9.0             pkgbuild_1.4.8        withr_3.0.2          </span></span>
 <span><span class="co">#&gt; [61] scales_1.4.0          backports_1.5.0       rmarkdown_2.30       </span></span>
-<span><span class="co">#&gt; [64] matrixStats_1.5.0     gridExtra_2.3         ragg_1.5.0           </span></span>
+<span><span class="co">#&gt; [64] matrixStats_1.5.0     gridExtra_2.3         ragg_1.5.1           </span></span>
 <span><span class="co">#&gt; [67] coda_0.19-4.1         evaluate_1.0.5        knitr_1.51           </span></span>
 <span><span class="co">#&gt; [70] mgcv_1.9-3            rstantools_2.6.0      rlang_1.1.7          </span></span>
 <span><span class="co">#&gt; [73] Rcpp_1.1.1            glue_1.8.0            jsonlite_2.0.0       </span></span>
-<span><span class="co">#&gt; [76] R6_2.6.1              systemfonts_1.3.2     fs_1.6.6</span></span></code></pre></div>
+<span><span class="co">#&gt; [76] R6_2.6.1              systemfonts_1.3.2     fs_1.6.7</span></span></code></pre></div>
 </div>
   </div>
 
