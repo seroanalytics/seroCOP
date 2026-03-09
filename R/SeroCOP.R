@@ -247,12 +247,13 @@ SeroCOP <- R6::R6Class(
       nl_formula <- stats::as.formula(paste(lhs, "~", rhs))
 
       if (hierarchical) {
-        message("  Adding group-level effects on slope and ec50\n")
-        # Hierarchical formula: group-level effects on slope and ec50
+        message("  Adding group-level effects on ceiling, slope and ec50\n")
+        # Hierarchical formula: group-level effects on ceiling (exposure/attack rate),
+        # ec50 (protective threshold) and slope (dose-response steepness)
         formula <- brms::bf(
           nl_formula,
           floor ~ 1,
-          ceiling ~ 1,
+          ceiling ~ 1 + (1 | group),   # Random intercept for ceiling (exposure rate)
           ec50 ~ 1 + (1 | group),      # Random intercept for ec50
           slope ~ 1 + (1 | group),      # Random intercept for slope
           nl = TRUE
@@ -261,6 +262,7 @@ SeroCOP <- R6::R6Class(
         # Add priors for group-level standard deviations
         priors <- c(
           priors,
+          brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "ceiling", group = "group"),
           brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "ec50", group = "group"),
           brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "slope", group = "group")
         )
@@ -309,21 +311,47 @@ SeroCOP <- R6::R6Class(
     #' @description
     #' Get posterior predictions for infection probability
     #' @param newdata Optional new titre values for prediction
+    #' @param group Optional group level (character) for group-specific predictions.
+    #'   If \code{NULL} (default), predictions are marginalised over all groups
+    #'   (population-average curve). Supply a valid group level string (e.g.
+    #'   \code{"5-11 years"}) to obtain the group-specific curve. Ignored when
+    #'   the model was not fitted with a group variable.
     #' @return Matrix of posterior predictions (iterations x observations)
-    predict = function(newdata = NULL) {
+    predict = function(newdata = NULL, group = NULL) {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
-      
+
+      hierarchical <- !is.null(self$group)
+
       if (is.null(newdata)) {
-        # Extract fitted probabilities using brms
-        # Get posterior predictions (summary = FALSE gives us all samples)
+        # Return in-sample fitted values (always marginalised)
         fitted_vals <- fitted(self$fit, summary = FALSE)
         return(fitted_vals)
       } else {
         # Predict for new data
         new_df <- data.frame(titre = newdata, infected = NA)
-        predictions <- fitted(self$fit, newdata = new_df, summary = FALSE)
+        # If the model was fitted with weights, brms expects obs_weights in newdata.
+        # Prediction doesn't use weights, so fill with 1.
+        if (!is.null(self$weights)) {
+          new_df$obs_weights <- 1
+        }
+
+        if (hierarchical && !is.null(group)) {
+          # Group-specific prediction: validate the group level and include it
+          valid_groups <- levels(self$group)
+          if (!group %in% valid_groups) {
+            stop(sprintf(
+              "'%s' is not a valid group level. Valid levels are: %s",
+              group, paste(valid_groups, collapse = ", ")
+            ))
+          }
+          new_df$group <- factor(group, levels = valid_groups)
+          predictions <- fitted(self$fit, newdata = new_df, summary = FALSE)
+        } else {
+          # Marginalise over group random effects (population-average curve)
+          predictions <- fitted(self$fit, newdata = new_df, summary = FALSE, re_formula = NA)
+        }
         return(predictions)
       }
     },
@@ -331,14 +359,17 @@ SeroCOP <- R6::R6Class(
     #' @description
     #' Extract probability of protection from the fitted model
     #' @param newdata Optional vector of new titre values for prediction
+    #' @param group Optional group level (character) for group-specific predictions.
+    #'   If \code{NULL} (default), predictions are marginalised over all groups.
+    #'   See \code{predict()} for details.
     #' @return Matrix of protection probabilities (rows = MCMC samples, cols = observations)
-    predict_protection = function(newdata = NULL) {
+    predict_protection = function(newdata = NULL, group = NULL) {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
-      
+
       # Get infection probabilities
-      prob_infection <- self$predict(newdata = newdata)
+      prob_infection <- self$predict(newdata = newdata, group = group)
       
       # Extract ceiling parameter samples from brms fit
       posterior_samples <- brms::as_draws_df(self$fit)
@@ -380,21 +411,24 @@ SeroCOP <- R6::R6Class(
       
       for (g in groups) {
         # Extract group-specific parameter deviations
-        ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
-        slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+        ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
+        ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
+        slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
         
         # Calculate group-specific parameters (population + group deviation)
-        ec50_samples <- posterior$b_ec50_Intercept + posterior[[ec50_col]]
-        slope_samples <- posterior$b_slope_Intercept + posterior[[slope_col]]
+        # ceiling is bounded [0,1]; clamp to valid range after adding deviation
+        ceiling_samples <- pmin(pmax(posterior$b_ceiling_Intercept + posterior[[ceiling_col]], 0), 1)
+        ec50_samples    <- posterior$b_ec50_Intercept    + posterior[[ec50_col]]
+        slope_samples   <- posterior$b_slope_Intercept   + posterior[[slope_col]]
         
         results[[g]] <- data.frame(
           group = g,
-          parameter = c("ec50", "slope"),
-          mean = c(mean(ec50_samples), mean(slope_samples)),
-          median = c(median(ec50_samples), median(slope_samples)),
-          sd = c(sd(ec50_samples), sd(slope_samples)),
-          q025 = c(quantile(ec50_samples, 0.025), quantile(slope_samples, 0.025)),
-          q975 = c(quantile(ec50_samples, 0.975), quantile(slope_samples, 0.975))
+          parameter = c("ceiling", "ec50", "slope"),
+          mean   = c(mean(ceiling_samples),   mean(ec50_samples),   mean(slope_samples)),
+          median = c(median(ceiling_samples), median(ec50_samples), median(slope_samples)),
+          sd     = c(sd(ceiling_samples),     sd(ec50_samples),     sd(slope_samples)),
+          q025   = c(quantile(ceiling_samples, 0.025), quantile(ec50_samples, 0.025), quantile(slope_samples, 0.025)),
+          q975   = c(quantile(ceiling_samples, 0.975), quantile(ec50_samples, 0.975), quantile(slope_samples, 0.975))
         )
       }
       
@@ -425,36 +459,74 @@ SeroCOP <- R6::R6Class(
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
-      
-      # Get posterior predictions
-      prob_pred <- self$predict()
-      prob_mean <- colMeans(prob_pred)
-      
-      # Calculate ROC AUC
-      roc_obj <- pROC::roc(self$infected, prob_mean, quiet = TRUE)
+
+      hierarchical <- !is.null(self$group)
+
+      # --- Marginalised predictions (population-average, no group conditioning) ---
+      # These are the right predictions to use for AUC: they reflect what the
+      # model would predict for a new observation without knowing its group,
+      # avoiding Simpson's-paradox inflation of AUC from between-group separation.
+      if (hierarchical) {
+        new_df <- data.frame(titre = self$titre, infected = NA)
+        if (!is.null(self$weights)) new_df$obs_weights <- 1
+        prob_pred_marg <- fitted(self$fit, newdata = new_df, summary = FALSE,
+                                 re_formula = NA)
+      } else {
+        prob_pred_marg <- fitted(self$fit, summary = FALSE)
+      }
+      prob_mean_marg <- colMeans(prob_pred_marg)
+
+      # --- Conditional predictions (conditioned on observed group) ---
+      # Used for Brier score (reflects actual fitted values)
+      prob_pred_cond <- fitted(self$fit, summary = FALSE)
+      prob_mean_cond <- colMeans(prob_pred_cond)
+
+      # --- ROC AUC (marginalised) ---
+      roc_obj <- pROC::roc(self$infected, prob_mean_marg, quiet = TRUE)
       auc_value <- as.numeric(pROC::auc(roc_obj))
-      
-      # Calculate Brier score
-      brier <- mean((prob_mean - self$infected)^2)
-      
-      # Get LOO metrics
+
+      # --- Within-group weighted AUC (only for hierarchical models) ---
+      auc_within_group <- NA_real_
+      if (hierarchical) {
+        groups <- levels(self$group)
+        auc_by_grp <- sapply(groups, function(g) {
+          idx <- which(self$group == g)
+          if (length(unique(self$infected[idx])) < 2) return(NA_real_)
+          as.numeric(pROC::auc(
+            pROC::roc(self$infected[idx], prob_mean_marg[idx], quiet = TRUE)
+          ))
+        })
+        n_by_grp <- table(self$group)
+        valid <- !is.na(auc_by_grp)
+        auc_within_group <- sum(auc_by_grp[valid] * n_by_grp[valid]) /
+          sum(n_by_grp[valid])
+      }
+
+      # --- Brier score (conditional) ---
+      brier <- mean((prob_mean_cond - self$infected)^2)
+
+      # --- LOO metrics ---
       loo_elpd <- self$loo$estimates["elpd_loo", "Estimate"]
-      loo_se <- self$loo$estimates["elpd_loo", "SE"]
-      
+      loo_se   <- self$loo$estimates["elpd_loo", "SE"]
+
       metrics <- list(
-        roc_auc = auc_value,
-        brier_score = brier,
-        loo_elpd = loo_elpd,
-        loo_se = loo_se,
-        loo_object = self$loo
+        roc_auc             = auc_value,
+        roc_auc_within_group = auc_within_group,
+        brier_score         = brier,
+        loo_elpd            = loo_elpd,
+        loo_se              = loo_se,
+        loo_object          = self$loo
       )
-      
+
       # Print summary
       cat("Performance Metrics:\n")
-      cat(sprintf("  ROC AUC: %.3f\n", auc_value))
-      cat(sprintf("  Brier Score: %.3f\n", brier))
-      cat(sprintf("  LOO ELPD: %.2f (SE: %.2f)\n", loo_elpd, loo_se))
-      
+      cat(sprintf("  ROC AUC (marginalised):        %.3f\n", auc_value))
+      if (hierarchical) {
+        cat(sprintf("  ROC AUC (within-group wtd):    %.3f\n", auc_within_group))
+      }
+      cat(sprintf("  Brier Score:                   %.3f\n", brier))
+      cat(sprintf("  LOO ELPD:                      %.2f (SE: %.2f)\n", loo_elpd, loo_se))
+
       invisible(metrics)
     },
     
@@ -588,18 +660,19 @@ SeroCOP <- R6::R6Class(
       
       for (g in groups) {
         # Extract group-specific parameters
-        ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
-        slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+        ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
+        ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
+        slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
         
         # Calculate group-specific predictions
         n_iter <- nrow(posterior)
         predictions <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
         
         for (i in 1:n_iter) {
-          floor_i <- posterior$b_floor_Intercept[i]
-          ceiling_i <- posterior$b_ceiling_Intercept[i]
-          ec50_i <- posterior$b_ec50_Intercept[i] + posterior[[ec50_col]][i]
-          slope_i <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
+          floor_i   <- posterior$b_floor_Intercept[i]
+          ceiling_i <- pmin(pmax(posterior$b_ceiling_Intercept[i] + posterior[[ceiling_col]][i], 0), 1)
+          ec50_i    <- posterior$b_ec50_Intercept[i]  + posterior[[ec50_col]][i]
+          slope_i   <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
           
           # Calculate predictions using the model formula
           logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))

@@ -439,18 +439,19 @@ SeroCOPMulti <- R6::R6Class(
         
         for (g in groups) {
           # Extract group-specific parameters
-          ec50_col <- paste0("r_group__ec50[", g, ",Intercept]")
-          slope_col <- paste0("r_group__slope[", g, ",Intercept]")
+          ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
+          ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
+          slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
           
           # Calculate group-specific predictions
           n_iter <- nrow(posterior)
           predictions <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
           
           for (iter in seq_len(n_iter)) {
-            floor_i <- posterior$b_floor_Intercept[iter]
-            ceiling_i <- posterior$b_ceiling_Intercept[iter]
-            ec50_i <- posterior$b_ec50_Intercept[iter] + posterior[[ec50_col]][iter]
-            slope_i <- posterior$b_slope_Intercept[iter] + posterior[[slope_col]][iter]
+            floor_i   <- posterior$b_floor_Intercept[iter]
+            ceiling_i <- pmin(pmax(posterior$b_ceiling_Intercept[iter] + posterior[[ceiling_col]][iter], 0), 1)
+            ec50_i    <- posterior$b_ec50_Intercept[iter]  + posterior[[ec50_col]][iter]
+            slope_i   <- posterior$b_slope_Intercept[iter] + posterior[[slope_col]][iter]
             
             # Calculate predictions using the model formula
             logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
