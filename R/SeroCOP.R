@@ -436,9 +436,14 @@ SeroCOP <- R6::R6Class(
         return(invisible(NULL))
       }
       
-      # Get posterior samples
-      posterior <- brms::as_draws_df(self$fit)
-      
+      # Convert to plain data.frame so column access returns simple numeric vectors
+      posterior <- as.data.frame(brms::as_draws_df(self$fit))
+
+      # Extract base population-level parameter vectors once
+      v_ceiling <- as.numeric(posterior$b_ceiling_Intercept)
+      v_ec50    <- as.numeric(posterior$b_ec50_Intercept)
+      v_slope   <- as.numeric(posterior$b_slope_Intercept)
+
       # Extract group levels
       groups <- levels(self$group)
       
@@ -453,13 +458,10 @@ SeroCOP <- R6::R6Class(
         
         # Calculate group-specific parameters (population + group deviation)
         # ceiling is bounded [0,1]; clamp to valid range after adding deviation
-        if (ceiling_col %in% names(posterior)) {
-          ceiling_samples <- pmin(pmax(posterior$b_ceiling_Intercept + posterior[[ceiling_col]], 0), 1)
-        } else {
-          ceiling_samples <- pmin(pmax(posterior$b_ceiling_Intercept, 0), 1)
-        }
-        ec50_samples    <- posterior$b_ec50_Intercept    + posterior[[ec50_col]]
-        slope_samples   <- posterior$b_slope_Intercept   + posterior[[slope_col]]
+        r_ceiling <- if (ceiling_col %in% names(posterior)) as.numeric(posterior[[ceiling_col]]) else rep(0, length(v_ceiling))
+        ceiling_samples <- pmin(pmax(v_ceiling + r_ceiling, 0), 1)
+        ec50_samples    <- v_ec50  + as.numeric(posterior[[ec50_col]])
+        slope_samples   <- v_slope + as.numeric(posterior[[slope_col]])
         
         results[[g]] <- data.frame(
           group = g,
@@ -696,9 +698,17 @@ SeroCOP <- R6::R6Class(
         return(invisible(NULL))
       }
 
-      posterior <- brms::as_draws_df(self$fit)
-      groups    <- levels(self$group)
-      n_iter    <- nrow(posterior)
+      # Convert to plain data.frame so column access returns simple numeric vectors
+      posterior   <- as.data.frame(brms::as_draws_df(self$fit))
+      groups      <- levels(self$group)
+      n_iter      <- nrow(posterior)
+
+      # Extract base population-level parameter vectors once (avoids draws_df
+      # element-wise indexing issues inside loops)
+      v_floor   <- as.numeric(posterior$b_floor_Intercept)
+      v_ceiling <- as.numeric(posterior$b_ceiling_Intercept)
+      v_ec50    <- as.numeric(posterior$b_ec50_Intercept)
+      v_slope   <- as.numeric(posterior$b_slope_Intercept)
 
       # Determine group weights for marginalisation
       n_by_group <- table(self$group)
@@ -731,17 +741,18 @@ SeroCOP <- R6::R6Class(
         ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
         slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
 
+        # Group-level deviations (zeros when the parameter has no group effects)
+        r_ceiling <- if (ceiling_col %in% names(posterior)) as.numeric(posterior[[ceiling_col]]) else rep(0, n_iter)
+        r_ec50    <- as.numeric(posterior[[ec50_col]])
+        r_slope   <- as.numeric(posterior[[slope_col]])
+
         predictions <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
 
         for (i in seq_len(n_iter)) {
-          floor_i   <- posterior$b_floor_Intercept[i]
-          ceiling_i <- if (ceiling_col %in% names(posterior)) {
-            pmin(pmax(posterior$b_ceiling_Intercept[i] + posterior[[ceiling_col]][i], 0), 1)
-          } else {
-            pmin(pmax(posterior$b_ceiling_Intercept[i], 0), 1)
-          }
-          ec50_i  <- posterior$b_ec50_Intercept[i] + posterior[[ec50_col]][i]
-          slope_i <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
+          floor_i   <- v_floor[i]
+          ceiling_i <- pmin(pmax(v_ceiling[i] + r_ceiling[i], 0), 1)
+          ec50_i    <- v_ec50[i] + r_ec50[i]
+          slope_i   <- v_slope[i] + r_slope[i]
 
           logit_part       <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
           predictions[i, ] <- ceiling_i * (logit_part * (1 - floor_i) + floor_i)
@@ -848,9 +859,16 @@ SeroCOP <- R6::R6Class(
         return(invisible(NULL))
       }
 
-      posterior <- brms::as_draws_df(self$fit)
-      groups    <- levels(self$group)
-      n_iter    <- nrow(posterior)
+      # Convert to plain data.frame so column access returns simple numeric vectors
+      posterior   <- as.data.frame(brms::as_draws_df(self$fit))
+      groups      <- levels(self$group)
+      n_iter      <- nrow(posterior)
+
+      # Extract base population-level parameter vectors once
+      v_floor   <- as.numeric(posterior$b_floor_Intercept)
+      v_ceiling <- as.numeric(posterior$b_ceiling_Intercept)
+      v_ec50    <- as.numeric(posterior$b_ec50_Intercept)
+      v_slope   <- as.numeric(posterior$b_slope_Intercept)
 
       # Determine group weights for marginalisation
       n_by_group <- table(self$group)
@@ -880,17 +898,18 @@ SeroCOP <- R6::R6Class(
         ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
         slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
 
+        # Group-level deviations (zeros when the parameter has no group effects)
+        r_ceiling <- if (ceiling_col %in% names(posterior)) as.numeric(posterior[[ceiling_col]]) else rep(0, n_iter)
+        r_ec50    <- as.numeric(posterior[[ec50_col]])
+        r_slope   <- as.numeric(posterior[[slope_col]])
+
         cop_mat <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
 
         for (i in seq_len(n_iter)) {
-          floor_i   <- posterior$b_floor_Intercept[i]
-          ceiling_i <- if (ceiling_col %in% names(posterior)) {
-            pmin(pmax(posterior$b_ceiling_Intercept[i] + posterior[[ceiling_col]][i], 0), 1)
-          } else {
-            pmin(pmax(posterior$b_ceiling_Intercept[i], 0), 1)
-          }
-          ec50_i  <- posterior$b_ec50_Intercept[i] + posterior[[ec50_col]][i]
-          slope_i <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
+          floor_i   <- v_floor[i]
+          ceiling_i <- pmin(pmax(v_ceiling[i] + r_ceiling[i], 0), 1)
+          ec50_i    <- v_ec50[i] + r_ec50[i]
+          slope_i   <- v_slope[i] + r_slope[i]
 
           logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
           prob_inf_i <- ceiling_i * (logit_part * (1 - floor_i) + floor_i)
