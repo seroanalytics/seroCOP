@@ -119,10 +119,11 @@ multi_model <- SeroCOPMulti$new(
 # Fit all models
 # Note: Using reduced iterations for vignette speed
 multi_model$fit_all(
-  chains = 4,
-  iter = 1000,
-  warmup = 500,
-  cores = 1
+  chains  = 4,
+  iter    = 1000,
+  warmup  = 500,
+  cores   = 1,
+  refresh = 0
 )
 ```
 
@@ -327,24 +328,31 @@ ggplot(recovery_df, aes(x = parameter, color = biomarker)) +
 
 # Individual ROC Curves
 
-```{r individual-roc, fig.height=4}
-# Plot ROC curves for each biomarker
-par(mfrow = c(1, 3))
+```{r individual-roc, fig.height=4, fig.width=10}
+# Plot ROC curves for each biomarker using ggplot2
+roc_plot_list <- lapply(multi_model$biomarker_names, function(bm) {
+  m       <- multi_model$models[[bm]]
+  pred    <- colMeans(m$predict())
+  roc_obj <- pROC::roc(m$infected, pred, quiet = TRUE)
+  auc_val <- as.numeric(pROC::auc(roc_obj))
+  data.frame(
+    biomarker    = sprintf("%s (AUC = %.3f)", bm, auc_val),
+    fpr          = 1 - roc_obj$specificities,
+    tpr          = roc_obj$sensitivities
+  )
+})
 
-for (biomarker in multi_model$biomarker_names) {
-  model <- multi_model$models[[biomarker]]
-  
-  pred <- colMeans(model$predict())
-  roc_obj <- pROC::roc(model$infected, pred, quiet = TRUE)
-  
-  plot(roc_obj, 
-       main = sprintf("%s\nAUC = %.3f", biomarker, pROC::auc(roc_obj)),
-       col = "steelblue",
-       lwd = 2)
-  abline(a = 0, b = 1, lty = 2, col = "gray")
-}
+roc_df <- do.call(rbind, roc_plot_list)
 
-par(mfrow = c(1, 1))
+ggplot(roc_df, aes(x = fpr, y = tpr)) +
+  geom_line(colour = "steelblue", linewidth = 1) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", alpha = 0.5) +
+  facet_wrap(~biomarker) +
+  labs(x = "False Positive Rate", y = "True Positive Rate",
+       title = "ROC Curves by Biomarker") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
+  coord_equal()
 ```
 
 # Cross-Validation Results

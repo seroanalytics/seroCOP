@@ -11,7 +11,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.width = 10,
+  fig.width = 11,
   fig.height = 6,
   warning = FALSE,
   message = FALSE
@@ -20,26 +20,30 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette demonstrates how to use hierarchical modeling in `SeroCOP` to account for group-level heterogeneity in correlates of protection. This is particularly useful when different subpopulations (e.g., age groups, geographic regions, or vaccine types) may have different dose-response relationships.
+This vignette demonstrates how to use hierarchical modeling in `SeroCOP` to
+account for group-level heterogeneity in correlates of protection. This is
+particularly useful when different subpopulations (e.g. age groups, geographic
+regions, or vaccine types) may have different dose–response relationships.
 
 ## When to Use Hierarchical Models
 
 Hierarchical modeling is appropriate when:
 
-- You have multiple groups that may differ in their correlate of protection relationships
-- You want to "borrow strength" across groups while allowing group-specific estimates
-- You want to quantify between-group variability in protection
+- You have multiple groups that may differ in their correlate of protection
+  relationships
+- You want to "borrow strength" across groups while allowing group-specific
+  estimates
 - Sample sizes within groups may be modest
+- You want to quantify between-group variability in protection
 
 ## Example Scenario: Age-Specific Correlates
 
-We'll demonstrate with a realistic scenario where antibody titre is a correlate of protection, but the strength of this relationship varies by age group:
+We demonstrate with a realistic scenario where the strength of the
+antibody–protection relationship varies by age group:
 
-- **Young adults**: Steep relationship (strong correlate)
-- **Middle-aged**: Moderate relationship  
-- **Older adults**: Flat relationship (weak or no correlate)
-
-This reflects real-world phenomena where immune responses may differ by age.
+- **Young adults** (largest cohort): Steep relationship — strong correlate
+- **Middle-aged** (medium cohort): Moderate relationship
+- **Older adults** (smallest cohort): Flat — weak or absent correlate
 
 ## Load the package
 
@@ -51,289 +55,321 @@ set.seed(456)
 
 # Simulate Age-Stratified Data
 
-We'll create data for three age groups with different correlate of protection relationships:
+The three age groups have **different sample sizes** to reflect typical
+epidemiological studies where recruitment is unequal.
 
 ```{r simulate-data}
-n_per_group <- 80  # Sample size per age group
+# ---- unequal group sizes ----
+young_n  <- 150   # most participants
+middle_n <- 90
+old_n    <- 45    # fewest participants
 
-# Function to simulate data for one age group
-simulate_group <- function(n, group_name, slope, ec50) {
-  # Generate antibody titres
+simulate_group <- function(n, group_name, slope, ec50,
+                           floor = 0.05, ceiling = 0.70) {
   titre <- rnorm(n, mean = 2.5, sd = 2.0)
-  
-  # Calculate infection probability using the logistic model
-  # floor = 0.05, ceiling = 0.70
-  floor <- 0.05
-  ceiling <- 0.70
-  
-  logit_part <- 1 / (1 + exp(slope * (titre - ec50)))
+  logit_part     <- 1 / (1 + exp(slope * (titre - ec50)))
   prob_infection <- ceiling * (logit_part * (1 - floor) + floor)
-  
-  # Generate infection outcomes
-  infected <- rbinom(n, 1, prob_infection)
-  
-  return(data.frame(
-    titre = titre,
-    infected = infected,
-    age_group = group_name
-  ))
+  infected       <- rbinom(n, 1, prob_infection)
+  data.frame(titre = titre, infected = infected, age_group = group_name)
 }
 
-# Simulate three age groups with different CoP strengths
-# Note: Higher slope values mean steeper curves (stronger correlate)
-young <- simulate_group(n_per_group, "Young", slope = 3.0, ec50 = 1.5)
-middle <- simulate_group(n_per_group, "Middle", slope = 1.5, ec50 = 1.8)
-old <- simulate_group(n_per_group, "Old", slope = 0.3, ec50 = 2.0)
+young  <- simulate_group(young_n,  "Young adults",   slope = 3.0, ec50 = 1.5)
+middle <- simulate_group(middle_n, "Middle-aged",    slope = 1.5, ec50 = 1.8)
+old    <- simulate_group(old_n,    "Older adults",   slope = 0.3, ec50 = 2.0)
 
-# Combine all groups
 all_data <- rbind(young, middle, old)
+# Use an ordered factor so panels appear in a natural left-to-right order
+all_data$age_group <- factor(all_data$age_group,
+                             levels = c("Young adults", "Middle-aged", "Older adults"))
 
-cat(sprintf("Simulated data with age-specific correlates:\n"))
-cat(sprintf("  Young (n=%d): slope=3.0, ec50=1.5 (steep - strong protection)\n", n_per_group))
-cat(sprintf("  Middle (n=%d): slope=1.5, ec50=1.8 (moderate protection)\n", n_per_group))
-cat(sprintf("  Old (n=%d): slope=0.3, ec50=2.0 (flat - weak correlate)\n", n_per_group))
-cat(sprintf("\nTotal sample size: %d\n", nrow(all_data)))
-cat(sprintf("Overall infection rate: %.1f%%\n", 100 * mean(all_data$infected)))
+cat("Simulated data with age-specific correlates:\n")
+cat(sprintf("  Young adults  (n=%d): slope=3.0, ec50=1.5 — strong correlate\n", young_n))
+cat(sprintf("  Middle-aged   (n=%d): slope=1.5, ec50=1.8 — moderate correlate\n", middle_n))
+cat(sprintf("  Older adults  (n=%d): slope=0.3, ec50=2.0 — weak correlate\n", old_n))
+cat(sprintf("\nTotal n=%d  |  Infection rate: %.1f%%\n",
+            nrow(all_data), 100 * mean(all_data$infected)))
 ```
 
-Let's visualize the raw data:
+# Raw Data: Binned Infection Rates
 
-```{r plot-raw-data}
-ggplot(all_data, aes(x = titre, y = infected, color = age_group)) +
-  geom_point(alpha = 0.4, position = position_jitter(height = 0.02)) +
-  geom_smooth(method = "loess", se = TRUE, linewidth = 1) +
+Before fitting, it is helpful to summarise the raw data by binning titres and
+computing the observed infection proportion in each bin. These empirical points
+will later be overlaid on the fitted curves to assess goodness-of-fit.
+
+```{r bin-raw-data}
+# Bin titre into deciles *within each age group*
+n_bins <- 8
+
+all_data$bin <- ave(
+  all_data$titre, all_data$age_group,
+  FUN = function(x) {
+    breaks <- unique(quantile(x, probs = seq(0, 1, length.out = n_bins + 1)))
+    as.integer(cut(x, breaks = breaks, include.lowest = TRUE))
+  }
+)
+
+# Summarise per group × bin
+binned <- aggregate(
+  cbind(infected, titre) ~ age_group + bin,
+  data    = all_data,
+  FUN     = mean
+)
+bin_n <- aggregate(infected ~ age_group + bin, data = all_data, FUN = length)
+binned$n <- bin_n$infected
+
+head(binned)
+```
+
+```{r plot-raw-binned, fig.cap="Binned observed infection rates (point area ∝ bin size). These will be overlaid on fitted curves later."}
+ggplot(binned, aes(x = titre, y = infected, colour = age_group)) +
+  geom_point(aes(size = n), alpha = 0.7) +
+  geom_line(aes(group = age_group), alpha = 0.5, linetype = "dashed") +
+  scale_size_area(max_size = 8, guide = guide_legend(title = "Bin n")) +
   facet_wrap(~age_group) +
   labs(
-    title = "Infection vs Titre by Age Group",
-    x = "Antibody Titre (log scale)",
-    y = "Infected (0/1)",
-    color = "Age Group"
+    title    = "Raw Binned Infection Rates by Age Group",
+    x        = "Mean Titre in Bin (log scale)",
+    y        = "Observed Infection Proportion",
+    colour   = "Age Group"
   ) +
   theme_minimal() +
+  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+# Fit the Hierarchical Model
+
+The hierarchical model estimates group-specific `ec50` and `slope` values
+while sharing a common `floor` and `ceiling`. Group-level random effects
+borrow strength across age groups.
+
+By default, `ceiling` is fixed across groups (shared attack rate). Pass
+`ceiling_group = TRUE` if you expect the baseline attack rate to differ by group.
+
+```{r fit-hierarchical, results='hide'}
+hier_model <- SeroCOP$new(
+  titre    = all_data$titre,
+  infected = all_data$infected,
+  group    = all_data$age_group
+)
+
+hier_model$fit_model(
+  chains        = 4,
+  iter          = 2000,
+  warmup        = 1000,
+  cores         = 4,
+  ceiling_group = FALSE,   # shared ceiling (default)
+  refresh       = 0
+)
+```
+
+# Fitted Curves with Binned Data Overlay
+
+The plot below shows the posterior mean curve and 95% credible interval for
+each age group, with the marginalised (population-weighted) curve as a dashed
+black line. Empirical binned points are overlaid to allow visual assessment
+of model fit.
+
+```{r plot-fitted-plus-bins, fig.width=12, fig.height=5}
+# --- 1. Get fitted curve data via the built-in method -------------------------
+p_base <- hier_model$plot_group_curves(
+  title       = "Age-Specific Correlates of Risk with Empirical Bins",
+  weights_pop = c("Young adults"  = young_n,
+                  "Middle-aged"   = middle_n,
+                  "Older adults"  = old_n)
+)
+
+# --- 2. Overlay binned empirical points (size ∝ bin n) -----------------------
+p_base +
+  geom_point(
+    data    = binned,
+    mapping = aes(x = titre, y = infected, size = n),
+    colour  = "black", alpha = 0.75, inherit.aes = FALSE
+  ) +
+  scale_size_area(max_size = 7, guide = guide_legend(title = "Bin n")) +
   theme(legend.position = "bottom")
 ```
 
-# Fit Hierarchical Model
+The black dots are the raw binned proportions. When they track the fitted
+curve closely, it indicates a good fit. Deviations suggest model
+mis-specification or sparse data in that titre region.
 
-Now we'll fit a hierarchical model that estimates group-specific slopes and EC50 values while sharing information across groups:
+# Correlates of Protection Curves
 
-```{r fit-hierarchical, results='hide'}
-# Create SeroCOP object with group variable
-hier_model <- SeroCOP$new(
-  titre = all_data$titre,
-  infected = all_data$infected,
-  group = all_data$age_group  # Add group variable for hierarchical modeling
+The correlate of protection (COP) is defined as:
+
+$$\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{P(\text{ceiling})}$$
+
+This quantifies the probability of being protected conditional on exposure.
+The population-weighted marginalised COP curve summarises the overall
+effectiveness across age groups.
+
+```{r plot-cop, fig.width=10, fig.height=6}
+hier_model$plot_cop_curves(
+  title       = "Age-Specific Correlates of Protection",
+  weights_pop = c("Young adults"  = young_n,
+                  "Middle-aged"   = middle_n,
+                  "Older adults"  = old_n)
 )
-
-# Fit the hierarchical model
-hier_model$fit_model(
-  chains = 4,
-  iter = 2000,
-  warmup = 1000,
-  cores = 4,
-  refresh = 0
-)
-```
-
-```{r show-hierarchical-fit}
-cat("✓ Hierarchical model fitted successfully!\n")
 ```
 
 ## Extract Group-Specific Parameters
 
-The hierarchical model estimates both population-level parameters and group-specific deviations:
-
 ```{r extract-parameters}
-# Extract group-specific estimates
 group_params <- hier_model$extract_group_parameters()
 print(group_params)
 ```
 
-The table shows:
+Key observations:
 
-- **ec50**: The antibody level at which infection probability is 50% of maximum
-- **slope**: The steepness of the dose-response curve (higher = steeper)
+- **Young adults** have the steepest `slope` — a strong antibody correlate
+- **Older adults** have a `slope` near zero — little titre-dependent protection
+- **Middle-aged** are intermediate
+- `ec50` shifts to the right with age — older individuals need higher titres for
+  equivalent protection
 
-Notice how:
-- **Young** group has the most negative (steepest) slope
-- **Old** group has a slope near zero (flat relationship)
-- **Middle** group is intermediate
+# Model Performance
 
-## Visualize Group-Specific Curves
+## Overall and Per-Group Metrics
 
-We can plot the fitted curves for each group:
-
-```{r plot-group-curves, fig.width=12, fig.height=5}
-hier_model$plot_group_curves(title = "Age-Specific Correlates of Protection")
+```{r metrics}
+metrics <- hier_model$get_metrics()
 ```
 
-The plot shows:
+The per-group LOO-ELPD breakdown shows how much each age group contributes to
+(or detracts from) overall model fit. A lower ELPD for a group indicates the
+model fits that group less well — often because it has fewer participants or a
+weaker signal.
 
-- **Fitted curves** (solid lines) for each age group
-- **95% credible intervals** (shaded ribbons) reflecting uncertainty
-- **Observed data points** (dots) for each group
-- Clear differences in curve steepness across age groups
-
-# Compare with Non-Hierarchical Model
-
-Let's fit a standard (non-hierarchical) model that ignores age groups and see how it compares:
+## Comparison with Pooled Model
 
 ```{r fit-pooled, results='hide'}
-# Fit without group variable (pooled model)
 pooled_model <- SeroCOP$new(
-  titre = all_data$titre,
+  titre    = all_data$titre,
   infected = all_data$infected
 )
 
 pooled_model$fit_model(
-  chains = 4,
-  iter = 2000,
-  warmup = 1000,
-  cores = 4,
+  chains  = 4,
+  iter    = 2000,
+  warmup  = 1000,
+  cores   = 4,
   refresh = 0
 )
 ```
 
-```{r show-pooled-fit}
-cat("✓ Non-hierarchical (pooled) model fitted successfully!\n")
-```
-
-## Model Comparison
-
-We can use Leave-One-Out Cross-Validation (LOO-CV) to compare model fit:
-
 ```{r compare-models}
-# Extract LOO estimates
-hier_loo <- hier_model$loo$estimates["elpd_loo", c("Estimate", "SE")]
+hier_loo   <- hier_model$loo$estimates["elpd_loo", c("Estimate", "SE")]
 pooled_loo <- pooled_model$loo$estimates["elpd_loo", c("Estimate", "SE")]
 
-# Calculate difference
 loo_diff <- hier_loo["Estimate"] - pooled_loo["Estimate"]
-loo_se <- sqrt(hier_loo["SE"]^2 + pooled_loo["SE"]^2)
+loo_se   <- sqrt(hier_loo["SE"]^2 + pooled_loo["SE"]^2)
 
-cat("\n=== Model Comparison (LOO-CV) ===\n")
-cat(sprintf("Hierarchical model ELPD: %.2f (SE: %.2f)\n", 
-           hier_loo["Estimate"], hier_loo["SE"]))
-cat(sprintf("Pooled model ELPD:       %.2f (SE: %.2f)\n", 
-           pooled_loo["Estimate"], pooled_loo["SE"]))
-cat(sprintf("\nDifference: %.2f (SE: %.2f)\n", loo_diff, loo_se))
-cat(sprintf("Z-score: %.2f\n", loo_diff / loo_se))
+cat("=== Model Comparison (LOO-CV) ===\n")
+cat(sprintf("Hierarchical ELPD: %.2f (SE: %.2f)\n", hier_loo["Estimate"],   hier_loo["SE"]))
+cat(sprintf("Pooled       ELPD: %.2f (SE: %.2f)\n", pooled_loo["Estimate"], pooled_loo["SE"]))
+cat(sprintf("Difference:        %.2f (SE: %.2f)  |  Z = %.2f\n",
+            loo_diff, loo_se, loo_diff / loo_se))
 
 if (loo_diff > 2 * loo_se) {
-  cat("\n✓ Strong evidence favoring hierarchical model\n")
+  cat("-> Strong evidence favouring hierarchical model\n")
 } else if (loo_diff > 0) {
-  cat("\n→ Hierarchical model preferred but evidence is weak\n")
+  cat("-> Hierarchical preferred but evidence is weak\n")
 } else {
-  cat("\n→ No clear advantage for hierarchical model\n")
+  cat("-> No clear advantage for hierarchical model\n")
 }
 ```
 
-A positive difference indicates the hierarchical model fits better. The Z-score helps assess the strength of evidence (|Z| > 2 suggests strong evidence).
+## Fitted Curves: Pooled Model vs Binned Data
 
-## Visualize Both Models
-
-Let's compare the two approaches visually:
+The pooled model uses a single curve for all age groups. Overlaying the binned
+empirical rates highlights how much signal is lost by ignoring heterogeneity.
 
 ```{r compare-curves, fig.width=12, fig.height=5}
-# For the pooled model, get predictions across the titre range
-titre_grid <- seq(min(all_data$titre), max(all_data$titre), length.out = 100)
+titre_grid  <- seq(min(all_data$titre), max(all_data$titre), length.out = 100)
 pooled_pred <- pooled_model$predict(newdata = titre_grid)
-pooled_mean <- colMeans(pooled_pred)
-pooled_lower <- apply(pooled_pred, 2, quantile, probs = 0.025)
-pooled_upper <- apply(pooled_pred, 2, quantile, probs = 0.975)
 
-# Create a simple comparison plot showing pooled model vs observed data by group
 pooled_df <- data.frame(
   titre = titre_grid,
-  prob = pooled_mean,
-  lower = pooled_lower,
-  upper = pooled_upper
+  prob  = colMeans(pooled_pred),
+  lower = apply(pooled_pred, 2, quantile, probs = 0.025),
+  upper = apply(pooled_pred, 2, quantile, probs = 0.975)
 )
 
 ggplot() +
   geom_ribbon(data = pooled_df,
               aes(x = titre, ymin = lower, ymax = upper),
-              fill = "gray", alpha = 0.3) +
+              fill = "gray70", alpha = 0.4) +
   geom_line(data = pooled_df,
             aes(x = titre, y = prob),
-            color = "gray30", linewidth = 1.2) +
-  geom_point(data = all_data,
-             aes(x = titre, y = infected, color = age_group),
-             alpha = 0.4, size = 1.5,
-             position = position_jitter(height = 0.02)) +
-  geom_smooth(data = all_data,
-              aes(x = titre, y = infected, color = age_group),
-              method = "loess", se = FALSE, linewidth = 1) +
+            colour = "gray30", linewidth = 1.2) +
+  geom_point(data    = binned,
+             mapping = aes(x = titre, y = infected,
+                           colour = age_group, size = n),
+             alpha = 0.85) +
+  scale_size_area(max_size = 7, guide = guide_legend(title = "Bin n")) +
   facet_wrap(~age_group) +
   labs(
-    title = "Pooled Model vs Age-Specific Data",
-    subtitle = "Gray line = pooled model (same for all groups); Colored lines = observed LOESS fits",
-    x = "Antibody Titre (log scale)",
-    y = "Probability of Infection",
-    color = "Age Group"
+    title    = "Pooled Model vs Binned Empirical Rates",
+    subtitle = "Gray band = pooled model; coloured points = within-group empirical proportions",
+    x        = "Antibody Titre (log scale)",
+    y        = "Probability of Infection",
+    colour   = "Age Group"
   ) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5))
 ```
-
-Note how:
-- The **pooled model** (gray line) uses the same curve for all age groups, ignoring heterogeneity
-- The **observed patterns** (colored LOESS curves) show clear age-specific differences
-- The hierarchical model (shown in the previous plot) captures these group-specific relationships
-- The pooled approach misses important variation, particularly the flat relationship in older adults
-
-
-# Key Advantages of Hierarchical Modeling
-
-1. **Partial Pooling**: Groups share information, improving estimates for small groups
-2. **Heterogeneity**: Captures real differences between groups
-3. **Better Predictions**: More accurate for group-specific outcomes
-4. **Quantifies Variability**: Estimates between-group variance in parameters
 
 # Technical Details
 
 ## Model Structure
 
-The hierarchical model uses random intercepts on the `ec50` and `slope` parameters:
+The hierarchical model uses random intercepts on `ec50` and `slope`:
 
 ```r
-ec50 ~ 1 + (1 | group)
-slope ~ 1 + (1 | group)
+infected ~ ceiling * (inv_logit(-slope * (titre - ec50)) * (1 - floor) + floor)
+floor    ~ 1
+ceiling  ~ 1                   # fixed across groups (ceiling_group = FALSE)
+ec50     ~ 1 + (1 | group)     # random intercept per group
+slope    ~ 1 + (1 | group)     # random intercept per group
 ```
 
-This means:
-- Each group gets its own `ec50` and `slope` value
-- Group-specific values are drawn from a common distribution
-- The model estimates both the population mean and group-level variance
+Set `ceiling_group = TRUE` in `fit_model()` to also allow the ceiling
+(maximum attack rate) to vary across groups.
 
 ## Priors
 
-The model uses weakly informative priors:
-- Group-level standard deviations: `student_t(3, 0, 2.5)`
-- This allows substantial between-group variation while regularizing extreme values
+- Group-level standard deviations: `student_t(3, 0, 2.5)` — weakly informative,
+  permitting substantial between-group variation while regularising extremes.
+- Population-level: Beta priors on `floor`/`ceiling`; Normal on `ec50`
+  (centred on data midpoint) and `slope`.
 
-## Backwards Compatibility
+## Population Weights for Marginalisation
 
-To fit a standard (non-hierarchical) model, simply omit the `group` parameter:
+Pass a named numeric vector to `weights_pop` in `plot_group_curves()` and
+`plot_cop_curves()` to control how the marginalised curve is computed:
 
 ```r
-# Non-hierarchical
-model <- SeroCOP$new(titre = titre, infected = infected)
-
-# Hierarchical
-model <- SeroCOP$new(titre = titre, infected = infected, group = age_group)
+# Census-based age-group proportions (must sum to any positive value)
+hier_model$plot_cop_curves(
+  weights_pop = c("Young adults" = 0.45, "Middle-aged" = 0.35, "Older adults" = 0.20)
+)
 ```
+
+If `weights_pop = NULL` (default), sample proportions are used instead.
 
 # Conclusion
 
-Hierarchical modeling in `SeroCOP` provides a powerful framework for analyzing correlates of protection when you expect heterogeneity across groups. The approach:
+`SeroCOP` hierarchical models provide a flexible framework for analysing
+correlates of protection with group-level heterogeneity:
 
-- Provides group-specific estimates while sharing information
-- Improves model fit and predictive accuracy
-- Quantifies between-group variability
-- Is easy to implement with the optional `group` parameter
-
-This is particularly valuable in real-world scenarios where immune responses vary by demographics, vaccine types, or other grouping factors.
+- Group-specific `ec50` and `slope` are estimated while borrowing strength
+- The shared `ceiling` ensures identifiability; `ceiling_group = TRUE` relaxes this
+- Binned empirical overlays give a quick visual goodness-of-fit check
+- Per-group LOO contributions identify groups driving poor fit
+- `plot_cop_curves()` summarises protection across the titre range with a
+  population-weighted marginalised curve
 
 # Session Info
 

@@ -133,10 +133,11 @@ model$definePrior(
 # Note: Using fewer iterations for vignette speed; 
 # use more (e.g., iter=2000) for real analysis
 model$fit_model(
-  chains = 4,
-  iter = 1000,
-  warmup = 500,
-  cores = 1  # Adjust based on your system
+  chains  = 4,
+  iter    = 1000,
+  warmup  = 500,
+  cores   = 1,    # Adjust based on your system
+  refresh = 0
 )
 ```
 
@@ -304,8 +305,8 @@ calib_df <- data.frame(
   titre = sim_data$titre
 )
 
-# Binned calibration plot
-breaks <- quantile(calib_df$titre, probs = seq(0, 1, 0.1))
+# Binned calibration plot (unique breaks guards against duplicate quantile values)
+breaks <- unique(quantile(calib_df$titre, probs = seq(0, 1, 0.1)))
 calib_df$bin <- cut(calib_df$titre, breaks = breaks, include.lowest = TRUE)
 
 calib_summary <- aggregate(

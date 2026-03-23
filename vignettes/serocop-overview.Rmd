@@ -7,172 +7,236 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.width = 8,
+  fig.height = 5
+)
+```
+
 # Overview of SeroCOP
 
-This vignette provides a comprehensive overview of the `SeroCOP` R6 class, including its options, functions, and usage. The `SeroCOP` class is designed for Bayesian analysis of correlates of protection using Stan.
+The `seroCOP` package provides Bayesian tools for analysing **correlates of
+protection (CoP)** — the relationship between an individual's antibody level
+and their risk of infection. Models are fit using
+[brms](https://paul-buerkner.github.io/brms/) (backed by Stan) and expose
+posterior predictions, performance metrics, and publication-quality plots
+through two R6 classes:
 
-## Key Features
+| Class | Purpose |
+|-------|---------|
+| `SeroCOP` | Single biomarker; optionally hierarchical by group |
+| `SeroCOPMulti` | Multiple biomarkers fitted and compared simultaneously |
 
-- Flexible prior distributions.
-- Multi-biomarker analysis.
-- Model fitting and parameter extraction.
-- Visualization tools.
+---
 
 ## Model Description
 
-The `SeroCOP` model is based on a logistic regression framework, which models the probability of protection as a function of biomarker levels. The logistic function is defined as:
+The probability of infection is modelled as a four-parameter logistic curve:
 
 $$
-P(Y = 1 | X) = \frac{1}{1 + \exp(-z)},
+P(\text{infection} \mid t) =
+  \text{ceiling} \times
+  \left[\text{inv\_logit}\!\bigl(-\text{slope}\,(t - \text{ec50})\bigr)
+    \times (1 - \text{floor}) + \text{floor}\right]
 $$
 
-where $z$ is a linear combination of the predictors:
+| Parameter | Interpretation |
+|-----------|---------------|
+| `floor`   | Residual infection risk at the highest titres (near-complete protection) |
+| `ceiling` | Maximum infection risk at the lowest titres (baseline attack rate) |
+| `ec50`    | Titre at the inflection point of the curve |
+| `slope`   | Steepness of the dose–response (higher = sharper transition) |
 
-$$
-z = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \dots + \beta_k X_k.
-$$
+---
 
-### Parameters
-- $\beta_0$: Intercept term.
-- $\beta_1, \beta_2, \dots, \beta_k$: Coefficients for the predictors.
-- $X_1, X_2, \dots, X_k$: Biomarker levels.
+# Quick Start
 
-### Priors
-The `SeroCOP` model allows you to specify prior distributions for the parameters. These priors can be tailored to reflect prior knowledge or assumptions about the parameters.
-
-#### Supported Priors
-- **Normal**: Suitable for parameters with symmetric distributions.
-  ```r
-  model$definePrior(parameter = "beta_1", distribution = "normal", mean = 0, sd = 1)
-  ```
-- **Uniform**: Suitable for parameters with bounded ranges.
-  ```r
-  model$definePrior(parameter = "beta_2", distribution = "uniform", min = -1, max = 1)
-  ```
-- **Beta**: Suitable for probabilities or proportions.
-  ```r
-  model$definePrior(parameter = "p", distribution = "beta", alpha = 2, beta = 5)
-  ```
-
-## Initialization
-
-To create a new `SeroCOP` object, use the following:
-
-```r
+```{r quick-start, eval=FALSE}
 library(seroCOP)
-# Example data
+
+# Simulate data
 set.seed(123)
-n <- 200
-titre <- rnorm(n, mean = 2, sd = 1.5)
-prob <- 0.05 + 0.9 / (1 + exp(2 * (titre - 1.5)))
+n        <- 300
+titre    <- rnorm(n, mean = 2, sd = 1.5)
+prob     <- 0.05 + 0.65 / (1 + exp(2 * (titre - 1.5)))
 infected <- rbinom(n, 1, prob)
 
-# Initialize the model
+# Initialise the model
 model <- SeroCOP$new(titre = titre, infected = infected)
+
+# Fit (brms / Stan backend)
+model$fit_model(chains = 4, iter = 2000, warmup = 1000, cores = 4)
+
+# Inspect parameters
+model$summary()
+
+# Performance metrics
+model$get_metrics()
+
+# Plots
+model$plot_curve()
+model$plot_roc()
+model$plot_posteriors()
 ```
 
-### Arguments
-- `titre`: Numeric vector of antibody titres.
-- `infected`: Binary vector (0/1) of infection outcomes.
+---
 
-These inputs are required to initialize the `SeroCOP` object.
+# Prior Distributions
 
-## Prior Options
+Default priors are weakly informative and data-driven:
 
-The `definePrior` method allows you to specify prior distributions for the model parameters. Below is a detailed explanation of each option:
+| Parameter | Default prior | Rationale |
+|-----------|--------------|-----------|
+| `floor`   | Beta(1, 9)   | Favours low residual risk |
+| `ceiling` | Beta(9, 1)   | Favours high baseline risk |
+| `ec50`    | Normal(mid, range/4) | Centred on the data range |
+| `slope`   | Normal(0, 2) truncated ≥ 0 | Weakly informative |
 
-- **`floor_alpha`**: Alpha parameter for the Beta prior distribution of the "floor" parameter (proportion of maximum risk at high titre). Default: `1`.
-- **`floor_beta`**: Beta parameter for the Beta prior distribution of the "floor" parameter. Default: `9` (favors low residual risk).
-- **`ceiling_alpha`**: Alpha parameter for the Beta prior distribution of the "ceiling" parameter (maximum infection risk at low titre). Default: `9`.
-- **`ceiling_beta`**: Beta parameter for the Beta prior distribution of the "ceiling" parameter. Default: `1` (favors high risk at low titre).
-- **`ec50_mean`**: Mean of the Normal prior distribution for the `ec50` parameter (titre at inflection point). Default: Midpoint of the `titre` range.
-- **`ec50_sd`**: Standard deviation of the Normal prior distribution for the `ec50` parameter. Default: One-fourth of the `titre` range.
-- **`slope_mean`**: Mean of the Normal prior distribution for the slope parameter (steepness of protective curve). Default: `0`.
-- **`slope_sd`**: Standard deviation of the Normal prior distribution for the slope parameter. Default: `2`.
+Override priors with `definePrior()`:
 
-### Example Usage
-
-```r
+```{r define-prior, eval=FALSE}
 model$definePrior(
-  floor_alpha = 2, floor_beta = 18,    # Stronger prior for low residual risk (E[floor] ≈ 0.1)
-  ceiling_alpha = 18, ceiling_beta = 2, # Stronger prior for high baseline risk (E[ceiling] ≈ 0.9)
-  ec50_mean = 1.5, ec50_sd = 0.5,      # Custom ec50 prior
-  slope_mean = 0, slope_sd = 1         # More conservative slope
+  floor_alpha   = 2,   floor_beta    = 18,   # E[floor]   ≈ 0.10
+  ceiling_alpha = 18,  ceiling_beta  = 2,    # E[ceiling] ≈ 0.90
+  ec50_mean     = 2.0, ec50_sd       = 1.0,  # Informative ec50 prior
+  slope_mean    = 0,   slope_sd      = 1     # Tighter slope prior
 )
 ```
 
-### Supported Distributions
-- Normal
-- Uniform
-- Beta
+`definePrior()` can be called any time **before** `fit_model()` and prints a
+summary of the updated priors.
 
-## Model Fitting
+---
 
-The `fit_model` method fits the model to the data using Stan. Example:
+# Observation Weights
 
-```r
-fit <- model$fit_model(
-  chains = 4,
-  iter = 2000,
-  warmup = 500,
-  cores = 2
-)
+Pass a non-negative numeric vector to `SeroCOP$new(weights = ...)` to
+up-/down-weight individual observations in the likelihood:
+
+```{r weights-example, eval=FALSE}
+# Case-control design: up-weight confirmed cases
+w <- ifelse(infected == 1, 1.0, 0.5)
+
+w_model <- SeroCOP$new(titre = titre, infected = infected, weights = w)
+w_model$fit_model(chains = 4, iter = 2000, warmup = 1000)
 ```
 
-### Arguments
-- `data`: The dataset to fit the model to.
-- `chains`: Number of MCMC chains.
-- `iter`: Total number of iterations per chain.
-- `warmup`: Number of warmup iterations.
-- `cores`: Number of CPU cores to use.
+---
 
-## Multi-Biomarker Analysis
+# Hierarchical Models (Multiple Groups)
 
-The `SeroCOPMulti` class extends `SeroCOP` to support multi-biomarker analysis. Example:
+Add a `group` variable to estimate group-specific `ec50` and `slope` while
+sharing a common `floor` (and optionally `ceiling`):
 
-```r
+```{r hier-example, eval=FALSE}
+age_group <- sample(c("Young", "Middle", "Old"), n, replace = TRUE)
 
-set.seed(123)
-data1 <- data.frame(
-  titre = rnorm(100, mean = 2, sd = 1.5),
-  infected = rbinom(100, 1, prob = 0.5)
+hier <- SeroCOP$new(titre = titre, infected = infected, group = age_group)
+
+# ceiling_group = FALSE (default): ceiling shared across groups
+# ceiling_group = TRUE:  ceiling also allowed to vary by group
+hier$fit_model(chains = 4, iter = 2000, warmup = 1000,
+               ceiling_group = FALSE)
+
+# Group-specific parameter table
+hier$extract_group_parameters()
+
+# Fitted risk curves with marginalised overlay
+hier$plot_group_curves(
+  weights_pop = c(Young = 0.45, Middle = 0.35, Old = 0.20)
 )
-data2 <- data.frame(
-  titre = rnorm(100, mean = 3, sd = 1.2),
-  infected = rbinom(100, 1, prob = 0.6)
+
+# Correlates of protection curves
+hier$plot_cop_curves(
+  weights_pop = c(Young = 0.45, Middle = 0.35, Old = 0.20)
 )
 
-
-multi_model <- SeroCOPMulti$new(
-  titre = c(data1$titre, data2$titre),
-  infected = c(data1$infected, data2$infected)
-)
-multi_fit <- multi_model$fit_all(
-  chains = 4,
-  iter = 2000,
-  warmup = 500,
-  cores = 2
-)
+# Per-group LOO is computed automatically; accessed via:
+hier$loo_by_group
 ```
 
-### Example Datasets for Multi-Biomarker analysis
+---
 
-## Visualization
+# Multi-Biomarker Analysis
 
-The `plot` method provides visualization tools for the fitted model:
+`SeroCOPMulti` fits one independent `SeroCOP` model per biomarker and
+provides comparison tools:
 
-```r
-fit$plot_curve()
+```{r multi-example, eval=FALSE}
+# titre is a matrix: rows = observations, cols = biomarkers
+titre_mat <- cbind(IgG = titre_IgG, IgA = titre_IgA, Neutralisation = titre_Neut)
+
+multi <- SeroCOPMulti$new(
+  titre           = titre_mat,
+  infected        = infected,
+  biomarker_names = c("IgG", "IgA", "Neutralisation")
+)
+
+multi$fit_all(chains = 4, iter = 2000, warmup = 1000, cores = 4)
+
+# Compare biomarkers (AUC, Brier, LOO-ELPD)
+multi$compare_biomarkers()
+multi$plot_comparison()
+
+# All fitted risk curves side-by-side
+multi$plot_all_curves()
 ```
 
-## Extracting Parameters
+---
 
-Use the `extract_parameters` method to extract posterior samples:
+# Performance Metrics
 
-```r
-params <- model$extract_parameters()
+`get_metrics()` returns and prints:
+
+| Metric | Description |
+|--------|-------------|
+| `roc_auc` | Area under the ROC curve (marginalised predictions) |
+| `roc_auc_within_group` | Weighted within-group AUC (hierarchical only) |
+| `brier_score` | Mean squared error of predicted probabilities |
+| `loo_elpd` / `loo_se` | LOO expected log predictive density ± SE |
+| `loo_by_group` | Per-group LOO ELPD (hierarchical only) |
+
+---
+
+# Extracting Parameters
+
+`extract_parameters()` wraps `brms::as_draws_df()` and returns a tidy
+data frame of posterior mean, median, and credible intervals:
+
+```{r extract-params-example, eval=FALSE}
+params <- extract_parameters(model, prob = 0.95)
+print(params)
+#   parameter  mean median  lower  upper
+# 1     floor 0.052  0.050  0.010  0.110
+# 2   ceiling 0.681  0.683  0.612  0.748
+# 3      ec50 1.504  1.503  1.363  1.641
+# 4     slope 1.983  1.978  1.701  2.275
 ```
 
-## Summary
+---
 
-The `SeroCOP` class provides a flexible and powerful framework for Bayesian analysis of correlates of protection. This vignette covered the key options and functions available in the class. For more details, refer to the package documentation.
+# Predicting Protection
+
+The **correlate of protection** at titre $t$ is:
+
+$$\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{\text{ceiling}}$$
+
+```{r cop-example, eval=FALSE}
+# Matrix of posterior samples (rows = draws, cols = observations)
+cop_samples <- model$predict_protection(newdata = seq(0, 5, 0.1))
+
+cop_mean  <- colMeans(cop_samples)
+cop_lower <- apply(cop_samples, 2, quantile, 0.025)
+cop_upper <- apply(cop_samples, 2, quantile, 0.975)
+```
+
+---
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```

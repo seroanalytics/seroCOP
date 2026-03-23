@@ -55,6 +55,9 @@ SeroCOP <- R6::R6Class(
     
     #' @field loo LOO-CV object (after fitting)
     loo = NULL,
+
+    #' @field loo_by_group List of per-group LOO contributions (hierarchical models only)
+    loo_by_group = NULL,
     
     #' @field priors List of prior distributions for model parameters
     priors = NULL,
@@ -195,9 +198,11 @@ SeroCOP <- R6::R6Class(
     #' @param iter Number of iterations per chain (default: 2000)
     #' @param warmup Number of warmup iterations (default: iter/2)
     #' @param thin Thinning interval (default: 1)
+    #' @param ceiling_group Logical; when \code{TRUE} and a group variable is present,
+    #'   the ceiling parameter also receives group-level random effects (default: FALSE).
     #' @param ... Additional arguments passed to brms::brm
     #' @return Self (invisibly)
-    fit_model = function(chains = 4, iter = 2000, warmup = 1000, thin = 1, ...) {
+    fit_model = function(chains = 4, iter = 2000, warmup = 1000, thin = 1, ceiling_group = FALSE, ...) {
       message("Fitting Bayesian logistic model using brms...")
       
       # Prepare data frame
@@ -247,25 +252,36 @@ SeroCOP <- R6::R6Class(
       nl_formula <- stats::as.formula(paste(lhs, "~", rhs))
 
       if (hierarchical) {
-        message("  Adding group-level effects on ceiling, slope and ec50\n")
-        # Hierarchical formula: group-level effects on ceiling (exposure/attack rate),
-        # ec50 (protective threshold) and slope (dose-response steepness)
+        if (ceiling_group) {
+          message("  Adding group-level effects on ceiling, ec50 and slope\n")
+        } else {
+          message("  Adding group-level effects on ec50 and slope (ceiling fixed across groups; set ceiling_group = TRUE to allow group variation)\n")
+        }
+        # Hierarchical formula: group-level effects on ec50 (protective threshold)
+        # and slope (dose-response steepness); ceiling gets group effects only when
+        # ceiling_group = TRUE
+        ceiling_f <- if (ceiling_group) ceiling ~ 1 + (1 | group) else ceiling ~ 1
         formula <- brms::bf(
           nl_formula,
           floor ~ 1,
-          ceiling ~ 1 + (1 | group),   # Random intercept for ceiling (exposure rate)
+          ceiling_f,
           ec50 ~ 1 + (1 | group),      # Random intercept for ec50
-          slope ~ 1 + (1 | group),      # Random intercept for slope
+          slope ~ 1 + (1 | group),     # Random intercept for slope
           nl = TRUE
         )
         
         # Add priors for group-level standard deviations
-        priors <- c(
-          priors,
-          brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "ceiling", group = "group"),
+        group_sd_priors <- c(
           brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "ec50", group = "group"),
           brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "slope", group = "group")
         )
+        if (ceiling_group) {
+          group_sd_priors <- c(
+            brms::set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "ceiling", group = "group"),
+            group_sd_priors
+          )
+        }
+        priors <- c(priors, group_sd_priors)
       } else {
         # Non-hierarchical formula
         formula <- brms::bf(
@@ -303,7 +319,27 @@ SeroCOP <- R6::R6Class(
       # Compute LOO-CV
       message("Computing LOO-CV...")
       self$loo <- brms::loo(self$fit)
-      
+
+      # Per-group LOO contributions (derived from overall pointwise values)
+      if (!is.null(self$group)) {
+        message("Computing per-group LOO contributions...")
+        loo_pw <- self$loo$pointwise
+        groups <- levels(self$group)
+        self$loo_by_group <- stats::setNames(
+          lapply(groups, function(g) {
+            idx       <- which(self$group == g)
+            elpd_vals <- loo_pw[idx, "elpd_loo"]
+            list(
+              group = g,
+              n     = length(idx),
+              elpd  = sum(elpd_vals),
+              se    = sqrt(length(idx) * stats::var(elpd_vals))
+            )
+          }),
+          groups
+        )
+      }
+
       message("Model fitting complete!")
       invisible(self)
     },
@@ -417,7 +453,11 @@ SeroCOP <- R6::R6Class(
         
         # Calculate group-specific parameters (population + group deviation)
         # ceiling is bounded [0,1]; clamp to valid range after adding deviation
-        ceiling_samples <- pmin(pmax(posterior$b_ceiling_Intercept + posterior[[ceiling_col]], 0), 1)
+        if (ceiling_col %in% names(posterior)) {
+          ceiling_samples <- pmin(pmax(posterior$b_ceiling_Intercept + posterior[[ceiling_col]], 0), 1)
+        } else {
+          ceiling_samples <- pmin(pmax(posterior$b_ceiling_Intercept, 0), 1)
+        }
         ec50_samples    <- posterior$b_ec50_Intercept    + posterior[[ec50_col]]
         slope_samples   <- posterior$b_slope_Intercept   + posterior[[slope_col]]
         
@@ -510,12 +550,13 @@ SeroCOP <- R6::R6Class(
       loo_se   <- self$loo$estimates["elpd_loo", "SE"]
 
       metrics <- list(
-        roc_auc             = auc_value,
+        roc_auc              = auc_value,
         roc_auc_within_group = auc_within_group,
-        brier_score         = brier,
-        loo_elpd            = loo_elpd,
-        loo_se              = loo_se,
-        loo_object          = self$loo
+        brier_score          = brier,
+        loo_elpd             = loo_elpd,
+        loo_se               = loo_se,
+        loo_object           = self$loo,
+        loo_by_group         = self$loo_by_group
       )
 
       # Print summary
@@ -526,6 +567,13 @@ SeroCOP <- R6::R6Class(
       }
       cat(sprintf("  Brier Score:                   %.3f\n", brier))
       cat(sprintf("  LOO ELPD:                      %.2f (SE: %.2f)\n", loo_elpd, loo_se))
+      if (!is.null(self$loo_by_group)) {
+        cat("  LOO ELPD by group:\n")
+        for (grp_loo in self$loo_by_group) {
+          cat(sprintf("    %-22s %.2f (SE: %.2f, n = %d)\n",
+                      grp_loo$group, grp_loo$elpd, grp_loo$se, grp_loo$n))
+        }
+      }
 
       invisible(metrics)
     },
@@ -630,81 +678,109 @@ SeroCOP <- R6::R6Class(
     },
     
     #' @description
-    #' Plot group-specific curves for hierarchical models
+    #' Plot group-specific correlates of risk curves with a population-weighted
+    #' marginalised curve overlaid on each panel.
     #' @param title Plot title
+    #' @param weights_pop Optional named numeric vector of population weights for
+    #'   computing the marginalised curve. Names must match group levels.
+    #'   If \code{NULL} (default), sample proportions are used.
     #' @return A ggplot object (returns NULL if not a hierarchical model)
-    plot_group_curves = function(title = "Group-Specific Correlates of Risk") {
+    plot_group_curves = function(title = "Group-Specific Correlates of Risk",
+                                  weights_pop = NULL) {
       if (is.null(self$fit)) {
         stop("Model has not been fitted yet. Run fit_model() first.")
       }
-      
+
       if (is.null(self$group)) {
         message("Not a hierarchical model. Use plot_curve() instead.")
         return(invisible(NULL))
       }
-      
-      # Get posterior samples
+
       posterior <- brms::as_draws_df(self$fit)
-      
-      # Extract group levels
-      groups <- levels(self$group)
-      n_groups <- length(groups)
-      
-      # Create prediction grid for each group
+      groups    <- levels(self$group)
+      n_iter    <- nrow(posterior)
+
+      # Determine group weights for marginalisation
+      n_by_group <- table(self$group)
+      if (!is.null(weights_pop)) {
+        if (!is.numeric(weights_pop) || is.null(names(weights_pop))) {
+          stop("weights_pop must be a named numeric vector with names matching group levels")
+        }
+        if (!all(groups %in% names(weights_pop))) {
+          stop("weights_pop must contain entries for all groups: ",
+               paste(groups, collapse = ", "))
+        }
+        grp_weights <- weights_pop[groups] / sum(weights_pop[groups])
+      } else {
+        grp_weights <- as.numeric(n_by_group[groups]) / sum(n_by_group)
+      }
+      names(grp_weights) <- groups
+
       titre_range <- range(self$titre)
-      titre_grid <- seq(titre_range[1], titre_range[2], length.out = 100)
-      
-      # Prepare data for plotting
+      titre_grid  <- seq(titre_range[1], titre_range[2], length.out = 100)
+
+      # Raw prediction matrices per group (needed for weighted marginalisation)
+      all_pred_matrices <- vector("list", length(groups))
+      names(all_pred_matrices) <- groups
+
       plot_list <- list()
-      obs_list <- list()
-      
+      obs_list  <- list()
+
       for (g in groups) {
-        # Extract group-specific parameters
         ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
         ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
         slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
-        
-        # Calculate group-specific predictions
-        n_iter <- nrow(posterior)
+
         predictions <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
-        
-        for (i in 1:n_iter) {
+
+        for (i in seq_len(n_iter)) {
           floor_i   <- posterior$b_floor_Intercept[i]
-          ceiling_i <- pmin(pmax(posterior$b_ceiling_Intercept[i] + posterior[[ceiling_col]][i], 0), 1)
-          ec50_i    <- posterior$b_ec50_Intercept[i]  + posterior[[ec50_col]][i]
-          slope_i   <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
-          
-          # Calculate predictions using the model formula
-          logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
+          ceiling_i <- if (ceiling_col %in% names(posterior)) {
+            pmin(pmax(posterior$b_ceiling_Intercept[i] + posterior[[ceiling_col]][i], 0), 1)
+          } else {
+            pmin(pmax(posterior$b_ceiling_Intercept[i], 0), 1)
+          }
+          ec50_i  <- posterior$b_ec50_Intercept[i] + posterior[[ec50_col]][i]
+          slope_i <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
+
+          logit_part       <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
           predictions[i, ] <- ceiling_i * (logit_part * (1 - floor_i) + floor_i)
         }
-        
-        # Calculate summary statistics
-        pred_mean <- colMeans(predictions)
-        pred_lower <- apply(predictions, 2, quantile, probs = 0.025)
-        pred_upper <- apply(predictions, 2, quantile, probs = 0.975)
-        
+
+        all_pred_matrices[[g]] <- predictions
+
         plot_list[[g]] <- data.frame(
           group = g,
           titre = titre_grid,
-          prob = pred_mean,
-          lower = pred_lower,
-          upper = pred_upper
+          prob  = colMeans(predictions),
+          lower = apply(predictions, 2, quantile, probs = 0.025),
+          upper = apply(predictions, 2, quantile, probs = 0.975)
         )
-        
-        # Get observed data for this group
-        group_idx <- which(self$group == g)
+
+        group_idx     <- which(self$group == g)
         obs_list[[g]] <- data.frame(
-          group = g,
-          titre = self$titre[group_idx],
+          group    = g,
+          titre    = self$titre[group_idx],
           infected = self$infected[group_idx]
         )
       }
-      
+
+      # Population-weighted marginalised curve
+      marg_pred <- matrix(0, nrow = n_iter, ncol = length(titre_grid))
+      for (g in groups) {
+        marg_pred <- marg_pred + grp_weights[g] * all_pred_matrices[[g]]
+      }
+      # marg_df has no 'group' column so ggplot2 draws it in every facet panel
+      marg_df <- data.frame(
+        titre = titre_grid,
+        prob  = colMeans(marg_pred),
+        lower = apply(marg_pred, 2, quantile, probs = 0.025),
+        upper = apply(marg_pred, 2, quantile, probs = 0.975)
+      )
+
       plot_df <- do.call(rbind, plot_list)
-      obs_df <- do.call(rbind, obs_list)
-      
-      # Create plot
+      obs_df  <- do.call(rbind, obs_list)
+
       p <- ggplot2::ggplot() +
         ggplot2::geom_ribbon(
           data = plot_df,
@@ -716,6 +792,16 @@ SeroCOP <- R6::R6Class(
           ggplot2::aes(x = titre, y = prob, color = group),
           linewidth = 1
         ) +
+        ggplot2::geom_ribbon(
+          data = marg_df,
+          ggplot2::aes(x = titre, ymin = lower, ymax = upper),
+          alpha = 0.15, fill = "black", inherit.aes = FALSE
+        ) +
+        ggplot2::geom_line(
+          data = marg_df,
+          ggplot2::aes(x = titre, y = prob),
+          color = "black", linewidth = 1, linetype = "dashed", inherit.aes = FALSE
+        ) +
         ggplot2::geom_point(
           data = obs_df,
           ggplot2::aes(x = titre, y = infected),
@@ -724,17 +810,158 @@ SeroCOP <- R6::R6Class(
         ) +
         ggplot2::facet_wrap(~group) +
         ggplot2::labs(
-          title = title,
-          x = "Antibody Titre (log scale)",
-          y = "Probability of Infection"
+          title    = title,
+          subtitle = "Dashed black line: marginalised (population-weighted) curve",
+          x        = "Antibody Titre (log scale)",
+          y        = "Probability of Infection"
         ) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
-          plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"),
+          plot.title       = ggplot2::element_text(hjust = 0.5, face = "bold"),
+          plot.subtitle    = ggplot2::element_text(hjust = 0.5),
           panel.grid.minor = ggplot2::element_blank(),
-          legend.position = "none"
+          legend.position  = "none"
         )
-      
+
+      return(p)
+    },
+
+    #' @description
+    #' Plot group-specific and marginalised correlates of protection (COP) curves.
+    #' The COP at titre \eqn{t} for group \eqn{g} is defined as
+    #' \eqn{1 - P(\text{infection} \mid t, g) / \text{ceiling}_g}, i.e.\ the
+    #' probability of protection conditional on exposure. The marginalised curve
+    #' is the weighted average of group-specific COP curves.
+    #' @param title Plot title
+    #' @param weights_pop Optional named numeric vector of population weights for
+    #'   computing the marginalised curve. Names must match group levels.
+    #'   If \code{NULL} (default), sample proportions are used.
+    #' @return A ggplot object (returns NULL if not a hierarchical model)
+    plot_cop_curves = function(title = "Correlates of Protection",
+                                weights_pop = NULL) {
+      if (is.null(self$fit)) {
+        stop("Model has not been fitted yet. Run fit_model() first.")
+      }
+
+      if (is.null(self$group)) {
+        message("Not a hierarchical model. Use predict_protection() for non-hierarchical curves.")
+        return(invisible(NULL))
+      }
+
+      posterior <- brms::as_draws_df(self$fit)
+      groups    <- levels(self$group)
+      n_iter    <- nrow(posterior)
+
+      # Determine group weights for marginalisation
+      n_by_group <- table(self$group)
+      if (!is.null(weights_pop)) {
+        if (!is.numeric(weights_pop) || is.null(names(weights_pop))) {
+          stop("weights_pop must be a named numeric vector with names matching group levels")
+        }
+        if (!all(groups %in% names(weights_pop))) {
+          stop("weights_pop must contain entries for all groups: ",
+               paste(groups, collapse = ", "))
+        }
+        grp_weights <- weights_pop[groups] / sum(weights_pop[groups])
+      } else {
+        grp_weights <- as.numeric(n_by_group[groups]) / sum(n_by_group)
+      }
+      names(grp_weights) <- groups
+
+      titre_range <- range(self$titre)
+      titre_grid  <- seq(titre_range[1], titre_range[2], length.out = 100)
+
+      cop_matrices <- vector("list", length(groups))
+      names(cop_matrices) <- groups
+      plot_list <- list()
+
+      for (g in groups) {
+        ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
+        ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
+        slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
+
+        cop_mat <- matrix(NA, nrow = n_iter, ncol = length(titre_grid))
+
+        for (i in seq_len(n_iter)) {
+          floor_i   <- posterior$b_floor_Intercept[i]
+          ceiling_i <- if (ceiling_col %in% names(posterior)) {
+            pmin(pmax(posterior$b_ceiling_Intercept[i] + posterior[[ceiling_col]][i], 0), 1)
+          } else {
+            pmin(pmax(posterior$b_ceiling_Intercept[i], 0), 1)
+          }
+          ec50_i  <- posterior$b_ec50_Intercept[i] + posterior[[ec50_col]][i]
+          slope_i <- posterior$b_slope_Intercept[i] + posterior[[slope_col]][i]
+
+          logit_part <- 1 / (1 + exp(slope_i * (titre_grid - ec50_i)))
+          prob_inf_i <- ceiling_i * (logit_part * (1 - floor_i) + floor_i)
+
+          # COP = P(protected | exposed) = 1 - P(infection) / ceiling
+          cop_mat[i, ] <- 1 - prob_inf_i / ceiling_i
+        }
+
+        cop_matrices[[g]] <- cop_mat
+
+        plot_list[[g]] <- data.frame(
+          group = g,
+          titre = titre_grid,
+          cop   = colMeans(cop_mat),
+          lower = apply(cop_mat, 2, quantile, probs = 0.025),
+          upper = apply(cop_mat, 2, quantile, probs = 0.975)
+        )
+      }
+
+      # Marginalised COP (weighted average across groups)
+      marg_cop <- matrix(0, nrow = n_iter, ncol = length(titre_grid))
+      for (g in groups) {
+        marg_cop <- marg_cop + grp_weights[g] * cop_matrices[[g]]
+      }
+      marg_df <- data.frame(
+        titre = titre_grid,
+        cop   = colMeans(marg_cop),
+        lower = apply(marg_cop, 2, quantile, probs = 0.025),
+        upper = apply(marg_cop, 2, quantile, probs = 0.975)
+      )
+
+      plot_df <- do.call(rbind, plot_list)
+
+      p <- ggplot2::ggplot() +
+        ggplot2::geom_ribbon(
+          data = plot_df,
+          ggplot2::aes(x = titre, ymin = lower, ymax = upper, fill = group),
+          alpha = 0.2
+        ) +
+        ggplot2::geom_line(
+          data = plot_df,
+          ggplot2::aes(x = titre, y = cop, colour = group),
+          linewidth = 1
+        ) +
+        ggplot2::geom_ribbon(
+          data = marg_df,
+          ggplot2::aes(x = titre, ymin = lower, ymax = upper),
+          alpha = 0.15, fill = "black", inherit.aes = FALSE
+        ) +
+        ggplot2::geom_line(
+          data = marg_df,
+          ggplot2::aes(x = titre, y = cop),
+          colour = "black", linewidth = 1.2, linetype = "dashed", inherit.aes = FALSE
+        ) +
+        ggplot2::geom_hline(yintercept = 0.5, linetype = "dotted", alpha = 0.5) +
+        ggplot2::scale_y_continuous(limits = c(NA, 1)) +
+        ggplot2::labs(
+          title    = title,
+          subtitle = "Dashed black line: marginalised (population-weighted) curve",
+          x        = "Antibody Titre (log scale)",
+          y        = "Correlate of Protection",
+          colour   = "Group",
+          fill     = "Group"
+        ) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(
+          plot.title       = ggplot2::element_text(hjust = 0.5, face = "bold"),
+          plot.subtitle    = ggplot2::element_text(hjust = 0.5),
+          panel.grid.minor = ggplot2::element_blank()
+        )
+
       return(p)
     },
     
