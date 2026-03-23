@@ -1,0 +1,7 @@
+SeroCOP                 SeroCOP R6 Class
+SeroCOPMulti            SeroCOPMulti R6 Class for Multi-Biomarker
+                        Correlates of Protection Analysis
+brier_score             Calculate Brier score
+extract_parameters      Extract parameter estimates from SeroCOP fit
+simulate_serocop_data   Simulate data for correlates of protection
+                        analysis

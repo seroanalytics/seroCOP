@@ -1,0 +1,80 @@
+* using log directory ‘/Users/davidhodgson/Dropbox/Mac (3)/Documents/research/software/sero/seroCop-all/seroCOP/seroCOP.Rcheck’
+* using R version 4.5.1 (2025-06-13)
+* using platform: aarch64-apple-darwin20
+* R was compiled by
+    Apple clang version 16.0.0 (clang-1600.0.26.6)
+    GNU Fortran (GCC) 14.2.0
+* running under: macOS Sequoia 15.7.3
+* using session charset: UTF-8
+* using options ‘--no-tests --no-vignettes’
+* checking for file ‘seroCOP/DESCRIPTION’ ... OK
+* this is package ‘seroCOP’ version ‘0.1.0’
+* package encoding: UTF-8
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking whether package ‘seroCOP’ can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking DESCRIPTION meta-information ... NOTE
+License stub is invalid DCF.
+'LinkingTo' field is unused: package has no 'src' directory
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking dependencies in R code ... NOTE
+Namespaces in Imports field not imported from:
+  ‘R6’ ‘ggplot2’ ‘loo’ ‘methods’ ‘pROC’ ‘rstan’ ‘rstantools’ ‘tidyr’
+  All declared Imports should be used.
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... OK
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking files in ‘vignettes’ ... WARNING
+Files in the 'vignettes' directory but no files in 'inst/doc':
+  ‘hierarchical-groups.R’ ‘hierarchical-groups.Rmd’
+  ‘hierarchical-groups.html’ ‘multi-biomarker.R’ ‘multi-biomarker.Rmd’
+  ‘multi-biomarker.html’ ‘serocop-overview.R’ ‘serocop-overview.Rmd’
+  ‘serocop-overview.html’ ‘simulation-recovery.R’
+  ‘simulation-recovery.Rmd’ ‘simulation-recovery.html’
+  ‘weighted-multi-biomarker.Rmd’ ‘weighted-multi-biomarker.html’
+* checking examples ... OK
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes ... WARNING
+Directory 'inst/doc' does not exist.
+Package vignettes without corresponding single PDF/HTML:
+  ‘hierarchical-groups.Rmd’
+  ‘multi-biomarker.Rmd’
+  ‘serocop-overview.Rmd’
+  ‘simulation-recovery.Rmd’
+  ‘weighted-multi-biomarker.Rmd’
+* checking running R code from vignettes ... SKIPPED
+* checking re-building of vignette outputs ... SKIPPED
+* checking PDF version of manual ... WARNING
+LaTeX errors when creating PDF version.
+This typically indicates Rd problems.
+* checking PDF version of manual without index ... ERROR
+Re-running with no redirection of stdout/stderr.
+* DONE
+Status: 1 ERROR, 3 WARNINGs, 2 NOTEs
