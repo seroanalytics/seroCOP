@@ -108,8 +108,8 @@
 <p>This vignette demonstrates how to use hierarchical modeling in
 <code>SeroCOP</code> to account for group-level heterogeneity in
 correlates of protection. This is particularly useful when different
-subpopulations (e.g., age groups, geographic regions, or vaccine types)
-may have different dose-response relationships.</p>
+subpopulations (e.g. age groups, geographic regions, or vaccine types)
+may have different dose–response relationships.</p>
 <div class="section level3">
 <h3 id="when-to-use-hierarchical-models">When to Use Hierarchical Models<a class="anchor" aria-label="anchor" href="#when-to-use-hierarchical-models"></a>
 </h3>
@@ -119,29 +119,26 @@ may have different dose-response relationships.</p>
 protection relationships</li>
 <li>You want to “borrow strength” across groups while allowing
 group-specific estimates</li>
-<li>You want to quantify between-group variability in protection</li>
 <li>Sample sizes within groups may be modest</li>
+<li>You want to quantify between-group variability in protection</li>
 </ul>
 </div>
 <div class="section level3">
 <h3 id="example-scenario-age-specific-correlates">Example Scenario: Age-Specific Correlates<a class="anchor" aria-label="anchor" href="#example-scenario-age-specific-correlates"></a>
 </h3>
-<p>We’ll demonstrate with a realistic scenario where antibody titre is a
-correlate of protection, but the strength of this relationship varies by
-age group:</p>
+<p>We demonstrate with a realistic scenario where the strength of the
+antibody–protection relationship varies by age group:</p>
 <ul>
 <li>
-<strong>Young adults</strong>: Steep relationship (strong
-correlate)</li>
+<strong>Young adults</strong> (largest cohort): Steep relationship —
+strong correlate</li>
 <li>
-<strong>Middle-aged</strong>: Moderate relationship<br>
-</li>
+<strong>Middle-aged</strong> (medium cohort): Moderate
+relationship</li>
 <li>
-<strong>Older adults</strong>: Flat relationship (weak or no
-correlate)</li>
+<strong>Older adults</strong> (smallest cohort): Flat — weak or
+absent correlate</li>
 </ul>
-<p>This reflects real-world phenomena where immune responses may differ
-by age.</p>
 </div>
 <div class="section level3">
 <h3 id="load-the-package">Load the package<a class="anchor" aria-label="anchor" href="#load-the-package"></a>
@@ -155,283 +152,314 @@ by age.</p>
 <div class="section level2">
 <h2 id="simulate-age-stratified-data">Simulate Age-Stratified Data<a class="anchor" aria-label="anchor" href="#simulate-age-stratified-data"></a>
 </h2>
-<p>We’ll create data for three age groups with different correlate of
-protection relationships:</p>
+<p>The three age groups have <strong>different sample sizes</strong> to
+reflect typical epidemiological studies where recruitment is
+unequal.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">n_per_group</span> <span class="op">&lt;-</span> <span class="fl">80</span>  <span class="co"># Sample size per age group</span></span>
+<code class="sourceCode R"><span><span class="co"># ---- unequal group sizes ----</span></span>
+<span><span class="va">young_n</span>  <span class="op">&lt;-</span> <span class="fl">150</span>   <span class="co"># most participants</span></span>
+<span><span class="va">middle_n</span> <span class="op">&lt;-</span> <span class="fl">90</span></span>
+<span><span class="va">old_n</span>    <span class="op">&lt;-</span> <span class="fl">45</span>    <span class="co"># fewest participants</span></span>
 <span></span>
-<span><span class="co"># Function to simulate data for one age group</span></span>
-<span><span class="va">simulate_group</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">group_name</span>, <span class="va">slope</span>, <span class="va">ec50</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Generate antibody titres</span></span>
+<span><span class="va">simulate_group</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">group_name</span>, <span class="va">slope</span>, <span class="va">ec50</span>,</span>
+<span>                           <span class="va">floor</span> <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">ceiling</span> <span class="op">=</span> <span class="fl">0.70</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">titre</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, mean <span class="op">=</span> <span class="fl">2.5</span>, sd <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="co"># Calculate infection probability using the logistic model</span></span>
-<span>  <span class="co"># floor = 0.05, ceiling = 0.70</span></span>
-<span>  <span class="va">floor</span> <span class="op">&lt;-</span> <span class="fl">0.05</span></span>
-<span>  <span class="va">ceiling</span> <span class="op">&lt;-</span> <span class="fl">0.70</span></span>
-<span>  </span>
-<span>  <span class="va">logit_part</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">slope</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre</span> <span class="op">-</span> <span class="va">ec50</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">logit_part</span>     <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">slope</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre</span> <span class="op">-</span> <span class="va">ec50</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">prob_infection</span> <span class="op">&lt;-</span> <span class="va">ceiling</span> <span class="op">*</span> <span class="op">(</span><span class="va">logit_part</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">floor</span><span class="op">)</span> <span class="op">+</span> <span class="va">floor</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="co"># Generate infection outcomes</span></span>
-<span>  <span class="va">infected</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="va">prob_infection</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    titre <span class="op">=</span> <span class="va">titre</span>,</span>
-<span>    infected <span class="op">=</span> <span class="va">infected</span>,</span>
-<span>    age_group <span class="op">=</span> <span class="va">group_name</span></span>
-<span>  <span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">infected</span>       <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="va">prob_infection</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>titre <span class="op">=</span> <span class="va">titre</span>, infected <span class="op">=</span> <span class="va">infected</span>, age_group <span class="op">=</span> <span class="va">group_name</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># Simulate three age groups with different CoP strengths</span></span>
-<span><span class="co"># Note: Higher slope values mean steeper curves (stronger correlate)</span></span>
-<span><span class="va">young</span> <span class="op">&lt;-</span> <span class="fu">simulate_group</span><span class="op">(</span><span class="va">n_per_group</span>, <span class="st">"Young"</span>, slope <span class="op">=</span> <span class="fl">3.0</span>, ec50 <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span>
-<span><span class="va">middle</span> <span class="op">&lt;-</span> <span class="fu">simulate_group</span><span class="op">(</span><span class="va">n_per_group</span>, <span class="st">"Middle"</span>, slope <span class="op">=</span> <span class="fl">1.5</span>, ec50 <span class="op">=</span> <span class="fl">1.8</span><span class="op">)</span></span>
-<span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu">simulate_group</span><span class="op">(</span><span class="va">n_per_group</span>, <span class="st">"Old"</span>, slope <span class="op">=</span> <span class="fl">0.3</span>, ec50 <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span></span>
+<span><span class="va">young</span>  <span class="op">&lt;-</span> <span class="fu">simulate_group</span><span class="op">(</span><span class="va">young_n</span>,  <span class="st">"Young adults"</span>,   slope <span class="op">=</span> <span class="fl">3.0</span>, ec50 <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span>
+<span><span class="va">middle</span> <span class="op">&lt;-</span> <span class="fu">simulate_group</span><span class="op">(</span><span class="va">middle_n</span>, <span class="st">"Middle-aged"</span>,    slope <span class="op">=</span> <span class="fl">1.5</span>, ec50 <span class="op">=</span> <span class="fl">1.8</span><span class="op">)</span></span>
+<span><span class="va">old</span>    <span class="op">&lt;-</span> <span class="fu">simulate_group</span><span class="op">(</span><span class="va">old_n</span>,    <span class="st">"Older adults"</span>,   slope <span class="op">=</span> <span class="fl">0.3</span>, ec50 <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Combine all groups</span></span>
 <span><span class="va">all_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">young</span>, <span class="va">middle</span>, <span class="va">old</span><span class="op">)</span></span>
+<span><span class="co"># Use an ordered factor so panels appear in a natural left-to-right order</span></span>
+<span><span class="va">all_data</span><span class="op">$</span><span class="va">age_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">$</span><span class="va">age_group</span>,</span>
+<span>                             levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Young adults"</span>, <span class="st">"Middle-aged"</span>, <span class="st">"Older adults"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Simulated data with age-specific correlates:\n"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Simulated data with age-specific correlates:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Simulated data with age-specific correlates:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  Young (n=%d): slope=3.0, ec50=1.5 (steep - strong protection)\n"</span>, <span class="va">n_per_group</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Young (n=80): slope=3.0, ec50=1.5 (steep - strong protection)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  Middle (n=%d): slope=1.5, ec50=1.8 (moderate protection)\n"</span>, <span class="va">n_per_group</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Middle (n=80): slope=1.5, ec50=1.8 (moderate protection)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  Old (n=%d): slope=0.3, ec50=2.0 (flat - weak correlate)\n"</span>, <span class="va">n_per_group</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Old (n=80): slope=0.3, ec50=2.0 (flat - weak correlate)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\nTotal sample size: %d\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  Young adults  (n=%d): slope=3.0, ec50=1.5 — strong correlate\n"</span>, <span class="va">young_n</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Young adults  (n=150): slope=3.0, ec50=1.5 — strong correlate</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  Middle-aged   (n=%d): slope=1.5, ec50=1.8 — moderate correlate\n"</span>, <span class="va">middle_n</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Middle-aged   (n=90): slope=1.5, ec50=1.8 — moderate correlate</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"  Older adults  (n=%d): slope=0.3, ec50=2.0 — weak correlate\n"</span>, <span class="va">old_n</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Older adults  (n=45): slope=0.3, ec50=2.0 — weak correlate</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\nTotal n=%d  |  Infection rate: %.1f%%\n"</span>,</span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">)</span>, <span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">$</span><span class="va">infected</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Total sample size: 240</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Overall infection rate: %.1f%%\n"</span>, <span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">$</span><span class="va">infected</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Overall infection rate: 25.4%</span></span></code></pre></div>
-<p>Let’s visualize the raw data:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">all_data</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">infected</span>, color <span class="op">=</span> <span class="va">age_group</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.4</span>, position <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/position_jitter.html" class="external-link">position_jitter</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">0.02</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html" class="external-link">geom_smooth</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"loess"</span>, se <span class="op">=</span> <span class="cn">TRUE</span>, linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">age_group</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    title <span class="op">=</span> <span class="st">"Infection vs Titre by Age Group"</span>,</span>
-<span>    x <span class="op">=</span> <span class="st">"Antibody Titre (log scale)"</span>,</span>
-<span>    y <span class="op">=</span> <span class="st">"Infected (0/1)"</span>,</span>
-<span>    color <span class="op">=</span> <span class="st">"Age Group"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="hierarchical-groups_files/figure-html/plot-raw-data-1.png" class="r-plt" alt="" width="960"></p>
+<span><span class="co">#&gt; Total n=285  |  Infection rate: 28.1%</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="fit-hierarchical-model">Fit Hierarchical Model<a class="anchor" aria-label="anchor" href="#fit-hierarchical-model"></a>
+<h2 id="raw-data-binned-infection-rates">Raw Data: Binned Infection Rates<a class="anchor" aria-label="anchor" href="#raw-data-binned-infection-rates"></a>
 </h2>
-<p>Now we’ll fit a hierarchical model that estimates group-specific
-slopes and EC50 values while sharing information across groups:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create SeroCOP object with group variable</span></span>
-<span><span class="va">hier_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>  titre <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">titre</span>,</span>
-<span>  infected <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">infected</span>,</span>
-<span>  group <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">age_group</span>  <span class="co"># Add group variable for hierarchical modeling</span></span>
+<p>Before fitting, it is helpful to summarise the raw data by binning
+titres and computing the observed infection proportion in each bin.
+These empirical points will later be overlaid on the fitted curves to
+assess goodness-of-fit.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Bin titre into deciles *within each age group*</span></span>
+<span><span class="va">n_bins</span> <span class="op">&lt;-</span> <span class="fl">8</span></span>
+<span></span>
+<span><span class="va">all_data</span><span class="op">$</span><span class="va">bin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ave.html" class="external-link">ave</a></span><span class="op">(</span></span>
+<span>  <span class="va">all_data</span><span class="op">$</span><span class="va">titre</span>, <span class="va">all_data</span><span class="op">$</span><span class="va">age_group</span>,</span>
+<span>  FUN <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">breaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">x</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="va">n_bins</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cut.html" class="external-link">cut</a></span><span class="op">(</span><span class="va">x</span>, breaks <span class="op">=</span> <span class="va">breaks</span>, include.lowest <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Fit the hierarchical model</span></span>
-<span><span class="va">hier_model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span></span>
-<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  iter <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># Summarise per group × bin</span></span>
+<span><span class="va">binned</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">infected</span>, <span class="va">titre</span><span class="op">)</span> <span class="op">~</span> <span class="va">age_group</span> <span class="op">+</span> <span class="va">bin</span>,</span>
+<span>  data    <span class="op">=</span> <span class="va">all_data</span>,</span>
+<span>  FUN     <span class="op">=</span> <span class="va">mean</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">bin_n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">infected</span> <span class="op">~</span> <span class="va">age_group</span> <span class="op">+</span> <span class="va">bin</span>, data <span class="op">=</span> <span class="va">all_data</span>, FUN <span class="op">=</span> <span class="va">length</span><span class="op">)</span></span>
+<span><span class="va">binned</span><span class="op">$</span><span class="va">n</span> <span class="op">&lt;-</span> <span class="va">bin_n</span><span class="op">$</span><span class="va">infected</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">binned</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      age_group bin  infected      titre  n</span></span>
+<span><span class="co">#&gt; 1 Young adults   1 0.6842105 -0.5614768 19</span></span>
+<span><span class="co">#&gt; 2  Middle-aged   1 0.5000000 -0.3363742 12</span></span>
+<span><span class="co">#&gt; 3 Older adults   1 0.6666667 -0.2649755  6</span></span>
+<span><span class="co">#&gt; 4 Young adults   2 0.7894737  0.6731679 19</span></span>
+<span><span class="co">#&gt; 5  Middle-aged   2 0.4545455  0.7761623 11</span></span>
+<span><span class="co">#&gt; 6 Older adults   2 0.1666667  0.6798197  6</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">binned</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">infected</span>, colour <span class="op">=</span> <span class="va">age_group</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">n</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">age_group</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.5</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_size.html" class="external-link">scale_size_area</a></span><span class="op">(</span>max_size <span class="op">=</span> <span class="fl">8</span>, guide <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guide_legend.html" class="external-link">guide_legend</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Bin n"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">age_group</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title    <span class="op">=</span> <span class="st">"Raw Binned Infection Rates by Age Group"</span>,</span>
+<span>    x        <span class="op">=</span> <span class="st">"Mean Titre in Bin (log scale)"</span>,</span>
+<span>    y        <span class="op">=</span> <span class="st">"Observed Infection Proportion"</span>,</span>
+<span>    colour   <span class="op">=</span> <span class="st">"Age Group"</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span>, plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span>, face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="hierarchical-groups_files/figure-html/plot-raw-binned-1.png" class="r-plt" alt="Binned observed infection rates (point area ∝ bin size). These will be overlaid on fitted curves later." width="1056"><p class="caption">
+Binned observed infection rates (point area ∝ bin size). These will be
+overlaid on fitted curves later.
+</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="fit-the-hierarchical-model">Fit the Hierarchical Model<a class="anchor" aria-label="anchor" href="#fit-the-hierarchical-model"></a>
+</h2>
+<p>The hierarchical model estimates group-specific <code>ec50</code> and
+<code>slope</code> values while sharing a common <code>floor</code> and
+<code>ceiling</code>. Group-level random effects borrow strength across
+age groups.</p>
+<p>By default, <code>ceiling</code> is fixed across groups (shared
+attack rate). Pass <code>ceiling_group = TRUE</code> if you expect the
+baseline attack rate to differ by group.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"✓ Hierarchical model fitted successfully!\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ✓ Hierarchical model fitted successfully!</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">hier_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  titre    <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">titre</span>,</span>
+<span>  infected <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">infected</span>,</span>
+<span>  group    <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">age_group</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">hier_model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span></span>
+<span>  chains        <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  iter          <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  warmup        <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  cores         <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  ceiling_group <span class="op">=</span> <span class="cn">FALSE</span>,   <span class="co"># shared ceiling (default)</span></span>
+<span>  refresh       <span class="op">=</span> <span class="fl">0</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="fitted-curves-with-binned-data-overlay">Fitted Curves with Binned Data Overlay<a class="anchor" aria-label="anchor" href="#fitted-curves-with-binned-data-overlay"></a>
+</h2>
+<p>The plot below shows the posterior mean curve and 95% credible
+interval for each age group, with the marginalised (population-weighted)
+curve as a dashed black line. Empirical binned points are overlaid to
+allow visual assessment of model fit.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># --- 1. Get fitted curve data via the built-in method -------------------------</span></span>
+<span><span class="va">p_base</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span></span>
+<span>  title       <span class="op">=</span> <span class="st">"Age-Specific Correlates of Risk with Empirical Bins"</span>,</span>
+<span>  weights_pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Young adults"</span>  <span class="op">=</span> <span class="va">young_n</span>,</span>
+<span>                  <span class="st">"Middle-aged"</span>   <span class="op">=</span> <span class="va">middle_n</span>,</span>
+<span>                  <span class="st">"Older adults"</span>  <span class="op">=</span> <span class="va">old_n</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># --- 2. Overlay binned empirical points (size ∝ bin n) -----------------------</span></span>
+<span><span class="va">p_base</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span></span>
+<span>    data    <span class="op">=</span> <span class="va">binned</span>,</span>
+<span>    mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">infected</span>, size <span class="op">=</span> <span class="va">n</span><span class="op">)</span>,</span>
+<span>    colour  <span class="op">=</span> <span class="st">"black"</span>, alpha <span class="op">=</span> <span class="fl">0.75</span>, inherit.aes <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_size.html" class="external-link">scale_size_area</a></span><span class="op">(</span>max_size <span class="op">=</span> <span class="fl">7</span>, guide <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guide_legend.html" class="external-link">guide_legend</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Bin n"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="hierarchical-groups_files/figure-html/plot-fitted-plus-bins-1.png" class="r-plt" alt="" width="1152"></p>
+<p>The black dots are the raw binned proportions. When they track the
+fitted curve closely, it indicates a good fit. Deviations suggest model
+mis-specification or sparse data in that titre region.</p>
+</div>
+<div class="section level2">
+<h2 id="correlates-of-protection-curves">Correlates of Protection Curves<a class="anchor" aria-label="anchor" href="#correlates-of-protection-curves"></a>
+</h2>
+<p>The correlate of protection (COP) is defined as:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">COP</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">ceiling</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{P(\text{ceiling})}</annotation></semantics></math></p>
+<p>This quantifies the probability of being protected conditional on
+exposure. The population-weighted marginalised COP curve summarises the
+overall effectiveness across age groups.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hier_model</span><span class="op">$</span><span class="fu">plot_cop_curves</span><span class="op">(</span></span>
+<span>  title       <span class="op">=</span> <span class="st">"Age-Specific Correlates of Protection"</span>,</span>
+<span>  weights_pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Young adults"</span>  <span class="op">=</span> <span class="va">young_n</span>,</span>
+<span>                  <span class="st">"Middle-aged"</span>   <span class="op">=</span> <span class="va">middle_n</span>,</span>
+<span>                  <span class="st">"Older adults"</span>  <span class="op">=</span> <span class="va">old_n</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="hierarchical-groups_files/figure-html/plot-cop-1.png" class="r-plt" alt="" width="960"></p>
 <div class="section level3">
 <h3 id="extract-group-specific-parameters">Extract Group-Specific Parameters<a class="anchor" aria-label="anchor" href="#extract-group-specific-parameters"></a>
 </h3>
-<p>The hierarchical model estimates both population-level parameters and
-group-specific deviations:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Extract group-specific estimates</span></span>
-<span><span class="va">group_params</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">group_params</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">group_params</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    group parameter      mean    median        sd       q025     q975</span></span>
-<span><span class="co">#&gt; 1 Middle   ceiling 0.6258615 0.6001679 0.1810434  0.3351707 1.000000</span></span>
-<span><span class="co">#&gt; 2 Middle      ec50 1.2208834 1.3509744 1.0489945 -1.0505385 2.897496</span></span>
-<span><span class="co">#&gt; 3 Middle     slope 1.9026316 1.2140542 1.8379125  0.3977485 6.758034</span></span>
-<span><span class="co">#&gt; 4    Old   ceiling 0.7671251 0.7732928 0.1572387  0.4228977 1.000000</span></span>
-<span><span class="co">#&gt; 5    Old      ec50 1.5566731 1.4304752 1.5872436 -1.3067207 5.213811</span></span>
-<span><span class="co">#&gt; 6    Old     slope 0.7073677 0.4777072 0.9445221  0.1142225 3.011993</span></span>
-<span><span class="co">#&gt; 7  Young   ceiling 0.6661553 0.6616788 0.1534055  0.3722268 1.000000</span></span>
-<span><span class="co">#&gt; 8  Young      ec50 0.8981806 1.0057785 0.6475540 -0.7558377 1.886408</span></span>
-<span><span class="co">#&gt; 9  Young     slope 2.8092492 2.3884836 1.9647780  0.6164553 7.762248</span></span></code></pre></div>
-<p>The table shows:</p>
+<span><span class="co">#&gt;          group parameter      mean    median         sd          q025      q975</span></span>
+<span><span class="co">#&gt; 1 Young adults   ceiling 0.7574206 0.7597347 0.06732319  0.6189448979 0.8821424</span></span>
+<span><span class="co">#&gt; 2 Young adults      ec50 1.6210718 1.6296821 0.16866424  1.2602080427 1.9378044</span></span>
+<span><span class="co">#&gt; 3 Young adults     slope 4.2621285 3.9282477 1.84128797  1.7459040511 8.7837355</span></span>
+<span><span class="co">#&gt; 4  Middle-aged   ceiling 0.7574206 0.7597347 0.06732319  0.6189448979 0.8821424</span></span>
+<span><span class="co">#&gt; 5  Middle-aged      ec50 1.2364724 1.3376212 0.67185811 -0.2920516634 2.3275827</span></span>
+<span><span class="co">#&gt; 6  Middle-aged     slope 0.7529185 0.6304040 0.51584788  0.2511784229 2.0887172</span></span>
+<span><span class="co">#&gt; 7 Older adults   ceiling 0.7574206 0.7597347 0.06732319  0.6189448979 0.8821424</span></span>
+<span><span class="co">#&gt; 8 Older adults      ec50 2.0761263 1.9699188 0.94081501  0.2698394824 3.9890990</span></span>
+<span><span class="co">#&gt; 9 Older adults     slope 0.6570104 0.5220733 0.61975607  0.0006603123 2.2711773</span></span></code></pre></div>
+<p>Key observations:</p>
 <ul>
 <li>
-<strong>ec50</strong>: The antibody level at which infection
-probability is 50% of maximum</li>
+<strong>Young adults</strong> have the steepest <code>slope</code> —
+a strong antibody correlate</li>
 <li>
-<strong>slope</strong>: The steepness of the dose-response curve
-(higher = steeper)</li>
-</ul>
-<p>Notice how: - <strong>Young</strong> group has the most negative
-(steepest) slope - <strong>Old</strong> group has a slope near zero
-(flat relationship) - <strong>Middle</strong> group is intermediate</p>
-</div>
-<div class="section level3">
-<h3 id="visualize-group-specific-curves">Visualize Group-Specific Curves<a class="anchor" aria-label="anchor" href="#visualize-group-specific-curves"></a>
-</h3>
-<p>We can plot the fitted curves for each group:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hier_model</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Age-Specific Correlates of Protection"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="hierarchical-groups_files/figure-html/plot-group-curves-1.png" class="r-plt" alt="" width="1152"></p>
-<p>The plot shows:</p>
-<ul>
+<strong>Older adults</strong> have a <code>slope</code> near zero —
+little titre-dependent protection</li>
 <li>
-<strong>Fitted curves</strong> (solid lines) for each age group</li>
+<strong>Middle-aged</strong> are intermediate</li>
 <li>
-<strong>95% credible intervals</strong> (shaded ribbons) reflecting
-uncertainty</li>
-<li>
-<strong>Observed data points</strong> (dots) for each group</li>
-<li>Clear differences in curve steepness across age groups</li>
+<code>ec50</code> shifts to the right with age — older individuals
+need higher titres for equivalent protection</li>
 </ul>
 </div>
 </div>
 <div class="section level2">
-<h2 id="compare-with-non-hierarchical-model">Compare with Non-Hierarchical Model<a class="anchor" aria-label="anchor" href="#compare-with-non-hierarchical-model"></a>
+<h2 id="model-performance">Model Performance<a class="anchor" aria-label="anchor" href="#model-performance"></a>
 </h2>
-<p>Let’s fit a standard (non-hierarchical) model that ignores age groups
-and see how it compares:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Fit without group variable (pooled model)</span></span>
-<span><span class="va">pooled_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>  titre <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">titre</span>,</span>
+<div class="section level3">
+<h3 id="overall-and-per-group-metrics">Overall and Per-Group Metrics<a class="anchor" aria-label="anchor" href="#overall-and-per-group-metrics"></a>
+</h3>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">get_metrics</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Performance Metrics:</span></span>
+<span><span class="co">#&gt;   ROC AUC (marginalised):        0.807</span></span>
+<span><span class="co">#&gt;   ROC AUC (within-group wtd):    0.812</span></span>
+<span><span class="co">#&gt;   Brier Score:                   0.136</span></span>
+<span><span class="co">#&gt;   LOO ELPD:                      -125.81 (SE: 9.05)</span></span>
+<span><span class="co">#&gt;   LOO ELPD by group:</span></span>
+<span><span class="co">#&gt;     Young adults           -46.33 (SE: 6.35, n = 150)</span></span>
+<span><span class="co">#&gt;     Middle-aged            -49.20 (SE: 5.42, n = 90)</span></span>
+<span><span class="co">#&gt;     Older adults           -30.28 (SE: 2.57, n = 45)</span></span></code></pre></div>
+<p>The per-group LOO-ELPD breakdown shows how much each age group
+contributes to (or detracts from) overall model fit. A lower ELPD for a
+group indicates the model fits that group less well — often because it
+has fewer participants or a weaker signal.</p>
+</div>
+<div class="section level3">
+<h3 id="comparison-with-pooled-model">Comparison with Pooled Model<a class="anchor" aria-label="anchor" href="#comparison-with-pooled-model"></a>
+</h3>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pooled_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  titre    <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">titre</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">all_data</span><span class="op">$</span><span class="va">infected</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">pooled_model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span></span>
-<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  iter <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  chains  <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  iter    <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  warmup  <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  cores   <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"✓ Non-hierarchical (pooled) model fitted successfully!\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ✓ Non-hierarchical (pooled) model fitted successfully!</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="model-comparison">Model Comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
-</h3>
-<p>We can use Leave-One-Out Cross-Validation (LOO-CV) to compare model
-fit:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Extract LOO estimates</span></span>
-<span><span class="va">hier_loo</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="va">loo</span><span class="op">$</span><span class="va">estimates</span><span class="op">[</span><span class="st">"elpd_loo"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Estimate"</span>, <span class="st">"SE"</span><span class="op">)</span><span class="op">]</span></span>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hier_loo</span>   <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="va">loo</span><span class="op">$</span><span class="va">estimates</span><span class="op">[</span><span class="st">"elpd_loo"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Estimate"</span>, <span class="st">"SE"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="va">pooled_loo</span> <span class="op">&lt;-</span> <span class="va">pooled_model</span><span class="op">$</span><span class="va">loo</span><span class="op">$</span><span class="va">estimates</span><span class="op">[</span><span class="st">"elpd_loo"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Estimate"</span>, <span class="st">"SE"</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="co"># Calculate difference</span></span>
 <span><span class="va">loo_diff</span> <span class="op">&lt;-</span> <span class="va">hier_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span> <span class="op">-</span> <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span></span>
-<span><span class="va">loo_se</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">loo_se</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n=== Model Comparison (LOO-CV) ===\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"=== Model Comparison (LOO-CV) ===\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; === Model Comparison (LOO-CV) ===</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Hierarchical model ELPD: %.2f (SE: %.2f)\n"</span>, </span>
-<span>           <span class="va">hier_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Hierarchical model ELPD: -119.84 (SE: 8.30)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Pooled model ELPD:       %.2f (SE: %.2f)\n"</span>, </span>
-<span>           <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Pooled model ELPD:       -123.06 (SE: 8.26)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\nDifference: %.2f (SE: %.2f)\n"</span>, <span class="va">loo_diff</span>, <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Difference: 3.22 (SE: 11.71)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Z-score: %.2f\n"</span>, <span class="va">loo_diff</span> <span class="op">/</span> <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Z-score: 0.28</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Hierarchical ELPD: %.2f (SE: %.2f)\n"</span>, <span class="va">hier_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>,   <span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Hierarchical ELPD: -125.81 (SE: 9.05)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Pooled       ELPD: %.2f (SE: %.2f)\n"</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Pooled       ELPD: -134.76 (SE: 9.49)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Difference:        %.2f (SE: %.2f)  |  Z = %.2f\n"</span>,</span>
+<span>            <span class="va">loo_diff</span>, <span class="va">loo_se</span>, <span class="va">loo_diff</span> <span class="op">/</span> <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Difference:        8.94 (SE: 13.12)  |  Z = 0.68</span></span>
 <span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">loo_diff</span> <span class="op">&gt;</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">loo_se</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n✓ Strong evidence favoring hierarchical model\n"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"-&gt; Strong evidence favouring hierarchical model\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="va">loo_diff</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n→ Hierarchical model preferred but evidence is weak\n"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"-&gt; Hierarchical preferred but evidence is weak\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n→ No clear advantage for hierarchical model\n"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"-&gt; No clear advantage for hierarchical model\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; → Hierarchical model preferred but evidence is weak</span></span></code></pre></div>
-<p>A positive difference indicates the hierarchical model fits better.
-The Z-score helps assess the strength of evidence (|Z| &gt; 2 suggests
-strong evidence).</p>
+<span><span class="co">#&gt; -&gt; Hierarchical preferred but evidence is weak</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="visualize-both-models">Visualize Both Models<a class="anchor" aria-label="anchor" href="#visualize-both-models"></a>
+<h3 id="fitted-curves-pooled-model-vs-binned-data">Fitted Curves: Pooled Model vs Binned Data<a class="anchor" aria-label="anchor" href="#fitted-curves-pooled-model-vs-binned-data"></a>
 </h3>
-<p>Let’s compare the two approaches visually:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># For the pooled model, get predictions across the titre range</span></span>
-<span><span class="va">titre_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<p>The pooled model uses a single curve for all age groups. Overlaying
+the binned empirical rates highlights how much signal is lost by
+ignoring heterogeneity.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">titre_grid</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">all_data</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">pooled_pred</span> <span class="op">&lt;-</span> <span class="va">pooled_model</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span>newdata <span class="op">=</span> <span class="va">titre_grid</span><span class="op">)</span></span>
-<span><span class="va">pooled_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">pooled_pred</span><span class="op">)</span></span>
-<span><span class="va">pooled_lower</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pooled_pred</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span></span>
-<span><span class="va">pooled_upper</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pooled_pred</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.975</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Create a simple comparison plot showing pooled model vs observed data by group</span></span>
 <span><span class="va">pooled_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  titre <span class="op">=</span> <span class="va">titre_grid</span>,</span>
-<span>  prob <span class="op">=</span> <span class="va">pooled_mean</span>,</span>
-<span>  lower <span class="op">=</span> <span class="va">pooled_lower</span>,</span>
-<span>  upper <span class="op">=</span> <span class="va">pooled_upper</span></span>
+<span>  prob  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">pooled_pred</span><span class="op">)</span>,</span>
+<span>  lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pooled_pred</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span>,</span>
+<span>  upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">pooled_pred</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fl">0.975</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">pooled_df</span>,</span>
 <span>              <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, ymin <span class="op">=</span> <span class="va">lower</span>, ymax <span class="op">=</span> <span class="va">upper</span><span class="op">)</span>,</span>
-<span>              fill <span class="op">=</span> <span class="st">"gray"</span>, alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>              fill <span class="op">=</span> <span class="st">"gray70"</span>, alpha <span class="op">=</span> <span class="fl">0.4</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">pooled_df</span>,</span>
 <span>            <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">prob</span><span class="op">)</span>,</span>
-<span>            color <span class="op">=</span> <span class="st">"gray30"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">all_data</span>,</span>
-<span>             <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">infected</span>, color <span class="op">=</span> <span class="va">age_group</span><span class="op">)</span>,</span>
-<span>             alpha <span class="op">=</span> <span class="fl">0.4</span>, size <span class="op">=</span> <span class="fl">1.5</span>,</span>
-<span>             position <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/position_jitter.html" class="external-link">position_jitter</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">0.02</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html" class="external-link">geom_smooth</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">all_data</span>,</span>
-<span>              <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">infected</span>, color <span class="op">=</span> <span class="va">age_group</span><span class="op">)</span>,</span>
-<span>              method <span class="op">=</span> <span class="st">"loess"</span>, se <span class="op">=</span> <span class="cn">FALSE</span>, linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>            colour <span class="op">=</span> <span class="st">"gray30"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data    <span class="op">=</span> <span class="va">binned</span>,</span>
+<span>             mapping <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">titre</span>, y <span class="op">=</span> <span class="va">infected</span>,</span>
+<span>                           colour <span class="op">=</span> <span class="va">age_group</span>, size <span class="op">=</span> <span class="va">n</span><span class="op">)</span>,</span>
+<span>             alpha <span class="op">=</span> <span class="fl">0.85</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_size.html" class="external-link">scale_size_area</a></span><span class="op">(</span>max_size <span class="op">=</span> <span class="fl">7</span>, guide <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guide_legend.html" class="external-link">guide_legend</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Bin n"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">age_group</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    title <span class="op">=</span> <span class="st">"Pooled Model vs Age-Specific Data"</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="st">"Gray line = pooled model (same for all groups); Colored lines = observed LOESS fits"</span>,</span>
-<span>    x <span class="op">=</span> <span class="st">"Antibody Titre (log scale)"</span>,</span>
-<span>    y <span class="op">=</span> <span class="st">"Probability of Infection"</span>,</span>
-<span>    color <span class="op">=</span> <span class="st">"Age Group"</span></span>
+<span>    title    <span class="op">=</span> <span class="st">"Pooled Model vs Binned Empirical Rates"</span>,</span>
+<span>    subtitle <span class="op">=</span> <span class="st">"Gray band = pooled model; coloured points = within-group empirical proportions"</span>,</span>
+<span>    x        <span class="op">=</span> <span class="st">"Antibody Titre (log scale)"</span>,</span>
+<span>    y        <span class="op">=</span> <span class="st">"Probability of Infection"</span>,</span>
+<span>    colour   <span class="op">=</span> <span class="st">"Age Group"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span>,</span>
+<span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span>, face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span>,</span>
+<span>        plot.subtitle <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="hierarchical-groups_files/figure-html/compare-curves-1.png" class="r-plt" alt="" width="1152"></p>
-<p>Note how: - The <strong>pooled model</strong> (gray line) uses the
-same curve for all age groups, ignoring heterogeneity - The
-<strong>observed patterns</strong> (colored LOESS curves) show clear
-age-specific differences - The hierarchical model (shown in the previous
-plot) captures these group-specific relationships - The pooled approach
-misses important variation, particularly the flat relationship in older
-adults</p>
 </div>
-</div>
-<div class="section level2">
-<h2 id="key-advantages-of-hierarchical-modeling">Key Advantages of Hierarchical Modeling<a class="anchor" aria-label="anchor" href="#key-advantages-of-hierarchical-modeling"></a>
-</h2>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Partial Pooling</strong>: Groups share information,
-improving estimates for small groups</li>
-<li>
-<strong>Heterogeneity</strong>: Captures real differences between
-groups</li>
-<li>
-<strong>Better Predictions</strong>: More accurate for
-group-specific outcomes</li>
-<li>
-<strong>Quantifies Variability</strong>: Estimates between-group
-variance in parameters</li>
-</ol>
 </div>
 <div class="section level2">
 <h2 id="technical-details">Technical Details<a class="anchor" aria-label="anchor" href="#technical-details"></a>
@@ -439,59 +467,69 @@ variance in parameters</li>
 <div class="section level3">
 <h3 id="model-structure">Model Structure<a class="anchor" aria-label="anchor" href="#model-structure"></a>
 </h3>
-<p>The hierarchical model uses random intercepts on the
-<code>ec50</code> and <code>slope</code> parameters:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ec50</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">group</span><span class="op">)</span></span>
-<span><span class="va">slope</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">group</span><span class="op">)</span></span></code></pre></div>
-<p>This means: - Each group gets its own <code>ec50</code> and
-<code>slope</code> value - Group-specific values are drawn from a common
-distribution - The model estimates both the population mean and
-group-level variance</p>
+<p>The hierarchical model uses random intercepts on <code>ec50</code>
+and <code>slope</code>:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">infected</span> <span class="op">~</span> <span class="va">ceiling</span> <span class="op">*</span> <span class="op">(</span><span class="fu">inv_logit</span><span class="op">(</span><span class="op">-</span><span class="va">slope</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre</span> <span class="op">-</span> <span class="va">ec50</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">floor</span><span class="op">)</span> <span class="op">+</span> <span class="va">floor</span><span class="op">)</span></span>
+<span><span class="va">floor</span>    <span class="op">~</span> <span class="fl">1</span></span>
+<span><span class="va">ceiling</span>  <span class="op">~</span> <span class="fl">1</span>                   <span class="co"># fixed across groups (ceiling_group = FALSE)</span></span>
+<span><span class="va">ec50</span>     <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">group</span><span class="op">)</span>     <span class="co"># random intercept per group</span></span>
+<span><span class="va">slope</span>    <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">group</span><span class="op">)</span>     <span class="co"># random intercept per group</span></span></code></pre></div>
+<p>Set <code>ceiling_group = TRUE</code> in <code>fit_model()</code> to
+also allow the ceiling (maximum attack rate) to vary across groups.</p>
 </div>
 <div class="section level3">
 <h3 id="priors">Priors<a class="anchor" aria-label="anchor" href="#priors"></a>
 </h3>
-<p>The model uses weakly informative priors: - Group-level standard
-deviations: <code>student_t(3, 0, 2.5)</code> - This allows substantial
-between-group variation while regularizing extreme values</p>
+<ul>
+<li>Group-level standard deviations: <code>student_t(3, 0, 2.5)</code> —
+weakly informative, permitting substantial between-group variation while
+regularising extremes.</li>
+<li>Population-level: Beta priors on
+<code>floor</code>/<code>ceiling</code>; Normal on <code>ec50</code>
+(centred on data midpoint) and <code>slope</code>.</li>
+</ul>
 </div>
 <div class="section level3">
-<h3 id="backwards-compatibility">Backwards Compatibility<a class="anchor" aria-label="anchor" href="#backwards-compatibility"></a>
+<h3 id="population-weights-for-marginalisation">Population Weights for Marginalisation<a class="anchor" aria-label="anchor" href="#population-weights-for-marginalisation"></a>
 </h3>
-<p>To fit a standard (non-hierarchical) model, simply omit the
-<code>group</code> parameter:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Non-hierarchical</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>titre <span class="op">=</span> <span class="va">titre</span>, infected <span class="op">=</span> <span class="va">infected</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Hierarchical</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>titre <span class="op">=</span> <span class="va">titre</span>, infected <span class="op">=</span> <span class="va">infected</span>, group <span class="op">=</span> <span class="va">age_group</span><span class="op">)</span></span></code></pre></div>
+<p>Pass a named numeric vector to <code>weights_pop</code> in
+<code>plot_group_curves()</code> and <code>plot_cop_curves()</code> to
+control how the marginalised curve is computed:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Census-based age-group proportions (must sum to any positive value)</span></span>
+<span><span class="va">hier_model</span><span class="op">$</span><span class="fu">plot_cop_curves</span><span class="op">(</span></span>
+<span>  weights_pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Young adults"</span> <span class="op">=</span> <span class="fl">0.45</span>, <span class="st">"Middle-aged"</span> <span class="op">=</span> <span class="fl">0.35</span>, <span class="st">"Older adults"</span> <span class="op">=</span> <span class="fl">0.20</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>If <code>weights_pop = NULL</code> (default), sample proportions are
+used instead.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="conclusion">Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>
 </h2>
-<p>Hierarchical modeling in <code>SeroCOP</code> provides a powerful
-framework for analyzing correlates of protection when you expect
-heterogeneity across groups. The approach:</p>
+<p><code>SeroCOP</code> hierarchical models provide a flexible framework
+for analysing correlates of protection with group-level
+heterogeneity:</p>
 <ul>
-<li>Provides group-specific estimates while sharing information</li>
-<li>Improves model fit and predictive accuracy</li>
-<li>Quantifies between-group variability</li>
-<li>Is easy to implement with the optional <code>group</code>
-parameter</li>
+<li>Group-specific <code>ec50</code> and <code>slope</code> are
+estimated while borrowing strength</li>
+<li>The shared <code>ceiling</code> ensures identifiability;
+<code>ceiling_group = TRUE</code> relaxes this</li>
+<li>Binned empirical overlays give a quick visual goodness-of-fit
+check</li>
+<li>Per-group LOO contributions identify groups driving poor fit</li>
+<li>
+<code>plot_cop_curves()</code> summarises protection across the
+titre range with a population-weighted marginalised curve</li>
 </ul>
-<p>This is particularly valuable in real-world scenarios where immune
-responses vary by demographics, vaccine types, or other grouping
-factors.</p>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -515,15 +553,15 @@ factors.</p>
 <span><span class="co">#&gt; [1] ggplot2_4.0.2 seroCOP_0.1.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] gtable_0.3.6          tensorA_0.36.2.1      xfun_0.56            </span></span>
+<span><span class="co">#&gt;  [1] gtable_0.3.6          tensorA_0.36.2.1      xfun_0.57            </span></span>
 <span><span class="co">#&gt;  [4] bslib_0.10.0          QuickJSR_1.9.0        processx_3.8.6       </span></span>
-<span><span class="co">#&gt;  [7] inline_0.3.21         lattice_0.22-7        callr_3.7.6          </span></span>
-<span><span class="co">#&gt; [10] ps_1.9.1              vctrs_0.7.1           tools_4.5.2          </span></span>
-<span><span class="co">#&gt; [13] generics_0.1.4        stats4_4.5.2          parallel_4.5.2       </span></span>
+<span><span class="co">#&gt;  [7] inline_0.3.21         lattice_0.22-9        callr_3.7.6          </span></span>
+<span><span class="co">#&gt; [10] ps_1.9.1              vctrs_0.7.2           tools_4.5.3          </span></span>
+<span><span class="co">#&gt; [13] generics_0.1.4        stats4_4.5.3          parallel_4.5.3       </span></span>
 <span><span class="co">#&gt; [16] tibble_3.3.1          pkgconfig_2.0.3       brms_2.23.0          </span></span>
 <span><span class="co">#&gt; [19] Matrix_1.7-4          checkmate_2.3.4       RColorBrewer_1.1-3   </span></span>
-<span><span class="co">#&gt; [22] S7_0.2.1              desc_1.4.3            distributional_0.6.0 </span></span>
-<span><span class="co">#&gt; [25] RcppParallel_5.1.11-2 lifecycle_1.0.5       compiler_4.5.2       </span></span>
+<span><span class="co">#&gt; [22] S7_0.2.1              desc_1.4.3            distributional_0.7.0 </span></span>
+<span><span class="co">#&gt; [25] RcppParallel_5.1.11-2 lifecycle_1.0.5       compiler_4.5.3       </span></span>
 <span><span class="co">#&gt; [28] farver_2.1.2          stringr_1.6.0         textshaping_1.0.5    </span></span>
 <span><span class="co">#&gt; [31] Brobdingnag_1.2-9     codetools_0.2-20      htmltools_0.5.9      </span></span>
 <span><span class="co">#&gt; [34] sass_0.4.10           bayesplot_1.15.0      yaml_2.3.12          </span></span>
@@ -531,16 +569,16 @@ factors.</p>
 <span><span class="co">#&gt; [40] cachem_1.1.0          StanHeaders_2.32.10   bridgesampling_1.2-1 </span></span>
 <span><span class="co">#&gt; [43] abind_1.4-8           nlme_3.1-168          posterior_1.6.1      </span></span>
 <span><span class="co">#&gt; [46] rstan_2.32.7          tidyselect_1.2.1      digest_0.6.39        </span></span>
-<span><span class="co">#&gt; [49] mvtnorm_1.3-3         stringi_1.8.7         dplyr_1.2.0          </span></span>
-<span><span class="co">#&gt; [52] labeling_0.4.3        splines_4.5.2         fastmap_1.2.0        </span></span>
-<span><span class="co">#&gt; [55] grid_4.5.2            cli_3.6.5             magrittr_2.0.4       </span></span>
-<span><span class="co">#&gt; [58] loo_2.9.0             pkgbuild_1.4.8        withr_3.0.2          </span></span>
-<span><span class="co">#&gt; [61] scales_1.4.0          backports_1.5.0       rmarkdown_2.30       </span></span>
-<span><span class="co">#&gt; [64] matrixStats_1.5.0     gridExtra_2.3         ragg_1.5.1           </span></span>
-<span><span class="co">#&gt; [67] coda_0.19-4.1         evaluate_1.0.5        knitr_1.51           </span></span>
-<span><span class="co">#&gt; [70] mgcv_1.9-3            rstantools_2.6.0      rlang_1.1.7          </span></span>
-<span><span class="co">#&gt; [73] Rcpp_1.1.1            glue_1.8.0            jsonlite_2.0.0       </span></span>
-<span><span class="co">#&gt; [76] R6_2.6.1              systemfonts_1.3.2     fs_1.6.7</span></span></code></pre></div>
+<span><span class="co">#&gt; [49] mvtnorm_1.3-6         stringi_1.8.7         dplyr_1.2.0          </span></span>
+<span><span class="co">#&gt; [52] labeling_0.4.3        fastmap_1.2.0         grid_4.5.3           </span></span>
+<span><span class="co">#&gt; [55] cli_3.6.5             magrittr_2.0.4        loo_2.9.0            </span></span>
+<span><span class="co">#&gt; [58] pkgbuild_1.4.8        withr_3.0.2           scales_1.4.0         </span></span>
+<span><span class="co">#&gt; [61] backports_1.5.0       rmarkdown_2.30        matrixStats_1.5.0    </span></span>
+<span><span class="co">#&gt; [64] gridExtra_2.3         ragg_1.5.2            coda_0.19-4.1        </span></span>
+<span><span class="co">#&gt; [67] evaluate_1.0.5        knitr_1.51            rstantools_2.6.0     </span></span>
+<span><span class="co">#&gt; [70] rlang_1.1.7           Rcpp_1.1.1            glue_1.8.0           </span></span>
+<span><span class="co">#&gt; [73] pROC_1.19.0.1         jsonlite_2.0.0        R6_2.6.1             </span></span>
+<span><span class="co">#&gt; [76] systemfonts_1.3.2     fs_2.0.0</span></span></code></pre></div>
 </div>
   </div>
 

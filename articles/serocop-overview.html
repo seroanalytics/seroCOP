@@ -105,258 +105,331 @@
 <div class="section level2">
 <h2 id="overview-of-serocop">Overview of SeroCOP<a class="anchor" aria-label="anchor" href="#overview-of-serocop"></a>
 </h2>
-<p>This vignette provides a comprehensive overview of the
-<code>SeroCOP</code> R6 class, including its options, functions, and
-usage. The <code>SeroCOP</code> class is designed for Bayesian analysis
-of correlates of protection using Stan.</p>
-<div class="section level3">
-<h3 id="key-features">Key Features<a class="anchor" aria-label="anchor" href="#key-features"></a>
-</h3>
-<ul>
-<li>Flexible prior distributions.</li>
-<li>Multi-biomarker analysis.</li>
-<li>Model fitting and parameter extraction.</li>
-<li>Visualization tools.</li>
-</ul>
-</div>
+<p>The <code>seroCOP</code> package provides Bayesian tools for
+analysing <strong>correlates of protection (CoP)</strong> — the
+relationship between an individual’s antibody level and their risk of
+infection. Models are fit using <a href="https://paul-buerkner.github.io/brms/" class="external-link">brms</a> (backed by Stan)
+and expose posterior predictions, performance metrics, and
+publication-quality plots through two R6 classes:</p>
+<table class="table">
+<colgroup>
+<col width="43%">
+<col width="56%">
+</colgroup>
+<thead><tr class="header">
+<th>Class</th>
+<th>Purpose</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>SeroCOP</code></td>
+<td>Single biomarker; optionally hierarchical by group</td>
+</tr>
+<tr class="even">
+<td><code>SeroCOPMulti</code></td>
+<td>Multiple biomarkers fitted and compared simultaneously</td>
+</tr>
+</tbody>
+</table>
+<hr>
 <div class="section level3">
 <h3 id="model-description">Model Description<a class="anchor" aria-label="anchor" href="#model-description"></a>
 </h3>
-<p>The <code>SeroCOP</code> model is based on a logistic regression
-framework, which models the probability of protection as a function of
-biomarker levels. The logistic function is defined as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>Y</mi><mo>=</mo><mn>1</mn><mo stretchy="false" form="prefix">|</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><mo>exp</mo><mrow><mo stretchy="true" form="prefix">(</mo><mo>−</mo><mi>z</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac><mo>,</mo></mrow><annotation encoding="application/x-tex">
-P(Y = 1 | X) = \frac{1}{1 + \exp(-z)},
+<p>The probability of infection is modelled as a four-parameter logistic
+curve:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mtext mathvariant="normal">ceiling</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtext mathvariant="normal">inv_logit</mtext><mspace width="-0.167em"></mspace><mo minsize="1.2" maxsize="1.2" stretchy="false" form="prefix">(</mo><mo>−</mo><mtext mathvariant="normal">slope</mtext><mspace width="0.167em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mo>−</mo><mtext mathvariant="normal">ec50</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo minsize="1.2" maxsize="1.2" stretchy="false" form="postfix">)</mo><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+P(\text{infection} \mid t) =
+  \text{ceiling} \times
+  \left[\text{inv\_logit}\!\bigl(-\text{slope}\,(t - \text{ec50})\bigr)
+    \times (1 - \text{floor}) + \text{floor}\right]
 </annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>z</mi><annotation encoding="application/x-tex">z</annotation></semantics></math>
-is a linear combination of the predictors:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>z</mi><mo>=</mo><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><msub><mi>β</mi><mn>1</mn></msub><msub><mi>X</mi><mn>1</mn></msub><mo>+</mo><msub><mi>β</mi><mn>2</mn></msub><msub><mi>X</mi><mn>2</mn></msub><mo>+</mo><mi>…</mi><mo>+</mo><msub><mi>β</mi><mi>k</mi></msub><msub><mi>X</mi><mi>k</mi></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
-z = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \dots + \beta_k X_k.
-</annotation></semantics></math></p>
-<div class="section level4">
-<h4 id="parameters">Parameters<a class="anchor" aria-label="anchor" href="#parameters"></a>
-</h4>
-<ul>
-<li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>β</mi><mn>0</mn></msub><annotation encoding="application/x-tex">\beta_0</annotation></semantics></math>:
-Intercept term.</li>
-<li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>β</mi><mn>1</mn></msub><mo>,</mo><msub><mi>β</mi><mn>2</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>β</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\beta_1, \beta_2, \dots, \beta_k</annotation></semantics></math>:
-Coefficients for the predictors.</li>
-<li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub><mo>,</mo><msub><mi>X</mi><mn>2</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>X</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">X_1, X_2, \dots, X_k</annotation></semantics></math>:
-Biomarker levels.</li>
-</ul>
+<table class="table">
+<colgroup>
+<col width="42%">
+<col width="57%">
+</colgroup>
+<thead><tr class="header">
+<th>Parameter</th>
+<th>Interpretation</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>floor</code></td>
+<td>Residual infection risk at the highest titres (near-complete
+protection)</td>
+</tr>
+<tr class="even">
+<td><code>ceiling</code></td>
+<td>Maximum infection risk at the lowest titres (baseline attack
+rate)</td>
+</tr>
+<tr class="odd">
+<td><code>ec50</code></td>
+<td>Titre at the inflection point of the curve</td>
+</tr>
+<tr class="even">
+<td><code>slope</code></td>
+<td>Steepness of the dose–response (higher = sharper transition)</td>
+</tr>
+</tbody>
+</table>
+<hr>
 </div>
-<div class="section level4">
-<h4 id="priors">Priors<a class="anchor" aria-label="anchor" href="#priors"></a>
-</h4>
-<p>The <code>SeroCOP</code> model allows you to specify prior
-distributions for the parameters. These priors can be tailored to
-reflect prior knowledge or assumptions about the parameters.</p>
-<div class="section level5">
-<h5 id="supported-priors">Supported Priors<a class="anchor" aria-label="anchor" href="#supported-priors"></a>
-</h5>
-<ul>
-<li>
-<p><strong>Normal</strong>: Suitable for parameters with symmetric
-distributions.</p>
+</div>
+<div class="section level2">
+<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
+</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span>parameter <span class="op">=</span> <span class="st">"beta_1"</span>, distribution <span class="op">=</span> <span class="st">"normal"</span>, mean <span class="op">=</span> <span class="fl">0</span>, sd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-</li>
-<li>
-<p><strong>Uniform</strong>: Suitable for parameters with bounded
-ranges.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span>parameter <span class="op">=</span> <span class="st">"beta_2"</span>, distribution <span class="op">=</span> <span class="st">"uniform"</span>, min <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, max <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-</li>
-<li>
-<p><strong>Beta</strong>: Suitable for probabilities or
-proportions.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span>parameter <span class="op">=</span> <span class="st">"p"</span>, distribution <span class="op">=</span> <span class="st">"beta"</span>, alpha <span class="op">=</span> <span class="fl">2</span>, beta <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="section level3">
-<h3 id="initialization">Initialization<a class="anchor" aria-label="anchor" href="#initialization"></a>
-</h3>
-<p>To create a new <code>SeroCOP</code> object, use the following:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://seroanalytics.org/seroCOP/">seroCOP</a></span><span class="op">)</span></span>
-<span><span class="co"># Example data</span></span>
+<span></span>
+<span><span class="co"># Simulate data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">200</span></span>
-<span><span class="va">titre</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, mean <span class="op">=</span> <span class="fl">2</span>, sd <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span>
-<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fl">0.05</span> <span class="op">+</span> <span class="fl">0.9</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre</span> <span class="op">-</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">n</span>        <span class="op">&lt;-</span> <span class="fl">300</span></span>
+<span><span class="va">titre</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, mean <span class="op">=</span> <span class="fl">2</span>, sd <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span>
+<span><span class="va">prob</span>     <span class="op">&lt;-</span> <span class="fl">0.05</span> <span class="op">+</span> <span class="fl">0.65</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="op">(</span><span class="va">titre</span> <span class="op">-</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">infected</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="va">prob</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Initialize the model</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>titre <span class="op">=</span> <span class="va">titre</span>, infected <span class="op">=</span> <span class="va">infected</span><span class="op">)</span></span></code></pre></div>
-<div class="section level4">
-<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a>
-</h4>
-<ul>
-<li>
-<code>titre</code>: Numeric vector of antibody titres.</li>
-<li>
-<code>infected</code>: Binary vector (0/1) of infection
-outcomes.</li>
-</ul>
-<p>These inputs are required to initialize the <code>SeroCOP</code>
-object.</p>
+<span><span class="co"># Initialise the model</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>titre <span class="op">=</span> <span class="va">titre</span>, infected <span class="op">=</span> <span class="va">infected</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Fit (brms / Stan backend)</span></span>
+<span><span class="va">model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fl">1000</span>, cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Inspect parameters</span></span>
+<span><span class="va">model</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Performance metrics</span></span>
+<span><span class="va">model</span><span class="op">$</span><span class="fu">get_metrics</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plots</span></span>
+<span><span class="va">model</span><span class="op">$</span><span class="fu">plot_curve</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">model</span><span class="op">$</span><span class="fu">plot_roc</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">model</span><span class="op">$</span><span class="fu">plot_posteriors</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
-</div>
-<div class="section level3">
-<h3 id="prior-options">Prior Options<a class="anchor" aria-label="anchor" href="#prior-options"></a>
-</h3>
-<p>The <code>definePrior</code> method allows you to specify prior
-distributions for the model parameters. Below is a detailed explanation
-of each option:</p>
-<ul>
-<li>
-<strong><code>floor_alpha</code></strong>: Alpha parameter for the
-Beta prior distribution of the “floor” parameter (proportion of maximum
-risk at high titre). Default: <code>1</code>.</li>
-<li>
-<strong><code>floor_beta</code></strong>: Beta parameter for the
-Beta prior distribution of the “floor” parameter. Default:
-<code>9</code> (favors low residual risk).</li>
-<li>
-<strong><code>ceiling_alpha</code></strong>: Alpha parameter for the
-Beta prior distribution of the “ceiling” parameter (maximum infection
-risk at low titre). Default: <code>9</code>.</li>
-<li>
-<strong><code>ceiling_beta</code></strong>: Beta parameter for the
-Beta prior distribution of the “ceiling” parameter. Default:
-<code>1</code> (favors high risk at low titre).</li>
-<li>
-<strong><code>ec50_mean</code></strong>: Mean of the Normal prior
-distribution for the <code>ec50</code> parameter (titre at inflection
-point). Default: Midpoint of the <code>titre</code> range.</li>
-<li>
-<strong><code>ec50_sd</code></strong>: Standard deviation of the
-Normal prior distribution for the <code>ec50</code> parameter. Default:
-One-fourth of the <code>titre</code> range.</li>
-<li>
-<strong><code>slope_mean</code></strong>: Mean of the Normal prior
-distribution for the slope parameter (steepness of protective curve).
-Default: <code>0</code>.</li>
-<li>
-<strong><code>slope_sd</code></strong>: Standard deviation of the
-Normal prior distribution for the slope parameter. Default:
-<code>2</code>.</li>
-</ul>
-<div class="section level4">
-<h4 id="example-usage">Example Usage<a class="anchor" aria-label="anchor" href="#example-usage"></a>
-</h4>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="section level2">
+<h2 id="prior-distributions">Prior Distributions<a class="anchor" aria-label="anchor" href="#prior-distributions"></a>
+</h2>
+<p>Default priors are weakly informative and data-driven:</p>
+<table class="table">
+<thead><tr class="header">
+<th>Parameter</th>
+<th>Default prior</th>
+<th>Rationale</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>floor</code></td>
+<td>Beta(1, 9)</td>
+<td>Favours low residual risk</td>
+</tr>
+<tr class="even">
+<td><code>ceiling</code></td>
+<td>Beta(9, 1)</td>
+<td>Favours high baseline risk</td>
+</tr>
+<tr class="odd">
+<td><code>ec50</code></td>
+<td>Normal(mid, range/4)</td>
+<td>Centred on the data range</td>
+</tr>
+<tr class="even">
+<td><code>slope</code></td>
+<td>Normal(0, 2) truncated ≥ 0</td>
+<td>Weakly informative</td>
+</tr>
+</tbody>
+</table>
+<p>Override priors with <code>definePrior()</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">definePrior</span><span class="op">(</span></span>
-<span>  floor_alpha <span class="op">=</span> <span class="fl">2</span>, floor_beta <span class="op">=</span> <span class="fl">18</span>,    <span class="co"># Stronger prior for low residual risk (E[floor] ≈ 0.1)</span></span>
-<span>  ceiling_alpha <span class="op">=</span> <span class="fl">18</span>, ceiling_beta <span class="op">=</span> <span class="fl">2</span>, <span class="co"># Stronger prior for high baseline risk (E[ceiling] ≈ 0.9)</span></span>
-<span>  ec50_mean <span class="op">=</span> <span class="fl">1.5</span>, ec50_sd <span class="op">=</span> <span class="fl">0.5</span>,      <span class="co"># Custom ec50 prior</span></span>
-<span>  slope_mean <span class="op">=</span> <span class="fl">0</span>, slope_sd <span class="op">=</span> <span class="fl">1</span>         <span class="co"># More conservative slope</span></span>
+<span>  floor_alpha   <span class="op">=</span> <span class="fl">2</span>,   floor_beta    <span class="op">=</span> <span class="fl">18</span>,   <span class="co"># E[floor]   ≈ 0.10</span></span>
+<span>  ceiling_alpha <span class="op">=</span> <span class="fl">18</span>,  ceiling_beta  <span class="op">=</span> <span class="fl">2</span>,    <span class="co"># E[ceiling] ≈ 0.90</span></span>
+<span>  ec50_mean     <span class="op">=</span> <span class="fl">2.0</span>, ec50_sd       <span class="op">=</span> <span class="fl">1.0</span>,  <span class="co"># Informative ec50 prior</span></span>
+<span>  slope_mean    <span class="op">=</span> <span class="fl">0</span>,   slope_sd      <span class="op">=</span> <span class="fl">1</span>     <span class="co"># Tighter slope prior</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p><code>definePrior()</code> can be called any time
+<strong>before</strong> <code>fit_model()</code> and prints a summary of
+the updated priors.</p>
+<hr>
 </div>
-<div class="section level4">
-<h4 id="supported-distributions">Supported Distributions<a class="anchor" aria-label="anchor" href="#supported-distributions"></a>
-</h4>
-<ul>
-<li>Normal</li>
-<li>Uniform</li>
-<li>Beta</li>
-</ul>
+<div class="section level2">
+<h2 id="observation-weights">Observation Weights<a class="anchor" aria-label="anchor" href="#observation-weights"></a>
+</h2>
+<p>Pass a non-negative numeric vector to
+<code>SeroCOP$new(weights = ...)</code> to up-/down-weight individual
+observations in the likelihood:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Case-control design: up-weight confirmed cases</span></span>
+<span><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">infected</span> <span class="op">==</span> <span class="fl">1</span>, <span class="fl">1.0</span>, <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">w_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>titre <span class="op">=</span> <span class="va">titre</span>, infected <span class="op">=</span> <span class="va">infected</span>, weights <span class="op">=</span> <span class="va">w</span><span class="op">)</span></span>
+<span><span class="va">w_model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
+<div class="section level2">
+<h2 id="hierarchical-models-multiple-groups">Hierarchical Models (Multiple Groups)<a class="anchor" aria-label="anchor" href="#hierarchical-models-multiple-groups"></a>
+</h2>
+<p>Add a <code>group</code> variable to estimate group-specific
+<code>ec50</code> and <code>slope</code> while sharing a common
+<code>floor</code> (and optionally <code>ceiling</code>):</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">age_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Young"</span>, <span class="st">"Middle"</span>, <span class="st">"Old"</span><span class="op">)</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">hier</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOP.html">SeroCOP</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>titre <span class="op">=</span> <span class="va">titre</span>, infected <span class="op">=</span> <span class="va">infected</span>, group <span class="op">=</span> <span class="va">age_group</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># ceiling_group = FALSE (default): ceiling shared across groups</span></span>
+<span><span class="co"># ceiling_group = TRUE:  ceiling also allowed to vary by group</span></span>
+<span><span class="va">hier</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>               ceiling_group <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Group-specific parameter table</span></span>
+<span><span class="va">hier</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Fitted risk curves with marginalised overlay</span></span>
+<span><span class="va">hier</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span></span>
+<span>  weights_pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Young <span class="op">=</span> <span class="fl">0.45</span>, Middle <span class="op">=</span> <span class="fl">0.35</span>, Old <span class="op">=</span> <span class="fl">0.20</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Correlates of protection curves</span></span>
+<span><span class="va">hier</span><span class="op">$</span><span class="fu">plot_cop_curves</span><span class="op">(</span></span>
+<span>  weights_pop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Young <span class="op">=</span> <span class="fl">0.45</span>, Middle <span class="op">=</span> <span class="fl">0.35</span>, Old <span class="op">=</span> <span class="fl">0.20</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Per-group LOO is computed automatically; accessed via:</span></span>
+<span><span class="va">hier</span><span class="op">$</span><span class="va">loo_by_group</span></span></code></pre></div>
+<hr>
 </div>
-<div class="section level3">
-<h3 id="model-fitting">Model Fitting<a class="anchor" aria-label="anchor" href="#model-fitting"></a>
-</h3>
-<p>The <code>fit_model</code> method fits the model to the data using
-Stan. Example:</p>
+<div class="section level2">
+<h2 id="multi-biomarker-analysis">Multi-Biomarker Analysis<a class="anchor" aria-label="anchor" href="#multi-biomarker-analysis"></a>
+</h2>
+<p><code>SeroCOPMulti</code> fits one independent <code>SeroCOP</code>
+model per biomarker and provides comparison tools:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># titre is a matrix: rows = observations, cols = biomarkers</span></span>
+<span><span class="va">titre_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>IgG <span class="op">=</span> <span class="va">titre_IgG</span>, IgA <span class="op">=</span> <span class="va">titre_IgA</span>, Neutralisation <span class="op">=</span> <span class="va">titre_Neut</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">multi</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  titre           <span class="op">=</span> <span class="va">titre_mat</span>,</span>
+<span>  infected        <span class="op">=</span> <span class="va">infected</span>,</span>
+<span>  biomarker_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IgG"</span>, <span class="st">"IgA"</span>, <span class="st">"Neutralisation"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">multi</span><span class="op">$</span><span class="fu">fit_all</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fl">1000</span>, cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compare biomarkers (AUC, Brier, LOO-ELPD)</span></span>
+<span><span class="va">multi</span><span class="op">$</span><span class="fu">compare_biomarkers</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">multi</span><span class="op">$</span><span class="fu">plot_comparison</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># All fitted risk curves side-by-side</span></span>
+<span><span class="va">multi</span><span class="op">$</span><span class="fu">plot_all_curves</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="performance-metrics">Performance Metrics<a class="anchor" aria-label="anchor" href="#performance-metrics"></a>
+</h2>
+<p><code>get_metrics()</code> returns and prints:</p>
+<table class="table">
+<colgroup>
+<col width="38%">
+<col width="61%">
+</colgroup>
+<thead><tr class="header">
+<th>Metric</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>roc_auc</code></td>
+<td>Area under the ROC curve (marginalised predictions)</td>
+</tr>
+<tr class="even">
+<td><code>roc_auc_within_group</code></td>
+<td>Weighted within-group AUC (hierarchical only)</td>
+</tr>
+<tr class="odd">
+<td><code>brier_score</code></td>
+<td>Mean squared error of predicted probabilities</td>
+</tr>
+<tr class="even">
+<td>
+<code>loo_elpd</code> / <code>loo_se</code>
+</td>
+<td>LOO expected log predictive density ± SE</td>
+</tr>
+<tr class="odd">
+<td><code>loo_by_group</code></td>
+<td>Per-group LOO ELPD (hierarchical only)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="extracting-parameters">Extracting Parameters<a class="anchor" aria-label="anchor" href="#extracting-parameters"></a>
+</h2>
+<p><code><a href="../reference/extract_parameters.html">extract_parameters()</a></code> wraps
+<code><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">brms::as_draws_df()</a></code> and returns a tidy data frame of
+posterior mean, median, and credible intervals:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span></span>
-<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  iter <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>  cores <span class="op">=</span> <span class="fl">2</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="section level4">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a>
-</h4>
-<ul>
-<li>
-<code>data</code>: The dataset to fit the model to.</li>
-<li>
-<code>chains</code>: Number of MCMC chains.</li>
-<li>
-<code>iter</code>: Total number of iterations per chain.</li>
-<li>
-<code>warmup</code>: Number of warmup iterations.</li>
-<li>
-<code>cores</code>: Number of CPU cores to use.</li>
-</ul>
+<code class="sourceCode R"><span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_parameters.html">extract_parameters</a></span><span class="op">(</span><span class="va">model</span>, prob <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">params</span><span class="op">)</span></span>
+<span><span class="co">#   parameter  mean median  lower  upper</span></span>
+<span><span class="co"># 1     floor 0.052  0.050  0.010  0.110</span></span>
+<span><span class="co"># 2   ceiling 0.681  0.683  0.612  0.748</span></span>
+<span><span class="co"># 3      ec50 1.504  1.503  1.363  1.641</span></span>
+<span><span class="co"># 4     slope 1.983  1.978  1.701  2.275</span></span></code></pre></div>
+<hr>
 </div>
-</div>
-<div class="section level3">
-<h3 id="multi-biomarker-analysis">Multi-Biomarker Analysis<a class="anchor" aria-label="anchor" href="#multi-biomarker-analysis"></a>
-</h3>
-<p>The <code>SeroCOPMulti</code> class extends <code>SeroCOP</code> to
-support multi-biomarker analysis. Example:</p>
+<div class="section level2">
+<h2 id="predicting-protection">Predicting Protection<a class="anchor" aria-label="anchor" href="#predicting-protection"></a>
+</h2>
+<p>The <strong>correlate of protection</strong> at titre
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+is:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">COP</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mtext mathvariant="normal">ceiling</mtext></mfrac></mrow><annotation encoding="application/x-tex">\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{\text{ceiling}}</annotation></semantics></math></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
-<span><span class="va">data1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  titre <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, mean <span class="op">=</span> <span class="fl">2</span>, sd <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span>,</span>
-<span>  infected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">1</span>, prob <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">data2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  titre <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, mean <span class="op">=</span> <span class="fl">3</span>, sd <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span>,</span>
-<span>  infected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">1</span>, prob <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Matrix of posterior samples (rows = draws, cols = observations)</span></span>
+<span><span class="va">cop_samples</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span>newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">5</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span></span>
-<span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
-<span>  titre <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data1</span><span class="op">$</span><span class="va">titre</span>, <span class="va">data2</span><span class="op">$</span><span class="va">titre</span><span class="op">)</span>,</span>
-<span>  infected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">data1</span><span class="op">$</span><span class="va">infected</span>, <span class="va">data2</span><span class="op">$</span><span class="va">infected</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">multi_fit</span> <span class="op">&lt;-</span> <span class="va">multi_model</span><span class="op">$</span><span class="fu">fit_all</span><span class="op">(</span></span>
-<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  iter <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>  cores <span class="op">=</span> <span class="fl">2</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="section level4">
-<h4 id="example-datasets-for-multi-biomarker-analysis">Example Datasets for Multi-Biomarker analysis<a class="anchor" aria-label="anchor" href="#example-datasets-for-multi-biomarker-analysis"></a>
-</h4>
+<span><span class="va">cop_mean</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">cop_samples</span><span class="op">)</span></span>
+<span><span class="va">cop_lower</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cop_samples</span>, <span class="fl">2</span>, <span class="va">quantile</span>, <span class="fl">0.025</span><span class="op">)</span></span>
+<span><span class="va">cop_upper</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">cop_samples</span>, <span class="fl">2</span>, <span class="va">quantile</span>, <span class="fl">0.975</span><span class="op">)</span></span></code></pre></div>
+<hr>
 </div>
-</div>
-<div class="section level3">
-<h3 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
-</h3>
-<p>The <code>plot</code> method provides visualization tools for the
-fitted model:</p>
+<div class="section level2">
+<h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
+</h2>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">plot_curve</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="extracting-parameters">Extracting Parameters<a class="anchor" aria-label="anchor" href="#extracting-parameters"></a>
-</h3>
-<p>Use the <code>extract_parameters</code> method to extract posterior
-samples:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">params</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">extract_parameters</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
-</h3>
-<p>The <code>SeroCOP</code> class provides a flexible and powerful
-framework for Bayesian analysis of correlates of protection. This
-vignette covered the key options and functions available in the class.
-For more details, refer to the package documentation.</p>
-</div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
+<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matrix products: default</span></span>
+<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
+<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; locale:</span></span>
+<span><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
+<span><span class="co">#&gt;  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
+<span><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
+<span><span class="co">#&gt; [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; time zone: UTC</span></span>
+<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; attached base packages:</span></span>
+<span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span><span class="co">#&gt;  [1] digest_0.6.39     desc_1.4.3        R6_2.6.1          fastmap_1.2.0    </span></span>
+<span><span class="co">#&gt;  [5] xfun_0.57         cachem_1.1.0      knitr_1.51        htmltools_0.5.9  </span></span>
+<span><span class="co">#&gt;  [9] rmarkdown_2.30    lifecycle_1.0.5   cli_3.6.5         sass_0.4.10      </span></span>
+<span><span class="co">#&gt; [13] pkgdown_2.2.0     textshaping_1.0.5 jquerylib_0.1.4   systemfonts_1.3.2</span></span>
+<span><span class="co">#&gt; [17] compiler_4.5.3    tools_4.5.3       ragg_1.5.2        evaluate_1.0.5   </span></span>
+<span><span class="co">#&gt; [21] bslib_0.10.0      yaml_2.3.12       jsonlite_2.0.0    rlang_1.1.7      </span></span>
+<span><span class="co">#&gt; [25] fs_2.0.0</span></span></code></pre></div>
 </div>
   </div>
 
