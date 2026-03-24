@@ -270,7 +270,7 @@ baseline attack rate to differ by group.</p>
 <span>  chains        <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  iter          <span class="op">=</span> <span class="fl">2000</span>,</span>
 <span>  warmup        <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  cores         <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  cores         <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  ceiling_group <span class="op">=</span> <span class="cn">FALSE</span>,   <span class="co"># shared ceiling (default)</span></span>
 <span>  refresh       <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -327,16 +327,16 @@ overall effectiveness across age groups.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">group_params</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">group_params</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          group parameter      mean    median         sd          q025      q975</span></span>
-<span><span class="co">#&gt; 1 Young adults   ceiling 0.7574206 0.7597347 0.06732319  0.6189448979 0.8821424</span></span>
-<span><span class="co">#&gt; 2 Young adults      ec50 1.6210718 1.6296821 0.16866424  1.2602080427 1.9378044</span></span>
-<span><span class="co">#&gt; 3 Young adults     slope 4.2621285 3.9282477 1.84128797  1.7459040511 8.7837355</span></span>
-<span><span class="co">#&gt; 4  Middle-aged   ceiling 0.7574206 0.7597347 0.06732319  0.6189448979 0.8821424</span></span>
-<span><span class="co">#&gt; 5  Middle-aged      ec50 1.2364724 1.3376212 0.67185811 -0.2920516634 2.3275827</span></span>
-<span><span class="co">#&gt; 6  Middle-aged     slope 0.7529185 0.6304040 0.51584788  0.2511784229 2.0887172</span></span>
-<span><span class="co">#&gt; 7 Older adults   ceiling 0.7574206 0.7597347 0.06732319  0.6189448979 0.8821424</span></span>
-<span><span class="co">#&gt; 8 Older adults      ec50 2.0761263 1.9699188 0.94081501  0.2698394824 3.9890990</span></span>
-<span><span class="co">#&gt; 9 Older adults     slope 0.6570104 0.5220733 0.61975607  0.0006603123 2.2711773</span></span></code></pre></div>
+<span><span class="co">#&gt;          group parameter      mean    median         sd         q025      q975</span></span>
+<span><span class="co">#&gt; 1 Young adults   ceiling 0.7535608 0.7562615 0.06530828  0.616718632 0.8736953</span></span>
+<span><span class="co">#&gt; 2 Young adults      ec50 1.6228170 1.6269624 0.16381614  1.273193288 1.9407667</span></span>
+<span><span class="co">#&gt; 3 Young adults     slope 4.2703235 3.9450179 1.76451069  1.802135171 8.6867585</span></span>
+<span><span class="co">#&gt; 4  Middle-aged   ceiling 0.7535608 0.7562615 0.06530828  0.616718632 0.8736953</span></span>
+<span><span class="co">#&gt; 5  Middle-aged      ec50 1.2456847 1.3545520 0.68539125 -0.438686108 2.3425992</span></span>
+<span><span class="co">#&gt; 6  Middle-aged     slope 0.7637980 0.6446116 0.51850845  0.259426276 2.0535662</span></span>
+<span><span class="co">#&gt; 7 Older adults   ceiling 0.7535608 0.7562615 0.06530828  0.616718632 0.8736953</span></span>
+<span><span class="co">#&gt; 8 Older adults      ec50 2.1579099 2.0386108 0.95894496  0.453728701 4.1092192</span></span>
+<span><span class="co">#&gt; 9 Older adults     slope 0.6560202 0.5138150 0.60495916 -0.004831226 2.3138291</span></span></code></pre></div>
 <p>Key observations:</p>
 <ul>
 <li>
@@ -365,11 +365,11 @@ need higher titres for equivalent protection</li>
 <span><span class="co">#&gt;   ROC AUC (marginalised):        0.807</span></span>
 <span><span class="co">#&gt;   ROC AUC (within-group wtd):    0.812</span></span>
 <span><span class="co">#&gt;   Brier Score:                   0.136</span></span>
-<span><span class="co">#&gt;   LOO ELPD:                      -125.81 (SE: 9.05)</span></span>
+<span><span class="co">#&gt;   LOO ELPD:                      -125.64 (SE: 9.03)</span></span>
 <span><span class="co">#&gt;   LOO ELPD by group:</span></span>
-<span><span class="co">#&gt;     Young adults           -46.33 (SE: 6.35, n = 150)</span></span>
-<span><span class="co">#&gt;     Middle-aged            -49.20 (SE: 5.42, n = 90)</span></span>
-<span><span class="co">#&gt;     Older adults           -30.28 (SE: 2.57, n = 45)</span></span></code></pre></div>
+<span><span class="co">#&gt;     Young adults           -46.12 (SE: 6.30, n = 150)</span></span>
+<span><span class="co">#&gt;     Middle-aged            -49.23 (SE: 5.45, n = 90)</span></span>
+<span><span class="co">#&gt;     Older adults           -30.29 (SE: 2.53, n = 45)</span></span></code></pre></div>
 <p>The per-group LOO-ELPD breakdown shows how much each age group
 contributes to (or detracts from) overall model fit. A lower ELPD for a
 group indicates the model fits that group less well — often because it
@@ -388,7 +388,7 @@ has fewer participants or a weaker signal.</p>
 <span>  chains  <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  iter    <span class="op">=</span> <span class="fl">2000</span>,</span>
 <span>  warmup  <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  cores   <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  cores   <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -401,12 +401,12 @@ has fewer participants or a weaker signal.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"=== Model Comparison (LOO-CV) ===\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; === Model Comparison (LOO-CV) ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Hierarchical ELPD: %.2f (SE: %.2f)\n"</span>, <span class="va">hier_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>,   <span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Hierarchical ELPD: -125.81 (SE: 9.05)</span></span>
+<span><span class="co">#&gt; Hierarchical ELPD: -125.64 (SE: 9.03)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Pooled       ELPD: %.2f (SE: %.2f)\n"</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Pooled       ELPD: -134.76 (SE: 9.49)</span></span>
+<span><span class="co">#&gt; Pooled       ELPD: -134.95 (SE: 9.45)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Difference:        %.2f (SE: %.2f)  |  Z = %.2f\n"</span>,</span>
 <span>            <span class="va">loo_diff</span>, <span class="va">loo_se</span>, <span class="va">loo_diff</span> <span class="op">/</span> <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Difference:        8.94 (SE: 13.12)  |  Z = 0.68</span></span>
+<span><span class="co">#&gt; Difference:        9.31 (SE: 13.07)  |  Z = 0.71</span></span>
 <span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">loo_diff</span> <span class="op">&gt;</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">loo_se</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"-&gt; Strong evidence favouring hierarchical model\n"</span><span class="op">)</span></span>
