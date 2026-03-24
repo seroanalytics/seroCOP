@@ -193,6 +193,7 @@ SeroCOPMulti <- R6::R6Class(
           chains = chains,
           iter = iter,
           warmup = warmup,
+          cores = cores,
           ...
         )
         
