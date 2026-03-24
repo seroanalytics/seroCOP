@@ -436,8 +436,12 @@ SeroCOP <- R6::R6Class(
         return(invisible(NULL))
       }
       
-      # Convert to plain data.frame so column access returns simple numeric vectors
-      posterior <- as.data.frame(brms::as_draws_df(self$fit))
+      # Convert to plain data.frame so column access returns simple numeric vectors.
+      # optional = TRUE preserves special characters ([, ], etc.) in column names.
+      # Note: brms itself converts spaces to dots in group level names, so
+      # 'Young adults' appears as 'Young.adults' in column names — we handle
+      # this below with gsub(' ', '.', g) when constructing lookup keys.
+      posterior <- as.data.frame(brms::as_draws_df(self$fit), optional = TRUE)
 
       # Extract base population-level parameter vectors once
       v_ceiling <- as.numeric(posterior$b_ceiling_Intercept)
@@ -451,10 +455,11 @@ SeroCOP <- R6::R6Class(
       results <- list()
       
       for (g in groups) {
-        # Extract group-specific parameter deviations
-        ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
-        ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
-        slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
+        # brms converts spaces to dots in level names for Stan variable names
+        g_clean     <- gsub(" ", ".", g)
+        ceiling_col <- paste0("r_group__ceiling[", g_clean, ",Intercept]")
+        ec50_col    <- paste0("r_group__ec50[",    g_clean, ",Intercept]")
+        slope_col   <- paste0("r_group__slope[",   g_clean, ",Intercept]")
         
         # Calculate group-specific parameters (population + group deviation)
         # ceiling is bounded [0,1]; clamp to valid range after adding deviation
@@ -698,8 +703,12 @@ SeroCOP <- R6::R6Class(
         return(invisible(NULL))
       }
 
-      # Convert to plain data.frame so column access returns simple numeric vectors
-      posterior   <- as.data.frame(brms::as_draws_df(self$fit))
+      # Convert to plain data.frame so column access returns simple numeric vectors.
+      # optional = TRUE preserves special characters ([, ], etc.) in column names.
+      # Note: brms itself converts spaces to dots in group level names, so
+      # 'Young adults' appears as 'Young.adults' in column names — we handle
+      # this below with gsub(' ', '.', g) when constructing lookup keys.
+      posterior   <- as.data.frame(brms::as_draws_df(self$fit), optional = TRUE)
       groups      <- levels(self$group)
       n_iter      <- nrow(posterior)
 
@@ -737,9 +746,11 @@ SeroCOP <- R6::R6Class(
       obs_list  <- list()
 
       for (g in groups) {
-        ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
-        ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
-        slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
+        # brms converts spaces to dots in level names for Stan variable names
+        g_clean     <- gsub(" ", ".", g)
+        ceiling_col <- paste0("r_group__ceiling[", g_clean, ",Intercept]")
+        ec50_col    <- paste0("r_group__ec50[",    g_clean, ",Intercept]")
+        slope_col   <- paste0("r_group__slope[",   g_clean, ",Intercept]")
 
         # Group-level deviations (zeros when the parameter has no group effects)
         r_ceiling <- if (ceiling_col %in% names(posterior)) as.numeric(posterior[[ceiling_col]]) else rep(0, n_iter)
@@ -859,8 +870,12 @@ SeroCOP <- R6::R6Class(
         return(invisible(NULL))
       }
 
-      # Convert to plain data.frame so column access returns simple numeric vectors
-      posterior   <- as.data.frame(brms::as_draws_df(self$fit))
+      # Convert to plain data.frame so column access returns simple numeric vectors.
+      # optional = TRUE preserves special characters ([, ], etc.) in column names.
+      # Note: brms itself converts spaces to dots in group level names, so
+      # 'Young adults' appears as 'Young.adults' in column names — we handle
+      # this below with gsub(' ', '.', g) when constructing lookup keys.
+      posterior   <- as.data.frame(brms::as_draws_df(self$fit), optional = TRUE)
       groups      <- levels(self$group)
       n_iter      <- nrow(posterior)
 
@@ -894,9 +909,11 @@ SeroCOP <- R6::R6Class(
       plot_list <- list()
 
       for (g in groups) {
-        ceiling_col <- paste0("r_group__ceiling[", g, ",Intercept]")
-        ec50_col    <- paste0("r_group__ec50[",    g, ",Intercept]")
-        slope_col   <- paste0("r_group__slope[",   g, ",Intercept]")
+        # brms converts spaces to dots in level names for Stan variable names
+        g_clean     <- gsub(" ", ".", g)
+        ceiling_col <- paste0("r_group__ceiling[", g_clean, ",Intercept]")
+        ec50_col    <- paste0("r_group__ec50[",    g_clean, ",Intercept]")
+        slope_col   <- paste0("r_group__slope[",   g_clean, ",Intercept]")
 
         # Group-level deviations (zeros when the parameter has no group effects)
         r_ceiling <- if (ceiling_col %in% names(posterior)) as.numeric(posterior[[ceiling_col]]) else rep(0, n_iter)
