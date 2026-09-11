@@ -76,6 +76,8 @@ model$definePrior(
 
 \item{\code{loo}}{LOO-CV object (after fitting)}
 
+\item{\code{loo_by_group}}{List of per-group LOO contributions (hierarchical models only)}
+
 \item{\code{priors}}{List of prior distributions for model parameters}
 
 \item{\code{weights}}{Optional numeric vector of observation weights}
@@ -96,6 +98,7 @@ model$definePrior(
 \item \href{#method-SeroCOP-plot_curve}{\code{SeroCOP$plot_curve()}}
 \item \href{#method-SeroCOP-plot_roc}{\code{SeroCOP$plot_roc()}}
 \item \href{#method-SeroCOP-plot_group_curves}{\code{SeroCOP$plot_group_curves()}}
+\item \href{#method-SeroCOP-plot_cop_curves}{\code{SeroCOP$plot_cop_curves()}}
 \item \href{#method-SeroCOP-plot_posteriors}{\code{SeroCOP$plot_posteriors()}}
 \item \href{#method-SeroCOP-extract_cop}{\code{SeroCOP$extract_cop()}}
 \item \href{#method-SeroCOP-clone}{\code{SeroCOP$clone()}}
@@ -120,8 +123,8 @@ Create a new SeroCOP object
 \item{\code{group}}{Optional factor or character vector for grouping (e.g., age groups)}
 
 \item{\code{weights}}{Optional numeric vector of non-negative observation weights.
-  When supplied, a weighted Bernoulli likelihood is used.
-  If \code{NULL} (the default) all observations receive equal weight.}
+When supplied, a weighted Bernoulli likelihood is used. If \code{NULL}
+(the default) all observations are given equal weight.}
 }
 \if{html}{\out{</div>}}
 }
@@ -199,7 +202,14 @@ model$definePrior(
 \subsection{Method \code{fit_model()}}{
 Fit the Bayesian logistic model
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$fit_model(chains = 4, iter = 2000, warmup = 1000, thin = 1, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$fit_model(
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  thin = 1,
+  ceiling_group = FALSE,
+  ...
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -212,6 +222,9 @@ Fit the Bayesian logistic model
 \item{\code{warmup}}{Number of warmup iterations (default: iter/2)}
 
 \item{\code{thin}}{Thinning interval (default: 1)}
+
+\item{\code{ceiling_group}}{Logical; when \code{TRUE} and a group variable is present,
+the ceiling parameter also receives group-level random effects (default: FALSE).}
 
 \item{\code{...}}{Additional arguments passed to brms::brm}
 }
@@ -227,13 +240,19 @@ Self (invisibly)
 \subsection{Method \code{predict()}}{
 Get posterior predictions for infection probability
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$predict(newdata = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$predict(newdata = NULL, group = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{newdata}}{Optional new titre values for prediction}
+
+\item{\code{group}}{Optional group level (character) for group-specific predictions.
+If \code{NULL} (default), predictions are marginalised over all groups
+(population-average curve). Supply a valid group level string (e.g.
+\code{"5-11 years"}) to obtain the group-specific curve. Ignored when
+the model was not fitted with a group variable.}
 }
 \if{html}{\out{</div>}}
 }
@@ -247,13 +266,17 @@ Matrix of posterior predictions (iterations x observations)
 \subsection{Method \code{predict_protection()}}{
 Extract probability of protection from the fitted model
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$predict_protection(newdata = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$predict_protection(newdata = NULL, group = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{newdata}}{Optional vector of new titre values for prediction}
+
+\item{\code{group}}{Optional group level (character) for group-specific predictions.
+If \code{NULL} (default), predictions are marginalised over all groups.
+See \code{predict()} for details.}
 }
 \if{html}{\out{</div>}}
 }
@@ -346,15 +369,51 @@ A ggplot object
 \if{html}{\out{<a id="method-SeroCOP-plot_group_curves"></a>}}
 \if{latex}{\out{\hypertarget{method-SeroCOP-plot_group_curves}{}}}
 \subsection{Method \code{plot_group_curves()}}{
-Plot group-specific curves for hierarchical models
+Plot group-specific correlates of risk curves with a population-weighted
+marginalised curve overlaid on each panel.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$plot_group_curves(title = "Group-Specific Correlates of Risk")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$plot_group_curves(
+  title = "Group-Specific Correlates of Risk",
+  weights_pop = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{title}}{Plot title}
+
+\item{\code{weights_pop}}{Optional named numeric vector of population weights for
+computing the marginalised curve. Names must match group levels.
+If \code{NULL} (default), sample proportions are used.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A ggplot object (returns NULL if not a hierarchical model)
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SeroCOP-plot_cop_curves"></a>}}
+\if{latex}{\out{\hypertarget{method-SeroCOP-plot_cop_curves}{}}}
+\subsection{Method \code{plot_cop_curves()}}{
+Plot group-specific and marginalised correlates of protection (COP) curves.
+The COP at titre \eqn{t} for group \eqn{g} is defined as
+\eqn{1 - P(\text{infection} \mid t, g) / \text{ceiling}_g}, i.e.\ the
+probability of protection conditional on exposure. The marginalised curve
+is the weighted average of group-specific COP curves.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SeroCOP$plot_cop_curves(title = "Correlates of Protection", weights_pop = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{title}}{Plot title}
+
+\item{\code{weights_pop}}{Optional named numeric vector of population weights for
+computing the marginalised curve. Names must match group levels.
+If \code{NULL} (default), sample proportions are used.}
 }
 \if{html}{\out{</div>}}
 }

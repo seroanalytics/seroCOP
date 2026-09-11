@@ -28,7 +28,8 @@ through two R6 classes:
 | Class | Purpose |
 |-------|---------|
 | `SeroCOP` | Single biomarker; optionally hierarchical by group |
-| `SeroCOPMulti` | Multiple biomarkers fitted and compared simultaneously |
+| `SeroCOPCompare` | Independent univariate models fitted and compared across biomarkers |
+| `SeroMulti` | Joint model for 2--4 biomarkers measured at the same time point |
 
 ---
 
@@ -162,14 +163,14 @@ hier$loo_by_group
 
 # Multi-Biomarker Analysis
 
-`SeroCOPMulti` fits one independent `SeroCOP` model per biomarker and
+`SeroCOPCompare` fits one independent `SeroCOP` model per biomarker and
 provides comparison tools:
 
 ```{r multi-example, eval=FALSE}
 # titre is a matrix: rows = observations, cols = biomarkers
 titre_mat <- cbind(IgG = titre_IgG, IgA = titre_IgA, Neutralisation = titre_Neut)
 
-multi <- SeroCOPMulti$new(
+multi <- SeroCOPCompare$new(
   titre           = titre_mat,
   infected        = infected,
   biomarker_names = c("IgG", "IgA", "Neutralisation")
@@ -183,6 +184,26 @@ multi$plot_comparison()
 
 # All fitted risk curves side-by-side
 multi$plot_all_curves()
+```
+
+## Multidimensional CoP Surfaces
+
+`SeroMulti` jointly models 2--4 biomarkers from the same person and time
+point. For two biomarkers, `plot_surface()` displays the fitted joint CoP
+surface; 3- and 4-biomarker models provide posterior predictions for specified
+biomarker combinations.
+
+```{r multi-surface-example, eval=FALSE}
+joint_titres <- cbind(IgG = titre_IgG, IgA = titre_IgA)
+
+joint_model <- SeroMulti$new(titre = joint_titres, infected = infected)
+joint_model$fit_model(chains = 4, iter = 2000, warmup = 1000, cores = 4)
+
+# Filled contour CoP surface for two biomarkers
+joint_model$plot_surface()
+
+# For 3--4 biomarkers, predict at specified biomarker combinations
+joint_model$predict_protection(newdata = joint_titres)
 ```
 
 ---

@@ -1,9 +1,9 @@
-#' SeroCOPMulti R6 Class for Multi-Biomarker Correlates of Protection Analysis
+#' SeroCOPCompare R6 Class for Independent Biomarker Comparison
 #'
 #' @description
-#' An R6 class for analyzing multiple biomarkers simultaneously.
-#' Fits separate models for each biomarker using brms and provides comparison tools.
-#' Supports hierarchical modeling with group-level effects.
+#' An R6 class that fits independent univariate models for each biomarker and
+#' compares their performance. It does not fit a joint multidimensional model.
+#' Supports hierarchical modeling with group-level effects for each biomarker.
 #'
 #' @concept r6-classes
 #' @export
@@ -15,22 +15,22 @@
 #' infected <- rbinom(200, 1, 0.3)
 #'
 #' # Initialize and fit
-#' multi_model <- SeroCOPMulti$new(titre = titres, infected = infected)
-#' multi_model$fit_all(chains = 4, iter = 2000)
+#' comparison_model <- SeroCOPCompare$new(titre = titres, infected = infected)
+#' comparison_model$fit_all(chains = 4, iter = 2000)
 #' 
 #' # Compare biomarkers
-#' multi_model$compare_biomarkers()
-#' multi_model$plot_comparison()
+#' comparison_model$compare_biomarkers()
+#' comparison_model$plot_comparison()
 #' 
 #' # With hierarchical effects
 #' age_group <- sample(c("Young", "Middle", "Old"), 200, replace = TRUE)
-#' hier_model <- SeroCOPMulti$new(titre = titres, infected = infected, group = age_group)
+#' hier_model <- SeroCOPCompare$new(titre = titres, infected = infected, group = age_group)
 #' hier_model$fit_all(chains = 4, iter = 2000)
 #' hier_model$plot_group_curves()
 #' hier_model$extract_group_parameters()
 #' }
-SeroCOPMulti <- R6::R6Class(
-  "SeroCOPMulti",
+SeroCOPCompare <- R6::R6Class(
+  "SeroCOPCompare",
   
   public = list(
     #' @field titre Matrix of antibody titres (columns = biomarkers)
@@ -53,7 +53,7 @@ SeroCOPMulti <- R6::R6Class(
     weights = NULL,
 
     #' @description
-    #' Create a new SeroCOPMulti object
+    #' Create a new SeroCOPCompare object
     #' @param titre Matrix of antibody titres (rows = samples, cols = biomarkers)
     #' @param infected Binary vector (0/1) of infection outcomes
     #' @param biomarker_names Optional vector of biomarker names
@@ -65,7 +65,7 @@ SeroCOPMulti <- R6::R6Class(
     #'   A single vector of length \code{nrow(titre)} is also accepted and is broadcast
     #'   across all biomarkers. If \code{NULL} (the default) all observations receive
     #'   equal weight.
-    #' @return A new SeroCOPMulti object
+    #' @return A new SeroCOPCompare object
     initialize = function(titre, infected, biomarker_names = NULL, group = NULL, weights = NULL) {
       # Convert to matrix if needed
       if (is.vector(titre)) {
@@ -151,7 +151,7 @@ SeroCOPMulti <- R6::R6Class(
         self$biomarker_names <- biomarker_names
       }
       
-      message(sprintf("SeroCOPMulti initialized with %d observations and %d biomarkers", 
+      message(sprintf("SeroCOPCompare initialized with %d observations and %d biomarkers",
                       nrow(titre), ncol(titre)))
       message(sprintf("  Biomarkers: %s", paste(self$biomarker_names, collapse = ", ")))
       message(sprintf("  Infection rate: %.1f%%", mean(infected) * 100))
