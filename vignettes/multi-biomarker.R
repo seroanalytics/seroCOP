@@ -75,7 +75,7 @@ ggplot(plot_data, aes(x = titre, y = prob)) +
 
 ## ----init-multi-model---------------------------------------------------------
 # Initialize multi-biomarker model
-multi_model <- SeroCOPMulti$new(
+multi_model <- SeroCOPCompare$new(
   titre = titre_matrix,
   infected = infected,
   biomarker_names = c("IgG", "IgA", "Nonspecific")

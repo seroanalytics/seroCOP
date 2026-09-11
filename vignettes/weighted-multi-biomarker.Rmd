@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 # Introduction
 
 This vignette demonstrates how to supply biomarker-specific **observation
-weights** to `SeroCOPMulti`. Weights scale each observation's contribution to
+weights** to `SeroCOPCompare`. Weights scale each observation's contribution to
 the Bernoulli log-likelihood in Stan — effectively giving more or less influence
 to individual observations during model fitting.
 
@@ -119,13 +119,13 @@ ggplot(weight_df, aes(x = weight, fill = status)) +
 
 # Fit the Weighted Multi-Biomarker Model
 
-Pass the weight matrix to `SeroCOPMulti$new()`. Each column is automatically
+Pass the weight matrix to `SeroCOPCompare$new()`. Each column is automatically
 routed to the corresponding biomarker's `SeroCOP` sub-model, where it enters
 Stan as `infected | weights(obs_weights)`, scaling each observation's
 contribution to the log-posterior.
 
 ```{r fit-weighted, eval = FALSE}
-weighted_model <- SeroCOPMulti$new(
+weighted_model <- SeroCOPCompare$new(
   titre    = titres,
   infected = infected,
   weights  = weights_mat
@@ -145,7 +145,7 @@ Fitting an unweighted model on the same data lets us see how down-weighting
 non-infected controls changes parameter estimates and performance metrics.
 
 ```{r fit-unweighted, eval = FALSE}
-unweighted_model <- SeroCOPMulti$new(
+unweighted_model <- SeroCOPCompare$new(
   titre    = titres,
   infected = infected
 )
@@ -215,4 +215,4 @@ Key takeaways:
 - The mechanics are implemented in Stan via
   `target += w[i] * bernoulli_lpmf(y[i] | p[i])`.
 - When `weights = NULL` (the default), all observations receive equal weight
-  and behaviour is identical to the standard `SeroCOPMulti` workflow.
+  and behaviour is identical to the standard `SeroCOPCompare` workflow.

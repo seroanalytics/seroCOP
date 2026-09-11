@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette demonstrates how to analyze multiple biomarkers simultaneously using the `SeroCOPMulti` class. We'll simulate three biomarkers with different correlates of protection:
+This vignette demonstrates how to compare independent univariate models for multiple biomarkers using the `SeroCOPCompare` class. We'll simulate three biomarkers with different correlates of protection:
 
 1. **Strong CoP**: IgG with clear protective effect
 2. **Weak CoP**: IgA with modest protective effect  
@@ -102,13 +102,13 @@ ggplot(plot_data, aes(x = titre, y = prob)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-# Fit Multi-Biomarker Model
+# Compare Independent Biomarker Models
 
-Now we'll use the `SeroCOPMulti` class to fit models for all biomarkers:
+Now we'll use the `SeroCOPCompare` class to fit a separate univariate model for each biomarker:
 
 ```{r init-multi-model}
 # Initialize multi-biomarker model
-multi_model <- SeroCOPMulti$new(
+multi_model <- SeroCOPCompare$new(
   titre = titre_matrix,
   infected = infected,
   biomarker_names = c("IgG", "IgA", "Nonspecific")
@@ -384,7 +384,7 @@ This analysis demonstrates:
 - **IgA** shows weak correlate of protection (AUC ~ 0.65-0.75)
 - **Nonspecific** shows no correlate of protection (AUC ~ 0.50)
 
-The `SeroCOPMulti` class enables efficient comparison of multiple biomarkers to identify the best correlates of protection.
+The `SeroCOPCompare` class enables comparison of independent biomarker models to identify the strongest univariate correlates of protection.
 
 ## Session Info
 
