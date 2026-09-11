@@ -309,7 +309,7 @@ mis-specification or sparse data in that titre region.</p>
 <h2 id="correlates-of-protection-curves">Correlates of Protection Curves<a class="anchor" aria-label="anchor" href="#correlates-of-protection-curves"></a>
 </h2>
 <p>The correlate of protection (COP) is defined as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">COP</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">ceiling</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{P(\text{ceiling})}</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">COP</mtext><mo stretchy="false" form="prefix">(</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">ceiling</mtext><mo stretchy="false" form="postfix">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{P(\text{ceiling})}</annotation></semantics></math></p>
 <p>This quantifies the probability of being protected conditional on
 exposure. The population-weighted marginalised COP curve summarises the
 overall effectiveness across age groups.</p>
@@ -327,16 +327,16 @@ overall effectiveness across age groups.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">group_params</span> <span class="op">&lt;-</span> <span class="va">hier_model</span><span class="op">$</span><span class="fu">extract_group_parameters</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">group_params</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          group parameter      mean    median         sd         q025      q975</span></span>
-<span><span class="co">#&gt; 1 Young adults   ceiling 0.7535608 0.7562615 0.06530828  0.616718632 0.8736953</span></span>
-<span><span class="co">#&gt; 2 Young adults      ec50 1.6228170 1.6269624 0.16381614  1.273193288 1.9407667</span></span>
-<span><span class="co">#&gt; 3 Young adults     slope 4.2703235 3.9450179 1.76451069  1.802135171 8.6867585</span></span>
-<span><span class="co">#&gt; 4  Middle-aged   ceiling 0.7535608 0.7562615 0.06530828  0.616718632 0.8736953</span></span>
-<span><span class="co">#&gt; 5  Middle-aged      ec50 1.2456847 1.3545520 0.68539125 -0.438686108 2.3425992</span></span>
-<span><span class="co">#&gt; 6  Middle-aged     slope 0.7637980 0.6446116 0.51850845  0.259426276 2.0535662</span></span>
-<span><span class="co">#&gt; 7 Older adults   ceiling 0.7535608 0.7562615 0.06530828  0.616718632 0.8736953</span></span>
-<span><span class="co">#&gt; 8 Older adults      ec50 2.1579099 2.0386108 0.95894496  0.453728701 4.1092192</span></span>
-<span><span class="co">#&gt; 9 Older adults     slope 0.6560202 0.5138150 0.60495916 -0.004831226 2.3138291</span></span></code></pre></div>
+<span><span class="co">#&gt;          group parameter      mean    median         sd        q025      q975</span></span>
+<span><span class="co">#&gt; 1 Young adults   ceiling 0.7546538 0.7574055 0.06616431  0.61814513 0.8763251</span></span>
+<span><span class="co">#&gt; 2 Young adults      ec50 1.6256698 1.6279310 0.16314676  1.27416675 1.9340375</span></span>
+<span><span class="co">#&gt; 3 Young adults     slope 4.3302052 4.0364786 1.79252744  1.75614602 8.4753830</span></span>
+<span><span class="co">#&gt; 4  Middle-aged   ceiling 0.7546538 0.7574055 0.06616431  0.61814513 0.8763251</span></span>
+<span><span class="co">#&gt; 5  Middle-aged      ec50 1.2625923 1.3684763 0.68684691 -0.36063887 2.3693240</span></span>
+<span><span class="co">#&gt; 6  Middle-aged     slope 0.7542929 0.6334389 0.50749399  0.24288854 1.9882791</span></span>
+<span><span class="co">#&gt; 7 Older adults   ceiling 0.7546538 0.7574055 0.06616431  0.61814513 0.8763251</span></span>
+<span><span class="co">#&gt; 8 Older adults      ec50 2.1129705 1.9949460 0.92375314  0.39543573 4.0488206</span></span>
+<span><span class="co">#&gt; 9 Older adults     slope 0.6808166 0.5198644 0.67706640  0.02698378 2.4720901</span></span></code></pre></div>
 <p>Key observations:</p>
 <ul>
 <li>
@@ -365,11 +365,11 @@ need higher titres for equivalent protection</li>
 <span><span class="co">#&gt;   ROC AUC (marginalised):        0.807</span></span>
 <span><span class="co">#&gt;   ROC AUC (within-group wtd):    0.812</span></span>
 <span><span class="co">#&gt;   Brier Score:                   0.136</span></span>
-<span><span class="co">#&gt;   LOO ELPD:                      -125.64 (SE: 9.03)</span></span>
+<span><span class="co">#&gt;   LOO ELPD:                      -125.67 (SE: 9.03)</span></span>
 <span><span class="co">#&gt;   LOO ELPD by group:</span></span>
-<span><span class="co">#&gt;     Young adults           -46.12 (SE: 6.30, n = 150)</span></span>
-<span><span class="co">#&gt;     Middle-aged            -49.23 (SE: 5.45, n = 90)</span></span>
-<span><span class="co">#&gt;     Older adults           -30.29 (SE: 2.53, n = 45)</span></span></code></pre></div>
+<span><span class="co">#&gt;     Young adults           -46.14 (SE: 6.33, n = 150)</span></span>
+<span><span class="co">#&gt;     Middle-aged            -49.21 (SE: 5.39, n = 90)</span></span>
+<span><span class="co">#&gt;     Older adults           -30.32 (SE: 2.60, n = 45)</span></span></code></pre></div>
 <p>The per-group LOO-ELPD breakdown shows how much each age group
 contributes to (or detracts from) overall model fit. A lower ELPD for a
 group indicates the model fits that group less well — often because it
@@ -401,12 +401,12 @@ has fewer participants or a weaker signal.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"=== Model Comparison (LOO-CV) ===\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; === Model Comparison (LOO-CV) ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Hierarchical ELPD: %.2f (SE: %.2f)\n"</span>, <span class="va">hier_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>,   <span class="va">hier_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Hierarchical ELPD: -125.64 (SE: 9.03)</span></span>
+<span><span class="co">#&gt; Hierarchical ELPD: -125.67 (SE: 9.03)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Pooled       ELPD: %.2f (SE: %.2f)\n"</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"Estimate"</span><span class="op">]</span>, <span class="va">pooled_loo</span><span class="op">[</span><span class="st">"SE"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Pooled       ELPD: -134.95 (SE: 9.45)</span></span>
+<span><span class="co">#&gt; Pooled       ELPD: -134.98 (SE: 9.46)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Difference:        %.2f (SE: %.2f)  |  Z = %.2f\n"</span>,</span>
 <span>            <span class="va">loo_diff</span>, <span class="va">loo_se</span>, <span class="va">loo_diff</span> <span class="op">/</span> <span class="va">loo_se</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Difference:        9.31 (SE: 13.07)  |  Z = 0.71</span></span>
+<span><span class="co">#&gt; Difference:        9.31 (SE: 13.08)  |  Z = 0.71</span></span>
 <span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">loo_diff</span> <span class="op">&gt;</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">loo_se</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"-&gt; Strong evidence favouring hierarchical model\n"</span><span class="op">)</span></span>
@@ -529,9 +529,9 @@ titre range with a population-weighted marginalised curve</li>
 </h2>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
+<span><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -550,35 +550,35 @@ titre range with a population-weighted marginalised curve</li>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_4.0.2 seroCOP_0.1.0</span></span>
+<span><span class="co">#&gt; [1] ggplot2_4.0.3 seroCOP_0.1.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] gtable_0.3.6          tensorA_0.36.2.1      xfun_0.57            </span></span>
-<span><span class="co">#&gt;  [4] bslib_0.10.0          QuickJSR_1.9.0        processx_3.8.6       </span></span>
-<span><span class="co">#&gt;  [7] inline_0.3.21         lattice_0.22-9        callr_3.7.6          </span></span>
-<span><span class="co">#&gt; [10] ps_1.9.1              vctrs_0.7.2           tools_4.5.3          </span></span>
-<span><span class="co">#&gt; [13] generics_0.1.4        stats4_4.5.3          parallel_4.5.3       </span></span>
-<span><span class="co">#&gt; [16] tibble_3.3.1          pkgconfig_2.0.3       brms_2.23.0          </span></span>
-<span><span class="co">#&gt; [19] Matrix_1.7-4          checkmate_2.3.4       RColorBrewer_1.1-3   </span></span>
-<span><span class="co">#&gt; [22] S7_0.2.1              desc_1.4.3            distributional_0.7.0 </span></span>
-<span><span class="co">#&gt; [25] RcppParallel_5.1.11-2 lifecycle_1.0.5       compiler_4.5.3       </span></span>
-<span><span class="co">#&gt; [28] farver_2.1.2          stringr_1.6.0         textshaping_1.0.5    </span></span>
-<span><span class="co">#&gt; [31] Brobdingnag_1.2-9     codetools_0.2-20      htmltools_0.5.9      </span></span>
-<span><span class="co">#&gt; [34] sass_0.4.10           bayesplot_1.15.0      yaml_2.3.12          </span></span>
-<span><span class="co">#&gt; [37] pillar_1.11.1         pkgdown_2.2.0         jquerylib_0.1.4      </span></span>
-<span><span class="co">#&gt; [40] cachem_1.1.0          StanHeaders_2.32.10   bridgesampling_1.2-1 </span></span>
-<span><span class="co">#&gt; [43] abind_1.4-8           nlme_3.1-168          posterior_1.6.1      </span></span>
-<span><span class="co">#&gt; [46] rstan_2.32.7          tidyselect_1.2.1      digest_0.6.39        </span></span>
-<span><span class="co">#&gt; [49] mvtnorm_1.3-6         stringi_1.8.7         dplyr_1.2.0          </span></span>
-<span><span class="co">#&gt; [52] labeling_0.4.3        fastmap_1.2.0         grid_4.5.3           </span></span>
-<span><span class="co">#&gt; [55] cli_3.6.5             magrittr_2.0.4        loo_2.9.0            </span></span>
-<span><span class="co">#&gt; [58] pkgbuild_1.4.8        withr_3.0.2           scales_1.4.0         </span></span>
-<span><span class="co">#&gt; [61] backports_1.5.0       rmarkdown_2.30        matrixStats_1.5.0    </span></span>
-<span><span class="co">#&gt; [64] gridExtra_2.3         ragg_1.5.2            coda_0.19-4.1        </span></span>
-<span><span class="co">#&gt; [67] evaluate_1.0.5        knitr_1.51            rstantools_2.6.0     </span></span>
-<span><span class="co">#&gt; [70] rlang_1.1.7           Rcpp_1.1.1            glue_1.8.0           </span></span>
-<span><span class="co">#&gt; [73] pROC_1.19.0.1         jsonlite_2.0.0        R6_2.6.1             </span></span>
-<span><span class="co">#&gt; [76] systemfonts_1.3.2     fs_2.0.0</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] gtable_0.3.6         tensorA_0.36.2.1     xfun_0.60           </span></span>
+<span><span class="co">#&gt;  [4] bslib_0.12.0         QuickJSR_1.11.0      processx_3.9.0      </span></span>
+<span><span class="co">#&gt;  [7] inline_0.3.21        lattice_0.22-9       callr_3.8.0         </span></span>
+<span><span class="co">#&gt; [10] ps_1.9.3             vctrs_0.7.3          tools_4.6.1         </span></span>
+<span><span class="co">#&gt; [13] generics_0.1.4       stats4_4.6.1         parallel_4.6.1      </span></span>
+<span><span class="co">#&gt; [16] tibble_3.3.1         pkgconfig_2.0.3      brms_2.23.0         </span></span>
+<span><span class="co">#&gt; [19] Matrix_1.7-5         checkmate_2.3.4      RColorBrewer_1.1-3  </span></span>
+<span><span class="co">#&gt; [22] S7_0.2.2             desc_1.4.3           distributional_0.9.0</span></span>
+<span><span class="co">#&gt; [25] RcppParallel_6.2.1   lifecycle_1.0.5      compiler_4.6.1      </span></span>
+<span><span class="co">#&gt; [28] farver_2.1.2         stringr_1.6.0        textshaping_1.0.5   </span></span>
+<span><span class="co">#&gt; [31] Brobdingnag_1.2-9    codetools_0.2-20     htmltools_0.5.9     </span></span>
+<span><span class="co">#&gt; [34] sass_0.4.10          bayesplot_1.16.0     yaml_2.3.12         </span></span>
+<span><span class="co">#&gt; [37] pillar_1.11.1        pkgdown_2.2.1        jquerylib_0.1.4     </span></span>
+<span><span class="co">#&gt; [40] cachem_1.1.0         StanHeaders_2.39.1   bridgesampling_1.2-1</span></span>
+<span><span class="co">#&gt; [43] abind_1.4-8          nlme_3.1-169         posterior_1.7.0     </span></span>
+<span><span class="co">#&gt; [46] rstan_2.32.7         tidyselect_1.2.1     digest_0.6.39       </span></span>
+<span><span class="co">#&gt; [49] mvtnorm_1.4-2        stringi_1.8.9        dplyr_1.2.1         </span></span>
+<span><span class="co">#&gt; [52] labeling_0.4.3       fastmap_1.2.0        grid_4.6.1          </span></span>
+<span><span class="co">#&gt; [55] cli_3.6.6            magrittr_2.0.5       loo_2.10.1          </span></span>
+<span><span class="co">#&gt; [58] pkgbuild_1.4.8       withr_3.0.3          scales_1.4.0        </span></span>
+<span><span class="co">#&gt; [61] backports_1.5.1      rmarkdown_2.32       matrixStats_1.5.0   </span></span>
+<span><span class="co">#&gt; [64] otel_0.2.0           gridExtra_2.3.1      ragg_1.5.2          </span></span>
+<span><span class="co">#&gt; [67] coda_0.19-4.1        evaluate_1.0.5       knitr_1.52          </span></span>
+<span><span class="co">#&gt; [70] rstantools_2.7.1     rlang_1.3.0          Rcpp_1.1.2          </span></span>
+<span><span class="co">#&gt; [73] glue_1.8.1           pROC_1.19.1          jsonlite_2.0.0      </span></span>
+<span><span class="co">#&gt; [76] R6_2.6.1             systemfonts_1.3.2    fs_2.1.0</span></span></code></pre></div>
 </div>
   </div>
 
@@ -597,7 +597,7 @@ titre range with a population-weighted marginalised curve</li>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

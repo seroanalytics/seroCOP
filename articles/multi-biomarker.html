@@ -105,9 +105,10 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This vignette demonstrates how to analyze multiple biomarkers
-simultaneously using the <code>SeroCOPMulti</code> class. We’ll simulate
-three biomarkers with different correlates of protection:</p>
+<p>This vignette demonstrates how to compare independent univariate
+models for multiple biomarkers using the <code>SeroCOPCompare</code>
+class. We’ll simulate three biomarkers with different correlates of
+protection:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Strong CoP</strong>: IgG with clear protective effect</li>
@@ -200,18 +201,18 @@ effect</li>
 </div>
 </div>
 <div class="section level2">
-<h2 id="fit-multi-biomarker-model">Fit Multi-Biomarker Model<a class="anchor" aria-label="anchor" href="#fit-multi-biomarker-model"></a>
+<h2 id="compare-independent-biomarker-models">Compare Independent Biomarker Models<a class="anchor" aria-label="anchor" href="#compare-independent-biomarker-models"></a>
 </h2>
-<p>Now we’ll use the <code>SeroCOPMulti</code> class to fit models for
-all biomarkers:</p>
+<p>Now we’ll use the <code>SeroCOPCompare</code> class to fit a separate
+univariate model for each biomarker:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Initialize multi-biomarker model</span></span>
-<span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPCompare.html">SeroCOPCompare</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre <span class="op">=</span> <span class="va">titre_matrix</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">infected</span>,</span>
 <span>  biomarker_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IgG"</span>, <span class="st">"IgA"</span>, <span class="st">"Nonspecific"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; SeroCOPMulti initialized with 250 observations and 3 biomarkers</span></span>
+<span><span class="co">#&gt; SeroCOPCompare initialized with 250 observations and 3 biomarkers</span></span>
 <span><span class="co">#&gt;   Biomarkers: IgG, IgA, Nonspecific</span></span>
 <span><span class="co">#&gt;   Infection rate: 30.4%</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -226,7 +227,10 @@ all biomarkers:</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
 <span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span></code></pre></div>
+<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span>
+<span><span class="co">#&gt; Warning: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span></span>
+<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
+<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#tail-ess</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="compare-biomarkers">Compare Biomarkers<a class="anchor" aria-label="anchor" href="#compare-biomarkers"></a>
@@ -274,27 +278,27 @@ within the model as <code>1 - (prob_infection / ceiling)</code>.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === IgG ===</span></span>
 <span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
-<span><span class="co">#&gt; 1 3.244908         0.2361437               0.7227452</span></span>
-<span><span class="co">#&gt; 2 2.542770         0.2752986               0.6768291</span></span>
-<span><span class="co">#&gt; 3 3.427785         0.2283278               0.7318910</span></span>
-<span><span class="co">#&gt; 4 4.026987         0.2076328               0.7560922</span></span>
-<span><span class="co">#&gt; 5 2.945171         0.2508829               0.7054826</span></span>
+<span><span class="co">#&gt; 1 3.244908         0.2363716               0.7226842</span></span>
+<span><span class="co">#&gt; 2 2.542770         0.2757983               0.6763933</span></span>
+<span><span class="co">#&gt; 3 3.427785         0.2284290               0.7320146</span></span>
+<span><span class="co">#&gt; 4 4.026987         0.2072787               0.7568855</span></span>
+<span><span class="co">#&gt; 5 2.945171         0.2512811               0.7051778</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === IgA ===</span></span>
 <span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
-<span><span class="co">#&gt; 1 2.835740         0.2741801               0.6295343</span></span>
-<span><span class="co">#&gt; 2 2.701161         0.2786355               0.6235856</span></span>
-<span><span class="co">#&gt; 3 2.604183         0.2818967               0.6192387</span></span>
-<span><span class="co">#&gt; 4 3.136495         0.2645206               0.6424684</span></span>
-<span><span class="co">#&gt; 5 1.077544         0.3385873               0.5447430</span></span>
+<span><span class="co">#&gt; 1 2.835740         0.2760457               0.6325124</span></span>
+<span><span class="co">#&gt; 2 2.701161         0.2802506               0.6269617</span></span>
+<span><span class="co">#&gt; 3 2.604183         0.2833322               0.6228993</span></span>
+<span><span class="co">#&gt; 4 3.136495         0.2669481               0.6445494</span></span>
+<span><span class="co">#&gt; 5 1.077544         0.3375345               0.5522598</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; === Nonspecific ===</span></span>
 <span><span class="co">#&gt;      titre correlate_of_risk correlate_of_protection</span></span>
-<span><span class="co">#&gt; 1 1.706775         0.3556245               0.5087153</span></span>
-<span><span class="co">#&gt; 2 4.967871         0.2696618               0.6232863</span></span>
-<span><span class="co">#&gt; 3 3.522967         0.3014781               0.5798312</span></span>
-<span><span class="co">#&gt; 4 3.957672         0.2911410               0.5938306</span></span>
-<span><span class="co">#&gt; 5 4.374356         0.2818770               0.6064758</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 1.706775         0.3514083               0.5189602</span></span>
+<span><span class="co">#&gt; 2 4.967871         0.2685998               0.6291082</span></span>
+<span><span class="co">#&gt; 3 3.522967         0.2974851               0.5894755</span></span>
+<span><span class="co">#&gt; 4 3.957672         0.2879596               0.6024209</span></span>
+<span><span class="co">#&gt; 5 4.374356         0.2795496               0.6139537</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="correlate-of-protection-curves">Correlate of Protection Curves<a class="anchor" aria-label="anchor" href="#correlate-of-protection-curves"></a>
 </h4>
@@ -357,9 +361,9 @@ titre for each biomarker.</p>
 <span><span class="co">#&gt; === Biomarker Comparison ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se</span></span>
-<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2025953 -151.1798 6.815844</span></span>
-<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2105783 -154.7471 6.026969</span></span>
-<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2127073 -156.0191 5.795089</span></span></code></pre></div>
+<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2026460 -151.2895 6.823173</span></span>
+<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2105687 -154.8382 5.990506</span></span>
+<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2125641 -156.0892 5.925196</span></span></code></pre></div>
 <p>The comparison table shows:</p>
 <ul>
 <li>
@@ -384,9 +388,9 @@ performance:</p>
 <span><span class="co">#&gt; === Biomarker Comparison ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    biomarker       auc auc_lower auc_upper     brier  loo_elpd   loo_se</span></span>
-<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2025953 -151.1798 6.815844</span></span>
-<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2105783 -154.7471 6.026969</span></span>
-<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2127073 -156.0191 5.795089</span></span>
+<span><span class="co">#&gt;          IgG 0.6160012 0.5350460 0.6969564 0.2026460 -151.2895 6.823173</span></span>
+<span><span class="co">#&gt;          IgA 0.5559589 0.4795334 0.6323843 0.2105687 -154.8382 5.990506</span></span>
+<span><span class="co">#&gt;  Nonspecific 0.5062008 0.4277909 0.5846108 0.2125641 -156.0892 5.925196</span></span>
 <span><span class="co">#&gt; `height` was translated to `width`.</span></span></code></pre></div>
 <p><img src="multi-biomarker_files/figure-html/plot-comparison-1.png" class="r-plt" alt="" width="768"></p>
 <p>Interpretation:</p>
@@ -430,10 +434,10 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
 <span><span class="co">#&gt;   parameter      mean        lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.1665209  0.007073934 0.3441975</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.8665549  0.617729392 0.9956553</span></span>
-<span><span class="co">#&gt; 3      ec50 0.5297452 -0.929795602 1.8286675</span></span>
-<span><span class="co">#&gt; 4     slope 0.9468906  0.254941632 2.2490300</span></span>
+<span><span class="co">#&gt; 1     floor 0.1610778  0.006084481 0.3224573</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.8679028  0.607359452 0.9955192</span></span>
+<span><span class="co">#&gt; 3      ec50 0.5496206 -0.853958290 2.0206499</span></span>
+<span><span class="co">#&gt; 4     slope 0.9286825  0.249560222 2.2139732</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.020</span></span>
@@ -444,11 +448,11 @@ biomarker:</p>
 <span><span class="co">#&gt; === IgA ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
-<span><span class="co">#&gt;   parameter        mean        lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor  0.09783226  0.002067443 0.3236621</span></span>
-<span><span class="co">#&gt; 2   ceiling  0.77328709  0.487008360 0.9873291</span></span>
-<span><span class="co">#&gt; 3      ec50 -0.43639670 -3.578266925 3.6236774</span></span>
-<span><span class="co">#&gt; 4     slope  0.35390517  0.052806658 1.4460100</span></span>
+<span><span class="co">#&gt;   parameter       mean        lower     upper</span></span>
+<span><span class="co">#&gt; 1     floor  0.1072737  0.001964949 0.3425577</span></span>
+<span><span class="co">#&gt; 2   ceiling  0.7824714  0.504401858 0.9919841</span></span>
+<span><span class="co">#&gt; 3      ec50 -0.5473849 -3.543494312 3.4130836</span></span>
+<span><span class="co">#&gt; 4     slope  0.4381697  0.053893144 2.4990088</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.150</span></span>
@@ -460,10 +464,10 @@ biomarker:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Estimated parameters:</span></span>
 <span><span class="co">#&gt;   parameter      mean        lower     upper</span></span>
-<span><span class="co">#&gt; 1     floor 0.1246484  0.002485096 0.3638726</span></span>
-<span><span class="co">#&gt; 2   ceiling 0.7486946  0.510402766 0.9915895</span></span>
-<span><span class="co">#&gt; 3      ec50 1.3734446 -1.448496407 4.8448851</span></span>
-<span><span class="co">#&gt; 4     slope 0.5745722  0.012398412 3.1911891</span></span>
+<span><span class="co">#&gt; 1     floor 0.1441502  0.002687384 0.3787254</span></span>
+<span><span class="co">#&gt; 2   ceiling 0.7580576  0.502627989 0.9900783</span></span>
+<span><span class="co">#&gt; 3      ec50 1.2455633 -1.204964644 5.0183115</span></span>
+<span><span class="co">#&gt; 4     slope 0.6896366  0.011725435 3.3304535</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; True parameters:</span></span>
 <span><span class="co">#&gt;   floor:   0.350</span></span>
@@ -579,9 +583,9 @@ biomarker:</p>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -151.2  6.8</span></span>
-<span><span class="co">#&gt; p_loo         2.5  0.2</span></span>
-<span><span class="co">#&gt; looic       302.4 13.6</span></span>
+<span><span class="co">#&gt; elpd_loo   -151.3  6.8</span></span>
+<span><span class="co">#&gt; p_loo         2.6  0.2</span></span>
+<span><span class="co">#&gt; looic       302.6 13.6</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.1.</span></span>
 <span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 0.9]).</span></span>
@@ -594,12 +598,12 @@ biomarker:</p>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -154.7  6.0</span></span>
-<span><span class="co">#&gt; p_loo         1.9  0.1</span></span>
-<span><span class="co">#&gt; looic       309.5 12.1</span></span>
+<span><span class="co">#&gt; elpd_loo   -154.8  6.0</span></span>
+<span><span class="co">#&gt; p_loo         1.9  0.2</span></span>
+<span><span class="co">#&gt; looic       309.7 12.0</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.0.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.5, 0.8]).</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 0.9]).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span>
@@ -609,12 +613,12 @@ biomarker:</p>
 <span><span class="co">#&gt; Computed from 2000 by 250 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo   -156.0  5.8</span></span>
-<span><span class="co">#&gt; p_loo         1.8  0.1</span></span>
-<span><span class="co">#&gt; looic       312.0 11.6</span></span>
+<span><span class="co">#&gt; elpd_loo   -156.1  5.9</span></span>
+<span><span class="co">#&gt; p_loo         2.0  0.1</span></span>
+<span><span class="co">#&gt; looic       312.2 11.9</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.1.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.2, 0.6]).</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.1, 0.5]).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span></code></pre></div>
@@ -647,17 +651,18 @@ decision-making</li>
 <strong>Nonspecific</strong> shows no correlate of protection (AUC ~
 0.50)</li>
 </ul>
-<p>The <code>SeroCOPMulti</code> class enables efficient comparison of
-multiple biomarkers to identify the best correlates of protection.</p>
+<p>The <code>SeroCOPCompare</code> class enables comparison of
+independent biomarker models to identify the strongest univariate
+correlates of protection.</p>
 </div>
 <div class="section level3">
 <h3 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h3>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
+<span><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -676,35 +681,35 @@ multiple biomarkers to identify the best correlates of protection.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] ggplot2_4.0.2 seroCOP_0.1.0</span></span>
+<span><span class="co">#&gt; [1] ggplot2_4.0.3 seroCOP_0.1.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] gtable_0.3.6          tensorA_0.36.2.1      xfun_0.57            </span></span>
-<span><span class="co">#&gt;  [4] bslib_0.10.0          QuickJSR_1.9.0        processx_3.8.6       </span></span>
-<span><span class="co">#&gt;  [7] inline_0.3.21         lattice_0.22-9        callr_3.7.6          </span></span>
-<span><span class="co">#&gt; [10] ps_1.9.1              vctrs_0.7.2           tools_4.5.3          </span></span>
-<span><span class="co">#&gt; [13] generics_0.1.4        stats4_4.5.3          parallel_4.5.3       </span></span>
-<span><span class="co">#&gt; [16] tibble_3.3.1          pkgconfig_2.0.3       brms_2.23.0          </span></span>
-<span><span class="co">#&gt; [19] Matrix_1.7-4          checkmate_2.3.4       RColorBrewer_1.1-3   </span></span>
-<span><span class="co">#&gt; [22] S7_0.2.1              desc_1.4.3            distributional_0.7.0 </span></span>
-<span><span class="co">#&gt; [25] RcppParallel_5.1.11-2 lifecycle_1.0.5       compiler_4.5.3       </span></span>
-<span><span class="co">#&gt; [28] farver_2.1.2          stringr_1.6.0         textshaping_1.0.5    </span></span>
-<span><span class="co">#&gt; [31] Brobdingnag_1.2-9     codetools_0.2-20      htmltools_0.5.9      </span></span>
-<span><span class="co">#&gt; [34] sass_0.4.10           bayesplot_1.15.0      yaml_2.3.12          </span></span>
-<span><span class="co">#&gt; [37] pillar_1.11.1         pkgdown_2.2.0         jquerylib_0.1.4      </span></span>
-<span><span class="co">#&gt; [40] cachem_1.1.0          StanHeaders_2.32.10   bridgesampling_1.2-1 </span></span>
-<span><span class="co">#&gt; [43] abind_1.4-8           nlme_3.1-168          posterior_1.6.1      </span></span>
-<span><span class="co">#&gt; [46] rstan_2.32.7          tidyselect_1.2.1      digest_0.6.39        </span></span>
-<span><span class="co">#&gt; [49] mvtnorm_1.3-6         stringi_1.8.7         dplyr_1.2.0          </span></span>
-<span><span class="co">#&gt; [52] labeling_0.4.3        fastmap_1.2.0         grid_4.5.3           </span></span>
-<span><span class="co">#&gt; [55] cli_3.6.5             magrittr_2.0.4        loo_2.9.0            </span></span>
-<span><span class="co">#&gt; [58] pkgbuild_1.4.8        withr_3.0.2           scales_1.4.0         </span></span>
-<span><span class="co">#&gt; [61] backports_1.5.0       rmarkdown_2.30        matrixStats_1.5.0    </span></span>
-<span><span class="co">#&gt; [64] gridExtra_2.3         ragg_1.5.2            coda_0.19-4.1        </span></span>
-<span><span class="co">#&gt; [67] evaluate_1.0.5        knitr_1.51            rstantools_2.6.0     </span></span>
-<span><span class="co">#&gt; [70] rlang_1.1.7           Rcpp_1.1.1            glue_1.8.0           </span></span>
-<span><span class="co">#&gt; [73] pROC_1.19.0.1         jsonlite_2.0.0        R6_2.6.1             </span></span>
-<span><span class="co">#&gt; [76] systemfonts_1.3.2     fs_2.0.0</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] gtable_0.3.6         tensorA_0.36.2.1     xfun_0.60           </span></span>
+<span><span class="co">#&gt;  [4] bslib_0.12.0         QuickJSR_1.11.0      processx_3.9.0      </span></span>
+<span><span class="co">#&gt;  [7] inline_0.3.21        lattice_0.22-9       callr_3.8.0         </span></span>
+<span><span class="co">#&gt; [10] ps_1.9.3             vctrs_0.7.3          tools_4.6.1         </span></span>
+<span><span class="co">#&gt; [13] generics_0.1.4       stats4_4.6.1         parallel_4.6.1      </span></span>
+<span><span class="co">#&gt; [16] tibble_3.3.1         pkgconfig_2.0.3      brms_2.23.0         </span></span>
+<span><span class="co">#&gt; [19] Matrix_1.7-5         checkmate_2.3.4      RColorBrewer_1.1-3  </span></span>
+<span><span class="co">#&gt; [22] S7_0.2.2             desc_1.4.3           distributional_0.9.0</span></span>
+<span><span class="co">#&gt; [25] RcppParallel_6.2.1   lifecycle_1.0.5      compiler_4.6.1      </span></span>
+<span><span class="co">#&gt; [28] farver_2.1.2         stringr_1.6.0        textshaping_1.0.5   </span></span>
+<span><span class="co">#&gt; [31] Brobdingnag_1.2-9    codetools_0.2-20     htmltools_0.5.9     </span></span>
+<span><span class="co">#&gt; [34] sass_0.4.10          bayesplot_1.16.0     yaml_2.3.12         </span></span>
+<span><span class="co">#&gt; [37] pillar_1.11.1        pkgdown_2.2.1        jquerylib_0.1.4     </span></span>
+<span><span class="co">#&gt; [40] cachem_1.1.0         StanHeaders_2.39.1   bridgesampling_1.2-1</span></span>
+<span><span class="co">#&gt; [43] abind_1.4-8          nlme_3.1-169         posterior_1.7.0     </span></span>
+<span><span class="co">#&gt; [46] rstan_2.32.7         tidyselect_1.2.1     digest_0.6.39       </span></span>
+<span><span class="co">#&gt; [49] mvtnorm_1.4-2        stringi_1.8.9        dplyr_1.2.1         </span></span>
+<span><span class="co">#&gt; [52] labeling_0.4.3       fastmap_1.2.0        grid_4.6.1          </span></span>
+<span><span class="co">#&gt; [55] cli_3.6.6            magrittr_2.0.5       loo_2.10.1          </span></span>
+<span><span class="co">#&gt; [58] pkgbuild_1.4.8       withr_3.0.3          scales_1.4.0        </span></span>
+<span><span class="co">#&gt; [61] backports_1.5.1      rmarkdown_2.32       matrixStats_1.5.0   </span></span>
+<span><span class="co">#&gt; [64] otel_0.2.0           gridExtra_2.3.1      ragg_1.5.2          </span></span>
+<span><span class="co">#&gt; [67] coda_0.19-4.1        evaluate_1.0.5       knitr_1.52          </span></span>
+<span><span class="co">#&gt; [70] rstantools_2.7.1     rlang_1.3.0          Rcpp_1.1.2          </span></span>
+<span><span class="co">#&gt; [73] glue_1.8.1           pROC_1.19.1          jsonlite_2.0.0      </span></span>
+<span><span class="co">#&gt; [76] R6_2.6.1             systemfonts_1.3.2    fs_2.1.0</span></span></code></pre></div>
 </div>
 </div>
   </div>
@@ -724,7 +729,7 @@ multiple biomarkers to identify the best correlates of protection.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

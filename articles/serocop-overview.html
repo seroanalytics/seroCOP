@@ -126,8 +126,13 @@ publication-quality plots through two R6 classes:</p>
 <td>Single biomarker; optionally hierarchical by group</td>
 </tr>
 <tr class="even">
-<td><code>SeroCOPMulti</code></td>
-<td>Multiple biomarkers fitted and compared simultaneously</td>
+<td><code>SeroCOPCompare</code></td>
+<td>Independent univariate models fitted and compared across
+biomarkers</td>
+</tr>
+<tr class="odd">
+<td><code>SeroMulti</code></td>
+<td>Joint model for 2–4 biomarkers measured at the same time point</td>
 </tr>
 </tbody>
 </table>
@@ -137,7 +142,7 @@ publication-quality plots through two R6 classes:</p>
 </h3>
 <p>The probability of infection is modelled as a four-parameter logistic
 curve:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mtext mathvariant="normal">ceiling</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtext mathvariant="normal">inv_logit</mtext><mspace width="-0.167em"></mspace><mo minsize="1.2" maxsize="1.2" stretchy="false" form="prefix">(</mo><mo>−</mo><mtext mathvariant="normal">slope</mtext><mspace width="0.167em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mo>−</mo><mtext mathvariant="normal">ec50</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo minsize="1.2" maxsize="1.2" stretchy="false" form="postfix">)</mo><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mtext mathvariant="normal">ceiling</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">[</mo><mtext mathvariant="normal">inv_logit</mtext><mspace width="-0.167em"></mspace><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">(</mo><mo>−</mo><mtext mathvariant="normal">slope</mtext><mspace width="0.167em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>t</mi><mo>−</mo><mtext mathvariant="normal">ec50</mtext><mo stretchy="false" form="postfix">)</mo><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">)</mo><mo>×</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
 P(\text{infection} \mid t) =
   \text{ceiling} \times
   \left[\text{inv\_logit}\!\bigl(-\text{slope}\,(t - \text{ec50})\bigr)
@@ -303,13 +308,13 @@ observations in the likelihood:</p>
 <div class="section level2">
 <h2 id="multi-biomarker-analysis">Multi-Biomarker Analysis<a class="anchor" aria-label="anchor" href="#multi-biomarker-analysis"></a>
 </h2>
-<p><code>SeroCOPMulti</code> fits one independent <code>SeroCOP</code>
+<p><code>SeroCOPCompare</code> fits one independent <code>SeroCOP</code>
 model per biomarker and provides comparison tools:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># titre is a matrix: rows = observations, cols = biomarkers</span></span>
 <span><span class="va">titre_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>IgG <span class="op">=</span> <span class="va">titre_IgG</span>, IgA <span class="op">=</span> <span class="va">titre_IgA</span>, Neutralisation <span class="op">=</span> <span class="va">titre_Neut</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">multi</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span><span class="va">multi</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPCompare.html">SeroCOPCompare</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre           <span class="op">=</span> <span class="va">titre_mat</span>,</span>
 <span>  infected        <span class="op">=</span> <span class="va">infected</span>,</span>
 <span>  biomarker_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IgG"</span>, <span class="st">"IgA"</span>, <span class="st">"Neutralisation"</span><span class="op">)</span></span>
@@ -323,7 +328,26 @@ model per biomarker and provides comparison tools:</p>
 <span></span>
 <span><span class="co"># All fitted risk curves side-by-side</span></span>
 <span><span class="va">multi</span><span class="op">$</span><span class="fu">plot_all_curves</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="multidimensional-cop-surfaces">Multidimensional CoP Surfaces<a class="anchor" aria-label="anchor" href="#multidimensional-cop-surfaces"></a>
+</h3>
+<p><code>SeroMulti</code> jointly models 2–4 biomarkers from the same
+person and time point. For two biomarkers, <code>plot_surface()</code>
+displays the fitted joint CoP surface; 3- and 4-biomarker models provide
+posterior predictions for specified biomarker combinations.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">joint_titres</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>IgG <span class="op">=</span> <span class="va">titre_IgG</span>, IgA <span class="op">=</span> <span class="va">titre_IgA</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">joint_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroMulti.html">SeroMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>titre <span class="op">=</span> <span class="va">joint_titres</span>, infected <span class="op">=</span> <span class="va">infected</span><span class="op">)</span></span>
+<span><span class="va">joint_model</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fl">1000</span>, cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Filled contour CoP surface for two biomarkers</span></span>
+<span><span class="va">joint_model</span><span class="op">$</span><span class="fu">plot_surface</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># For 3--4 biomarkers, predict at specified biomarker combinations</span></span>
+<span><span class="va">joint_model</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span>newdata <span class="op">=</span> <span class="va">joint_titres</span><span class="op">)</span></span></code></pre></div>
 <hr>
+</div>
 </div>
 <div class="section level2">
 <h2 id="performance-metrics">Performance Metrics<a class="anchor" aria-label="anchor" href="#performance-metrics"></a>
@@ -371,7 +395,7 @@ model per biomarker and provides comparison tools:</p>
 <p><code><a href="../reference/extract_parameters.html">extract_parameters()</a></code> wraps
 <code><a href="https://mc-stan.org/posterior/reference/draws_df.html" class="external-link">brms::as_draws_df()</a></code> and returns a tidy data frame of
 posterior mean, median, and credible intervals:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_parameters.html">extract_parameters</a></span><span class="op">(</span><span class="va">model</span>, prob <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">params</span><span class="op">)</span></span>
 <span><span class="co">#   parameter  mean median  lower  upper</span></span>
@@ -387,8 +411,8 @@ posterior mean, median, and credible intervals:</p>
 <p>The <strong>correlate of protection</strong> at titre
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
 is:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">COP</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><mtext mathvariant="normal">ceiling</mtext></mfrac></mrow><annotation encoding="application/x-tex">\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{\text{ceiling}}</annotation></semantics></math></p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">COP</mtext><mo stretchy="false" form="prefix">(</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo>∣</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo></mrow><mtext mathvariant="normal">ceiling</mtext></mfrac></mrow><annotation encoding="application/x-tex">\text{COP}(t) = 1 - \frac{P(\text{infection} \mid t)}{\text{ceiling}}</annotation></semantics></math></p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Matrix of posterior samples (rows = draws, cols = observations)</span></span>
 <span><span class="va">cop_samples</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span>newdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">5</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -400,11 +424,11 @@ is:</p>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
+<span><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -424,12 +448,12 @@ is:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] digest_0.6.39     desc_1.4.3        R6_2.6.1          fastmap_1.2.0    </span></span>
-<span><span class="co">#&gt;  [5] xfun_0.57         cachem_1.1.0      knitr_1.51        htmltools_0.5.9  </span></span>
-<span><span class="co">#&gt;  [9] rmarkdown_2.30    lifecycle_1.0.5   cli_3.6.5         sass_0.4.10      </span></span>
-<span><span class="co">#&gt; [13] pkgdown_2.2.0     textshaping_1.0.5 jquerylib_0.1.4   systemfonts_1.3.2</span></span>
-<span><span class="co">#&gt; [17] compiler_4.5.3    tools_4.5.3       ragg_1.5.2        evaluate_1.0.5   </span></span>
-<span><span class="co">#&gt; [21] bslib_0.10.0      yaml_2.3.12       jsonlite_2.0.0    rlang_1.1.7      </span></span>
-<span><span class="co">#&gt; [25] fs_2.0.0</span></span></code></pre></div>
+<span><span class="co">#&gt;  [5] xfun_0.60         cachem_1.1.0      knitr_1.52        htmltools_0.5.9  </span></span>
+<span><span class="co">#&gt;  [9] rmarkdown_2.32    lifecycle_1.0.5   cli_3.6.6         sass_0.4.10      </span></span>
+<span><span class="co">#&gt; [13] pkgdown_2.2.1     textshaping_1.0.5 jquerylib_0.1.4   systemfonts_1.3.2</span></span>
+<span><span class="co">#&gt; [17] compiler_4.6.1    tools_4.6.1       ragg_1.5.2        bslib_0.12.0     </span></span>
+<span><span class="co">#&gt; [21] evaluate_1.0.5    yaml_2.3.12       otel_0.2.0        jsonlite_2.0.0   </span></span>
+<span><span class="co">#&gt; [25] rlang_1.3.0       fs_2.1.0</span></span></code></pre></div>
 </div>
   </div>
 
@@ -448,7 +472,7 @@ is:</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

@@ -107,7 +107,7 @@ seroCOP</h1>
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>This vignette demonstrates how to supply biomarker-specific
-<strong>observation weights</strong> to <code>SeroCOPMulti</code>.
+<strong>observation weights</strong> to <code>SeroCOPCompare</code>.
 Weights scale each observation’s contribution to the Bernoulli
 log-likelihood in Stan — effectively giving more or less influence to
 individual observations during model fitting.</p>
@@ -234,13 +234,13 @@ Distribution of observation weights split by infection status
 <div class="section level2">
 <h2 id="fit-the-weighted-multi-biomarker-model">Fit the Weighted Multi-Biomarker Model<a class="anchor" aria-label="anchor" href="#fit-the-weighted-multi-biomarker-model"></a>
 </h2>
-<p>Pass the weight matrix to <code>SeroCOPMulti$new()</code>. Each
+<p>Pass the weight matrix to <code>SeroCOPCompare$new()</code>. Each
 column is automatically routed to the corresponding biomarker’s
 <code>SeroCOP</code> sub-model, where it enters Stan as
 <code>infected | weights(obs_weights)</code>, scaling each observation’s
 contribution to the log-posterior.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">weighted_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">weighted_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPCompare.html">SeroCOPCompare</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre    <span class="op">=</span> <span class="va">titres</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">infected</span>,</span>
 <span>  weights  <span class="op">=</span> <span class="va">weights_mat</span></span>
@@ -255,7 +255,7 @@ contribution to the log-posterior.</p>
 down-weighting non-infected controls changes parameter estimates and
 performance metrics.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">unweighted_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">unweighted_model</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SeroCOPCompare.html">SeroCOPCompare</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre    <span class="op">=</span> <span class="va">titres</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">infected</span></span>
 <span><span class="op">)</span></span>
@@ -332,7 +332,7 @@ controls receive random weights in <code>[0, 0.8]</code>.</li>
 <code>target += w[i] * bernoulli_lpmf(y[i] | p[i])</code>.</li>
 <li>When <code>weights = NULL</code> (the default), all observations
 receive equal weight and behaviour is identical to the standard
-<code>SeroCOPMulti</code> workflow.</li>
+<code>SeroCOPCompare</code> workflow.</li>
 </ul>
 </div>
   </div>
@@ -352,7 +352,7 @@ receive equal weight and behaviour is identical to the standard
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

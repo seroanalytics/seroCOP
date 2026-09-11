@@ -183,7 +183,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Initialize and fit (without groups)</span></span>
-<span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span><span class="va">multi_model</span> <span class="op">&lt;-</span> <span class="va">SeroCOPMulti</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre <span class="op">=</span> <span class="va">titre_matrix</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">infected</span></span>
 <span><span class="op">)</span></span>
@@ -195,7 +195,7 @@
 <span><span class="va">multi_model</span><span class="op">$</span><span class="fu">plot_all_curves</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># With hierarchical effects across biomarkers</span></span>
-<span><span class="va">hier_multi</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/SeroCOPMulti.html">SeroCOPMulti</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span><span class="va">hier_multi</span> <span class="op">&lt;-</span> <span class="va">SeroCOPMulti</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  titre <span class="op">=</span> <span class="va">titre_matrix</span>,</span>
 <span>  infected <span class="op">=</span> <span class="va">infected</span>,</span>
 <span>  group <span class="op">=</span> <span class="va">age_group</span></span>
@@ -208,14 +208,14 @@
 <h2 id="model">Model<a class="anchor" aria-label="anchor" href="#model"></a>
 </h2>
 <p>The package fits a four-parameter logistic model using brms (Bayesian Regression Models using Stan):</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo stretchy="false" form="prefix">|</mo><mtext mathvariant="normal">titre</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mtext mathvariant="normal">ceiling</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">[</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><msup><mi>e</mi><mrow><mtext mathvariant="normal">slope</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">titre</mtext><mo>−</mo><mtext mathvariant="normal">ec50</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow></msup></mrow></mfrac><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">P(\text{infection} | \text{titre}) = \text{ceiling} \times \left[\frac{1}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}} \times (1 - \text{floor}) + \text{floor}\right]</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">infection</mtext><mo stretchy="false" form="prefix">|</mo><mtext mathvariant="normal">titre</mtext><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mtext mathvariant="normal">ceiling</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">[</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><msup><mi>e</mi><mrow><mtext mathvariant="normal">slope</mtext><mo>×</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">titre</mtext><mo>−</mo><mtext mathvariant="normal">ec50</mtext><mo stretchy="false" form="postfix">)</mo></mrow></msup></mrow></mfrac><mo>×</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mtext mathvariant="normal">floor</mtext><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">P(\text{infection} | \text{titre}) = \text{ceiling} \times \left[\frac{1}{1 + e^{\text{slope} \times (\text{titre} - \text{ec50})}} \times (1 - \text{floor}) + \text{floor}\right]</annotation></semantics></math></p>
 <p>Where: - <strong>floor</strong>: Lower asymptote (baseline infection probability at high titres) - <strong>ceiling</strong>: Upper asymptote (maximum infection probability at low titres)<br>
 - <strong>ec50</strong>: Titre at 50% between floor and ceiling (inflection point) - <strong>slope</strong>: Steepness of the dose-response curve</p>
 <div class="section level3">
 <h3 id="hierarchical-extension">Hierarchical Extension<a class="anchor" aria-label="anchor" href="#hierarchical-extension"></a>
 </h3>
 <p>When group variables are provided, the model adds random intercepts:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">ec50</mtext><mi>g</mi></msub><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mtext mathvariant="normal">ec50</mtext><mtext mathvariant="normal">population</mtext></msub><mo>,</mo><msub><mi>σ</mi><mtext mathvariant="normal">ec50</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{ec50}_g \sim \mathcal{N}(\text{ec50}_{\text{population}}, \sigma_{\text{ec50}})</annotation></semantics></math><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">slope</mtext><mi>g</mi></msub><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mtext mathvariant="normal">slope</mtext><mtext mathvariant="normal">population</mtext></msub><mo>,</mo><msub><mi>σ</mi><mtext mathvariant="normal">slope</mtext></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{slope}_g \sim \mathcal{N}(\text{slope}_{\text{population}}, \sigma_{\text{slope}})</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">ec50</mtext><mi>g</mi></msub><mo>∼</mo><mi>𝒩</mi><mo stretchy="false" form="prefix">(</mo><msub><mtext mathvariant="normal">ec50</mtext><mtext mathvariant="normal">population</mtext></msub><mo>,</mo><msub><mi>σ</mi><mtext mathvariant="normal">ec50</mtext></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{ec50}_g \sim \mathcal{N}(\text{ec50}_{\text{population}}, \sigma_{\text{ec50}})</annotation></semantics></math><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext mathvariant="normal">slope</mtext><mi>g</mi></msub><mo>∼</mo><mi>𝒩</mi><mo stretchy="false" form="prefix">(</mo><msub><mtext mathvariant="normal">slope</mtext><mtext mathvariant="normal">population</mtext></msub><mo>,</mo><msub><mi>σ</mi><mtext mathvariant="normal">slope</mtext></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{slope}_g \sim \mathcal{N}(\text{slope}_{\text{population}}, \sigma_{\text{slope}})</annotation></semantics></math></p>
 <p>This allows for group-specific parameters while borrowing strength across groups.</p>
 </div>
 </div>
@@ -335,7 +335,7 @@ R package version 0.1.0.</code></pre>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>

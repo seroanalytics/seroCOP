@@ -1,13 +1,14 @@
-pandoc: 3.1.11
-pkgdown: 2.2.0
+pandoc: 3.8.3
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   hierarchical-groups: hierarchical-groups.html
   multi-biomarker: multi-biomarker.html
+  multidimensional-surface: multidimensional-surface.html
   serocop-overview: serocop-overview.html
   simulation-recovery: simulation-recovery.html
   weighted-multi-biomarker: weighted-multi-biomarker.html
-last_built: 2026-03-24T09:43Z
+last_built: 2026-09-11T14:32Z
 urls:
   reference: https://seroanalytics.org/seroCOP/reference
   article: https://seroanalytics.org/seroCOP/articles

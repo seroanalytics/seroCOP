@@ -115,6 +115,10 @@ It provides methods for model fitting, prediction, performance evaluation, and v
 <dd><p>LOO-CV object (after fitting)</p></dd>
 
 
+<dt><code>loo_by_group</code></dt>
+<dd><p>List of per-group LOO contributions (hierarchical models only)</p></dd>
+
+
 <dt><code>priors</code></dt>
 <dd><p>List of prior distributions for model parameters</p></dd>
 
@@ -142,6 +146,7 @@ It provides methods for model fitting, prediction, performance evaluation, and v
 <li><p><a href="#method-SeroCOP-plot_curve"><code>SeroCOP$plot_curve()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-plot_roc"><code>SeroCOP$plot_roc()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-plot_group_curves"><code>SeroCOP$plot_group_curves()</code></a></p></li>
+<li><p><a href="#method-SeroCOP-plot_cop_curves"><code>SeroCOP$plot_cop_curves()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-plot_posteriors"><code>SeroCOP$plot_posteriors()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-extract_cop"><code>SeroCOP$extract_cop()</code></a></p></li>
 <li><p><a href="#method-SeroCOP-clone"><code>SeroCOP$clone()</code></a></p></li>
@@ -168,8 +173,8 @@ It provides methods for model fitting, prediction, performance evaluation, and v
 
 <dt><code>weights</code></dt>
 <dd><p>Optional numeric vector of non-negative observation weights.
-  When supplied, a weighted Bernoulli likelihood is used.
-  If <code>NULL</code> (the default) all observations receive equal weight.</p></dd>
+When supplied, a weighted Bernoulli likelihood is used. If <code>NULL</code>
+(the default) all observations are given equal weight.</p></dd>
 
 
 </dl><p></p></div>
@@ -259,7 +264,14 @@ model$definePrior(
 <h3 id="method-fit-model-">Method <code>fit_model()</code><a class="anchor" aria-label="anchor" href="#method-fit-model-"></a></h3>
 <p>Fit the Bayesian logistic model</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">4</span>, iter <span class="op">=</span> <span class="fl">2000</span>, warmup <span class="op">=</span> <span class="fl">1000</span>, thin <span class="op">=</span> <span class="fl">1</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">fit_model</span><span class="op">(</span></span>
+<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  iter <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  thin <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  ceiling_group <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -280,6 +292,11 @@ model$definePrior(
 <dd><p>Thinning interval (default: 1)</p></dd>
 
 
+<dt><code>ceiling_group</code></dt>
+<dd><p>Logical; when <code>TRUE</code> and a group variable is present,
+the ceiling parameter also receives group-level random effects (default: FALSE).</p></dd>
+
+
 <dt><code>...</code></dt>
 <dd><p>Additional arguments passed to brms::brm</p></dd>
 
@@ -295,13 +312,21 @@ model$definePrior(
 <h3 id="method-predict-">Method <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code><a class="anchor" aria-label="anchor" href="#method-predict-"></a></h3>
 <p>Get posterior predictions for infection probability</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span>newdata <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">predict</span><span class="op">(</span>newdata <span class="op">=</span> <span class="cn">NULL</span>, group <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>newdata</code></dt>
 <dd><p>Optional new titre values for prediction</p></dd>
+
+
+<dt><code>group</code></dt>
+<dd><p>Optional group level (character) for group-specific predictions.
+If <code>NULL</code> (default), predictions are marginalised over all groups
+(population-average curve). Supply a valid group level string (e.g.
+<code>"5-11 years"</code>) to obtain the group-specific curve. Ignored when
+the model was not fitted with a group variable.</p></dd>
 
 
 </dl><p></p></div>
@@ -315,13 +340,19 @@ model$definePrior(
 <h3 id="method-predict-protection-">Method <code>predict_protection()</code><a class="anchor" aria-label="anchor" href="#method-predict-protection-"></a></h3>
 <p>Extract probability of protection from the fitted model</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span>newdata <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">predict_protection</span><span class="op">(</span>newdata <span class="op">=</span> <span class="cn">NULL</span>, group <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>newdata</code></dt>
 <dd><p>Optional vector of new titre values for prediction</p></dd>
+
+
+<dt><code>group</code></dt>
+<dd><p>Optional group level (character) for group-specific predictions.
+If <code>NULL</code> (default), predictions are marginalised over all groups.
+See <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> for details.</p></dd>
 
 
 </dl><p></p></div>
@@ -413,15 +444,25 @@ model$definePrior(
 
 </div><p></p><hr><a id="method-SeroCOP-plot_group_curves"></a><div class="section">
 <h3 id="method-plot-group-curves-">Method <code>plot_group_curves()</code><a class="anchor" aria-label="anchor" href="#method-plot-group-curves-"></a></h3>
-<p>Plot group-specific curves for hierarchical models</p><div class="section">
+<p>Plot group-specific correlates of risk curves with a population-weighted
+marginalised curve overlaid on each panel.</p><div class="section">
 <h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Group-Specific Correlates of Risk"</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_group_curves</span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="st">"Group-Specific Correlates of Risk"</span>,</span>
+<span>  weights_pop <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>title</code></dt>
 <dd><p>Plot title</p></dd>
+
+
+<dt><code>weights_pop</code></dt>
+<dd><p>Optional named numeric vector of population weights for
+computing the marginalised curve. Names must match group levels.
+If <code>NULL</code> (default), sample proportions are used.</p></dd>
 
 
 </dl><p></p></div>
@@ -431,27 +472,57 @@ model$definePrior(
 <p>A ggplot object (returns NULL if not a hierarchical model)</p>
 </div>
 
+</div><p></p><hr><a id="method-SeroCOP-plot_cop_curves"></a><div class="section">
+<h3 id="method-plot-cop-curves-">Method <code>plot_cop_curves()</code><a class="anchor" aria-label="anchor" href="#method-plot-cop-curves-"></a></h3>
+<p>Plot group-specific and marginalised correlates of protection (COP) curves.
+The COP at titre \(t\) for group \(g\) is defined as
+\(1 - P(\text{infection} \mid t, g) / \text{ceiling}_g\), i.e.\ the
+probability of protection conditional on exposure. The marginalised curve
+is the weighted average of group-specific COP curves.</p><div class="section">
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_cop_curves</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Correlates of Protection"</span>, weights_pop <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>title</code></dt>
+<dd><p>Plot title</p></dd>
+
+
+<dt><code>weights_pop</code></dt>
+<dd><p>Optional named numeric vector of population weights for
+computing the marginalised curve. Names must match group levels.
+If <code>NULL</code> (default), sample proportions are used.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<p>A ggplot object (returns NULL if not a hierarchical model)</p>
+</div>
+
 </div><p></p><hr><a id="method-SeroCOP-plot_posteriors"></a><div class="section">
 <h3 id="method-plot-posteriors-">Method <code>plot_posteriors()</code><a class="anchor" aria-label="anchor" href="#method-plot-posteriors-"></a></h3>
 <p>Plot posterior distributions of parameters</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">plot_posteriors</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
 <p>A ggplot object</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-extract_cop"></a><div class="section">
 <h3 id="method-extract-cop-">Method <code>extract_cop()</code><a class="anchor" aria-label="anchor" href="#method-extract-cop-"></a></h3>
 <p>Extract the correlate of protection conditional on exposure.</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">extract_cop</span><span class="op">(</span><span class="va">correlate_of_risk</span>, upper_bound <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>correlate_of_risk</code></dt>
 <dd><p>Numeric vector of correlates of risk.</p></dd>
 
@@ -463,19 +534,19 @@ model$definePrior(
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
 <p>Numeric vector of correlates of protection.</p>
 </div>
 
 </div><p></p><hr><a id="method-SeroCOP-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SeroCOP</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
@@ -541,7 +612,7 @@ model$definePrior(
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer></div>
