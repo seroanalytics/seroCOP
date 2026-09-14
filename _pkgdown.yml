@@ -25,12 +25,14 @@ navbar:
         href: articles/serocop-overview.html
       - text: Application 1; Simulation and Recovery
         href: articles/simulation-recovery.html
-      - text: Application 2; Multi-Biomarker Analysis
+      - text: Application 2; Biomarker Comparison
         href: articles/multi-biomarker.html
       - text: Application 3; Hierarchical Group Effects
         href: articles/hierarchical-groups.html
       - text: Application 4; Weighted Multi-Biomarker Analysis
         href: articles/weighted-multi-biomarker.html
+      - text: Application 5; Multidimensional CoP Surface
+        href: articles/multidimensional-surface.html
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/seroanalytics/seroCOP
